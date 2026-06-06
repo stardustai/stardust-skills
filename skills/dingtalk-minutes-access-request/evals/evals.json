@@ -1,0 +1,15 @@
+{
+  "skill_name": "dingtalk-minutes-access-request",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "这个钉钉 AI 听记链接我打不开，帮我申请访问权限：https://shanji.dingtalk.com/app/transcribes/example-row-key",
+      "expected_output": "检查页面权限状态，必要时发送访问申请；不抽取 transcript 或 AI summary；如果权限可用，提示后续读取应使用 dws minutes。"
+    },
+    {
+      "id": 2,
+      "prompt": "之前有几个 AI 听记没权限，你帮我重查一下并申请权限。",
+      "expected_output": "使用权限复查流程处理 blocked/pending 页面，返回可访问、已申请、仍阻塞和失败计数；不保存会议正文。"
+    }
+  ]
+}

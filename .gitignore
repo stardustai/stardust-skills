@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+.env
+config.json
+.storage_state.json
+.chrome-profile/
+outputs/
+*.xlsx
+*.xlsm
+*.jsonl
+*.log
+dist/
+tmp/
