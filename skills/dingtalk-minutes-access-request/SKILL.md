@@ -37,7 +37,7 @@ python3 scripts/doctor.py --pretty
 Launch a dedicated visible browser when login refresh is needed:
 
 ```bash
-python3 scripts/launch_dingtalk_sync_browser.py --pretty
+python3 scripts/launch_dingtalk_access_browser.py --pretty
 ```
 
 Export storage state after login:
@@ -49,7 +49,7 @@ python3 scripts/export_dingtalk_storage_state.py --pretty
 Check CDP connectivity:
 
 ```bash
-python3 scripts/check_dingtalk_sync_browser.py --pretty
+python3 scripts/check_dingtalk_access_browser.py --pretty
 ```
 
 Recheck blocked permission pages and optionally send access requests:

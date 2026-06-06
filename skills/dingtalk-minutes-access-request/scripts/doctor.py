@@ -3,14 +3,13 @@ import argparse
 import importlib.util
 import json
 import os
-import shutil
 import socket
 from pathlib import Path
+import shutil
 
 
 SKILL_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG_PATH = SKILL_DIR / "config.json"
-DEFAULT_BASE_DIR = Path.home() / "Documents" / "dingtalk-minutes-access-request" / "captures"
 DEFAULT_STORAGE_STATE_PATH = Path.home() / "Documents" / "dingtalk-minutes-access-request" / ".storage_state.json"
 DEFAULT_CHROME_PROFILE_DIR = Path.home() / "Documents" / "dingtalk-minutes-access-request" / ".chrome-profile"
 DEFAULT_CDP_ENDPOINT = "http://127.0.0.1:19222"
@@ -44,7 +43,6 @@ def main() -> int:
     config_path = Path(args.config).expanduser()
     config = load_json(config_path)
 
-    base_dir = Path(config.get("base_dir") or DEFAULT_BASE_DIR).expanduser()
     storage_state_path = Path(config.get("storage_state_path") or DEFAULT_STORAGE_STATE_PATH).expanduser()
     chrome_profile_dir = Path(config.get("chrome_profile_dir") or DEFAULT_CHROME_PROFILE_DIR).expanduser()
     cdp_endpoint = str(config.get("cdp_endpoint") or DEFAULT_CDP_ENDPOINT).strip()
@@ -74,16 +72,6 @@ def main() -> int:
             "ok": shutil.which("lsof") is not None,
             "required": True,
             "path": shutil.which("lsof") or "",
-        },
-        "rsync": {
-            "ok": shutil.which("rsync") is not None,
-            "required": True,
-            "path": shutil.which("rsync") or "",
-        },
-        "base_dir_parent": {
-            "ok": base_dir.parent.exists() or base_dir.parent.parent.exists(),
-            "required": True,
-            "path": str(base_dir.parent),
         },
         "storage_state": {
             "ok": storage_state_path.exists(),

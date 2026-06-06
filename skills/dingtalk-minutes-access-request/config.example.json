@@ -1,12 +1,7 @@
 {
-  "base_dir": "~/Documents/dingtalk-minutes-access-request/captures",
-  "lock_path": "~/Documents/dingtalk-minutes-access-request/.sync.lock",
-  "permission_request_message": "AI自动抓取，用于会议纪要整理，如和工作内容无关或者涉及个人隐私，请拒绝",
-  "lookback_months": 3,
+  "permission_request_message": "用于工作相关会议纪要查看，如内容与工作无关或涉及个人隐私，请拒绝",
   "cdp_endpoint": "http://127.0.0.1:19222",
   "storage_state_path": "~/Documents/dingtalk-minutes-access-request/.storage_state.json",
   "chrome_profile_dir": "~/Documents/dingtalk-minutes-access-request/.chrome-profile",
-  "chrome_bin": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-  "refresh_storage_state_from_cdp": false,
-  "refresh_storage_state_from_main_chrome_profile": false
+  "chrome_bin": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 }

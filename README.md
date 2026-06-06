@@ -1,35 +1,101 @@
 # DingTalk Agent Skills
 
-Custom local skills for Derek's DingTalk and Dingdang OKR workflows.
+一组面向钉钉、叮当 OKR 和 DingTalk/Alidocs 工作流的本地 Agent Skills。
 
-This repository is the source-controlled copy. Installed skills live under:
+这个项目不是钉钉官方 SDK，也不是 `dws` 的替代品。它的定位是把可复用的业务流程、审阅规则、输出格式和浏览器兜底路径沉淀成 skills；具体的钉钉原子操作优先交给 `dws` 执行。
 
-```text
-~/.agents/skills
-```
+## 包含的 Skills
 
-## Skills
-
-| Skill | Purpose |
+| Skill | 作用 |
 | --- | --- |
-| `dingdang-okr-export` | Export Dingdang OKR data into a verified Excel workbook with one tab per person. |
-| `dingtalk-browser-export` | Export the currently open DingTalk/Alidocs Chrome document to docx/pdf/md when browser export is needed. |
-| `dingtalk-knowledge-organize` | Inventory, classify, rename, move, and deduplicate DingTalk knowledge base files through a CSV approval workflow. |
-| `dingtalk-minutes-access-request` | Request or recheck access for restricted DingTalk AI 听记 pages. Reading content belongs to `dws minutes`. |
-| `dingtalk-oa-approval` | Review DingTalk OA approvals with Derek's evidence and material-completeness rules. |
+| `dingdang-okr-export` | 从叮当 OKR 页面导出 OKR Excel：每人一个 tab，O/KR 分层，包含权重、进度、KR 进度说明和采集质量标记。 |
+| `dingtalk-browser-export` | 从已登录 Chrome 当前打开的 DingTalk/Alidocs 文档导出为 docx、PDF 或 Markdown，用作网页导出兜底。 |
+| `dingtalk-knowledge-organize` | 对钉钉知识库做盘点、分类、移动、重命名、去重和 CSV 审批式整理。底层操作优先走 `dws doc` / `dws wiki`。 |
+| `dingtalk-minutes-access-request` | 只处理钉钉 AI 听记权限申请、权限复查和阻塞诊断。听记正文、摘要、转写读取应走 `dws minutes`。 |
+| `dingtalk-oa-approval` | 审阅钉钉 OA 审批，要求读完整审批详情、流水、附件、链接文档和依据材料后再给审批意见。 |
 
-## Install
+## 适用场景
 
-From this repo:
+- 你已经用 Codex、Claude Code 或类似 Agent 运行本地 skills。
+- 你使用 `~/.agents/skills` 作为本机 skills 安装目录。
+- 你希望把钉钉相关的“固定业务流程”版本化，而不是每次临时写提示词。
+- 你已经有可用的 `dws` 命令或登录态，用来完成实际钉钉操作。
+
+## 安装
+
+克隆仓库后运行：
 
 ```bash
 ./install.sh
 ```
 
-The installer syncs `skills/*` into `~/.agents/skills`, excluding local state such as `config.json`, `.env`, `node_modules`, browser profiles, and generated outputs.
+安装脚本会把 `skills/*` 同步到：
 
-## Rules
+```text
+~/.agents/skills
+```
 
-- Do not commit credentials, tokens, cookies, browser profiles, exported workbooks, raw captures, or local `config.json` files.
-- Prefer `dws` for DingTalk primitive operations. These skills should contain only reusable workflow rules, review criteria, output formats, and fallback paths.
-- Keep one business boundary per skill. Do not merge approval, OKR, knowledge-base cleanup, minutes access, and browser export into a single broad skill.
+安装时会排除本地状态文件，例如：
+
+- `config.json`
+- `.env`
+- `node_modules`
+- `__pycache__`
+- `.storage_state.json`
+- `.chrome-profile`
+- 导出的 Excel、JSONL、日志和输出目录
+
+## 使用方式
+
+安装后，在支持 skills 的 Agent 中直接提出任务即可。例如：
+
+```text
+导出 2026 Q2 叮当 OKR，整理成每个人一个 tab 的 Excel
+```
+
+```text
+这个钉钉 AI 听记链接打不开，帮我申请访问权限
+```
+
+```text
+盘点这个钉钉知识库，先给我一个 CSV 整理建议，不要直接移动文件
+```
+
+```text
+看一下这个钉钉 OA 审批材料是否足够，给出审批意见
+```
+
+## 设计原则
+
+1. **dws 优先。** 文档、知识库、审批、AI 听记等钉钉原子能力优先使用 `dws`。
+2. **一个业务边界一个 skill。** OKR、审批、知识库整理、听记权限、浏览器导出不要合并成一个宽泛 skill。
+3. **不保存敏感状态。** 仓库不应包含 token、cookie、浏览器 profile、storage state、真实导出数据或本地配置。
+4. **可审计输出。** 涉及批量整理、审批或 OKR 导出时，保留可复查的 CSV、JSON 或 Excel 质量说明。
+
+## 目录结构
+
+```text
+.
+├── install.sh
+├── skills/
+│   ├── dingdang-okr-export/
+│   ├── dingtalk-browser-export/
+│   ├── dingtalk-knowledge-organize/
+│   ├── dingtalk-minutes-access-request/
+│   └── dingtalk-oa-approval/
+└── README.md
+```
+
+## 安全说明
+
+公开仓库前请确认：
+
+```bash
+rg -n "(secret|token|cookie|authorization|storage_state|config\\.json|password)" .
+```
+
+如果需要本地配置，请使用各 skill 的 `config.example.json` 作为模板，在安装后的本机 skill 目录中创建 `config.json`，不要提交到仓库。
+
+## License
+
+MIT

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
-from sync_dingtalk_ai_memory_cdp import (
+from dingtalk_minutes_access_helpers import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_PERMISSION_REQUEST_MESSAGE,
     DEFAULT_STORAGE_STATE_PATH,
@@ -20,7 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Recheck a saved set of DingTalk permission pages one by one.")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to JSON config.")
     parser.add_argument("--storage-state", help="Playwright storage_state.json for headless runs.")
-    parser.add_argument("--source-json", help="Prior sync JSON file to extract target pages from.")
+    parser.add_argument("--source-json", help="Prior permission-check JSON file to extract target pages from.")
     parser.add_argument(
         "--status",
         default="failed",

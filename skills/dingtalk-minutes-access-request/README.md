@@ -9,7 +9,7 @@ This skill is intentionally narrow. It only handles:
 - rechecking previously blocked links
 - diagnosing login, permission, or page-layout blockers
 
-It does not read, export, summarize, or locally sync transcripts. Use `dws minutes` for 听记 reading once access is available.
+It does not read, export, summarize, or store transcript content. Use `dws minutes` for 听记 reading once access is available.
 
 ## Common Commands
 
@@ -22,7 +22,7 @@ python3 scripts/doctor.py --pretty
 Refresh login state:
 
 ```bash
-python3 scripts/launch_dingtalk_sync_browser.py --pretty
+python3 scripts/launch_dingtalk_access_browser.py --pretty
 python3 scripts/export_dingtalk_storage_state.py --pretty
 ```
 
