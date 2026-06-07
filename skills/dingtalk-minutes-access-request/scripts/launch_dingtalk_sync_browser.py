@@ -88,7 +88,7 @@ def launch_browser(chrome_bin: str, profile_dir: Path, port: int, start_url: str
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Launch a dedicated Chrome profile for DingTalk AI minutes access requests over CDP.")
+    parser = argparse.ArgumentParser(description="Launch a dedicated Chrome profile for DingTalk AI sync over CDP.")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to JSON config.")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Remote debugging port.")
     parser.add_argument("--profile-dir", default="", help="Dedicated Chrome user-data-dir. Overrides config.")

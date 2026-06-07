@@ -10,7 +10,7 @@ DEFAULT_PORT = 19222
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Check the dedicated DingTalk access-request browser via CDP.")
+    parser = argparse.ArgumentParser(description="Check the dedicated DingTalk sync browser via CDP.")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Remote debugging port.")
     parser.add_argument("--pretty", action="store_true", help="Pretty-print JSON output.")
     return parser.parse_args()

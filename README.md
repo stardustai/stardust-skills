@@ -49,6 +49,16 @@
 - `.chrome-profile`
 - 导出的 Excel、JSONL、日志和输出目录
 
+## 从本机 Skills 更新仓库
+
+当你在本机 `~/.agents/skills` 里修改了本仓库已有的同名 skill，可以运行：
+
+```bash
+./scripts/sync-from-agents.sh
+```
+
+脚本只会更新仓库 `skills/` 里已经存在的同名目录，不会把本机其他 skill 自动加入仓库。同步时会排除 `config.json`、`.env`、浏览器状态、输出目录、日志和导出文件。
+
 ## 使用方式
 
 安装后，在支持 skills 的 Agent 中直接提出任务即可。例如：
