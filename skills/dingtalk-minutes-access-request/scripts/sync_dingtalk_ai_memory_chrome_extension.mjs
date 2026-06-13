@@ -417,7 +417,7 @@ async function extractAiSummary(tab, timeoutMs = 8000) {
 async function waitForHistoryReady(tab, timeoutMs = 15000) {
   await tab.goto(HISTORY_URL);
   await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs }).catch(() => {});
-  const loginState = await evaluatePage(tab, 
+  const loginState = await evaluatePage(tab,
     () => {
       const body = (document.body.innerText || '').replace(/\u00a0/g, ' ').trim();
       const title = document.title || '';
@@ -436,7 +436,7 @@ async function waitForHistoryReady(tab, timeoutMs = 15000) {
   }
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const ready = await evaluatePage(tab, 
+    const ready = await evaluatePage(tab,
     () => {
         if (location.pathname !== '/history') return false;
         if (document.querySelector('tr[data-row-key]')) return true;
@@ -453,7 +453,7 @@ async function waitForHistoryReady(tab, timeoutMs = 15000) {
 }
 
 async function getHistoryPage(tab) {
-  return evaluatePage(tab, 
+  return evaluatePage(tab,
     () => {
       const rows = Array.from(document.querySelectorAll('tr[data-row-key]')).map((tr) => {
         const tds = Array.from(tr.querySelectorAll('td'));
@@ -483,7 +483,7 @@ async function goToNextPage(tab, expectedNextPage, previousFirstRowKey = "") {
   await nextButton.click({ timeoutMs: 5000 });
   const deadline = Date.now() + 10000;
   while (Date.now() < deadline) {
-    const state = await evaluatePage(tab, 
+    const state = await evaluatePage(tab,
     ({ expectedPage, previousFirstRowKey }) => {
         const active = document.querySelector('li.dtd-pagination-item-active');
         const currentPage = Number(active?.getAttribute('title') || '0');
@@ -506,7 +506,7 @@ async function goToNextPage(tab, expectedNextPage, previousFirstRowKey = "") {
 async function waitForDetailReady(tab, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const state = await evaluatePage(tab, 
+    const state = await evaluatePage(tab,
     () => {
         const body = (document.body.innerText || '').replace(/\u00a0/g, ' ').trim();
         const transcriptEl = document.querySelector('[data-overlayscrollbars-contents]');
@@ -533,7 +533,7 @@ async function waitForDetailReady(tab, timeoutMs = 10000) {
     if (state.has_ai_summary && state.body_head) return state;
     await tab.playwright.waitForTimeout(300);
   }
-  return evaluatePage(tab, 
+  return evaluatePage(tab,
     () => {
       const body = (document.body.innerText || '').replace(/\u00a0/g, ' ').trim();
       const transcriptEl = document.querySelector('[data-overlayscrollbars-contents]');
@@ -558,7 +558,7 @@ async function waitForDetailReady(tab, timeoutMs = 10000) {
 }
 
 async function getPermissionState(tab) {
-  return evaluatePage(tab, 
+  return evaluatePage(tab,
     () => {
       const normalize = (value) => ((value || '').replace(/\s+/g, ' ')).trim();
       const directButton = Array.from(document.querySelectorAll('button')).find((el) => {
@@ -581,24 +581,40 @@ async function getPermissionState(tab) {
   );
 }
 
-async function clickSendRequest(tab, requestMessage) {
-  return evaluatePage(tab, 
-    (message) => {
-      const textarea = document.querySelector('textarea');
-      if (textarea) {
-        textarea.value = message || '';
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-        textarea.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      const normalize = (value) => ((value || '').replace(/\s+/g, ' ')).trim();
-      const button = Array.from(document.querySelectorAll('button')).find((el) => /^(发送申请|Send Application)$/i.test(normalize(el.innerText || el.textContent)));
-      if (!button || button.disabled) return false;
-      button.click();
+export async function waitForPermissionState(tab, { timeoutMs = 6000, pollMs = 250 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  let state = await getPermissionState(tab);
+  while (Date.now() < deadline) {
+    if (state.already_requested || state.can_request) return state;
+    await tab.playwright.waitForTimeout(pollMs);
+    state = await getPermissionState(tab);
+  }
+  return state;
+}
+
+export async function clickSendRequest(tab, requestMessage) {
+  const textarea = tab.playwright.locator("textarea");
+  if (await textarea.count() === 1) {
+    await textarea.fill(requestMessage || "", { timeoutMs: 5000 });
+    await tab.playwright.waitForTimeout(250);
+  }
+
+  let button = tab.playwright.getByRole("button", { name: "发送申请", exact: true });
+  let buttonCount = await button.count();
+  if (buttonCount !== 1) {
+    button = tab.playwright.getByRole("button", { name: "Send Application", exact: true });
+    buttonCount = await button.count();
+  }
+  if (buttonCount !== 1) return false;
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    if (await button.isEnabled()) {
+      await button.click({ timeoutMs: 5000 });
       return true;
-    },
-    requestMessage,
-    { timeoutMs: 5000 },
-  );
+    }
+    await tab.playwright.waitForTimeout(250);
+  }
+  return false;
 }
 
 async function processRow(detailTab, baseDir, row, requestPermissions, requestMessage, extractOptions) {
@@ -617,7 +633,7 @@ async function processRow(detailTab, baseDir, row, requestPermissions, requestMe
   const url = ready.url || (await detailTab.url());
 
   if (ready.is_permission || url.includes("/app/permission/")) {
-    let state = await getPermissionState(detailTab);
+    let state = await waitForPermissionState(detailTab);
     const topic = state.title || row.masked_title || rowKey;
     if (state.already_requested) {
       emitProgress(`permission_requested ${topic}`);
