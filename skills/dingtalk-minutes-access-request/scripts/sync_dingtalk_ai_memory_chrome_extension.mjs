@@ -770,12 +770,14 @@ async function processRow(detailTab, baseDir, row, requestPermissions, requestMe
 }
 
 export async function runChromeDingTalkSync(options = {}) {
-  const { setupBrowserRuntime } = await import(options.browserClientPath || BROWSER_CLIENT_PATH);
-  await setupBrowserRuntime({ globals: globalThis });
-  if (!options.agent && typeof agent === "undefined") {
+  if (!options.browser) {
+    const { setupBrowserRuntime } = await import(options.browserClientPath || BROWSER_CLIENT_PATH);
+    await setupBrowserRuntime({ globals: globalThis });
+  }
+  if (!options.browser && !options.agent && typeof agent === "undefined") {
     throw new Error("runChromeDingTalkSync must run inside the Codex browser runtime with an agent object.");
   }
-  const runtimeAgent = options.agent || agent;
+  const runtimeAgent = options.agent || (typeof agent === "undefined" ? null : agent);
   const browser = options.browser || (await runtimeAgent.browsers.get("extension"));
 
   const baseDir = options.baseDir || DEFAULT_BASE_DIR;
@@ -794,12 +796,17 @@ export async function runChromeDingTalkSync(options = {}) {
   };
   fs.mkdirSync(baseDir, { recursive: true });
 
-  const openTabs = await browser.user.openTabs();
-  const historyInfo =
-    openTabs.find((tab) => (tab.url || "").includes("shanji-admin.dingtalk.com/history")) ||
-    openTabs.find((tab) => (tab.title || "").includes("AI") && (tab.title || "").includes("听记")) ||
-    openTabs[0];
-  const historyTab = await browser.user.claimTab(historyInfo);
+  let historyTab;
+  if (options.useExistingHistoryTab === true) {
+    const openTabs = await browser.user.openTabs();
+    const historyInfo =
+      openTabs.find((tab) => (tab.url || "").includes("shanji-admin.dingtalk.com/history")) ||
+      openTabs.find((tab) => (tab.title || "").includes("AI") && (tab.title || "").includes("听记")) ||
+      openTabs[0];
+    historyTab = await browser.user.claimTab(historyInfo);
+  } else {
+    historyTab = await browser.tabs.new();
+  }
   const detailTab = await browser.tabs.new();
 
   emitProgress(`Opening DingTalk AI history through real Chrome`);
@@ -865,6 +872,9 @@ export async function runChromeDingTalkSync(options = {}) {
     }
   } finally {
     await detailTab.close().catch(() => {});
+    if (options.useExistingHistoryTab !== true) {
+      await historyTab.close().catch(() => {});
+    }
   }
 
   const summary = {
