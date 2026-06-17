@@ -809,16 +809,16 @@ export async function runChromeDingTalkSync(options = {}) {
   }
   const detailTab = await browser.tabs.new();
 
-  emitProgress(`Opening DingTalk AI history through real Chrome`);
-  await waitForHistoryReady(historyTab);
-  emitProgress(`History ready; scratch tab opened`);
-
   const results = [];
   const seenRowKeys = new Set();
   let processedCount = 0;
   let stopDueToCutoff = false;
 
   try {
+    emitProgress(`Opening DingTalk AI history through real Chrome`);
+    await waitForHistoryReady(historyTab, Number(options.historyReadyTimeoutMs || 60000));
+    emitProgress(`History ready; scratch tab opened`);
+
     while (true) {
       const pageState = await getHistoryPage(historyTab);
       const currentPage = Number(pageState.current_page || 1);
