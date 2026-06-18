@@ -4,9 +4,9 @@ import { execFile } from "node:child_process";
 
 const BROWSER_CLIENT_PATH =
   "/Users/derek/.codex/plugins/cache/openai-bundled/chrome/26.602.40724/scripts/browser-client.mjs";
-const HISTORY_URL = "https://shanji-admin.dingtalk.com/history";
-const TRANSCRIBE_URL_TEMPLATE = "https://shanji.dingtalk.com/app/transcribes/{row_key}";
+const HISTORY_URL = "https://oa.dingtalk.com/meeting_oa#/flash_minutes/history_list";
 const DEFAULT_BASE_DIR = "/Users/derek/Documents/memory/AI听记";
+const DEFAULT_MIN_AGE_MINUTES = 15;
 const DEFAULT_PERMISSION_REQUEST_MESSAGE =
   "AI自动抓取，用于会议纪要整理，如和工作内容无关或者涉及个人隐私，请拒绝";
 const DEFAULT_DWS_BIN = "dws";
@@ -113,6 +113,40 @@ function parseLocalTimestamp(value) {
     Number(second),
     0,
   );
+}
+
+function parseChinaTimestamp(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (!match) return null;
+  const [, year, month, day, hour = "00", minute = "00", second = "00"] = match;
+  return new Date(Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour) - 8,
+    Number(minute),
+    Number(second),
+    0,
+  ));
+}
+
+function decodeRowKey(rowKey) {
+  try {
+    return Buffer.from(String(rowKey || ""), "hex").toString("utf8");
+  } catch {
+    return "";
+  }
+}
+
+function buildTranscribeUrl(rowKey) {
+  const decoded = decodeRowKey(rowKey);
+  const match = decoded.match(/^v2uid(\d+)_[^_]+_(\d+)$/);
+  if (match) {
+    return `https://shanji.dingtalk.com/app/transcribes/${rowKey}/${match[1]}/${match[2]}?from=15`;
+  }
+  return `https://shanji.dingtalk.com/app/transcribes/${rowKey}?from=15`;
 }
 
 function buildMarkdownFilename(title, timestamp) {
@@ -438,7 +472,7 @@ async function waitForHistoryReady(tab, timeoutMs = 15000) {
   while (Date.now() < deadline) {
     const ready = await evaluatePage(tab,
     () => {
-        if (location.pathname !== '/history') return false;
+        if (location.hostname !== 'oa.dingtalk.com' || !location.hash.includes('/flash_minutes/history_list')) return false;
         if (document.querySelector('tr[data-row-key]')) return true;
         const body = (document.body.innerText || '').replace(/\u00a0/g, ' ');
         return body.includes('No content') || body.includes('暂无数据');
@@ -457,14 +491,16 @@ async function getHistoryPage(tab) {
     () => {
       const rows = Array.from(document.querySelectorAll('tr[data-row-key]')).map((tr) => {
         const tds = Array.from(tr.querySelectorAll('td'));
-        const button = tr.querySelector('button');
+        const titleLink = tds[1]?.querySelector('a') || null;
         return {
           row_key: tr.getAttribute('data-row-key') || '',
-          masked_title: button ? (button.innerText || '').trim() : '',
+          masked_title: titleLink ? (titleLink.innerText || '').trim() : (tds[1] ? (tds[1].innerText || '').trim() : ''),
           role: tds[2] ? (tds[2].innerText || '').trim() : '',
           initiator: tds[3] ? (tds[3].innerText || '').trim() : '',
-          size: tds[4] ? (tds[4].innerText || '').trim() : '',
-          last_active: tds[5] ? (tds[5].innerText || '').trim() : ''
+          duration: tds[4] ? (tds[4].innerText || '').trim() : '',
+          size: tds[5] ? (tds[5].innerText || '').trim() : '',
+          source: tds[6] ? (tds[6].innerText || '').trim() : '',
+          last_active: tds[7] ? (tds[7].innerText || '').trim() : ''
         };
       });
       const currentPage = Number(document.querySelector('li.dtd-pagination-item-active')?.getAttribute('title') || '1');
@@ -627,7 +663,7 @@ async function processRow(detailTab, baseDir, row, requestPermissions, requestMe
     return { row_key: rowKey, status: "skipped_existing", topic: row.masked_title || "" };
   }
 
-  await detailTab.goto(TRANSCRIBE_URL_TEMPLATE.replace("{row_key}", rowKey));
+  await detailTab.goto(buildTranscribeUrl(rowKey));
   await detailTab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 15000 }).catch(() => {});
   const ready = await waitForDetailReady(detailTab);
   const url = ready.url || (await detailTab.url());
@@ -784,6 +820,7 @@ export async function runChromeDingTalkSync(options = {}) {
   const cutoffDate = parseLocalTimestamp(options.stopBeforeDate || "");
   const maxItems = Number(options.maxItems || 0);
   const maxPages = Number(options.maxPages || 0);
+  const minAgeMinutes = Number(options.minAgeMinutes ?? DEFAULT_MIN_AGE_MINUTES);
   const requestPermissions = options.requestPermissions !== false;
   const requestMessage = options.permissionRequestMessage || DEFAULT_PERMISSION_REQUEST_MESSAGE;
   const extractOptions = {
@@ -800,7 +837,7 @@ export async function runChromeDingTalkSync(options = {}) {
   if (options.useExistingHistoryTab === true) {
     const openTabs = await browser.user.openTabs();
     const historyInfo =
-      openTabs.find((tab) => (tab.url || "").includes("shanji-admin.dingtalk.com/history")) ||
+      openTabs.find((tab) => (tab.url || "").includes("oa.dingtalk.com/meeting_oa#/flash_minutes/history_list")) ||
       openTabs.find((tab) => (tab.title || "").includes("AI") && (tab.title || "").includes("听记")) ||
       openTabs[0];
     historyTab = await browser.user.claimTab(historyInfo);
@@ -836,6 +873,23 @@ export async function runChromeDingTalkSync(options = {}) {
           );
           stopDueToCutoff = true;
           break;
+        }
+        const rowLastActiveChina = parseChinaTimestamp(row.last_active || "");
+        if (minAgeMinutes > 0 && rowLastActiveChina) {
+          const ageMs = Date.now() - rowLastActiveChina.getTime();
+          if (ageMs < minAgeMinutes * 60 * 1000) {
+            emitProgress(`Skipped recent ${row.masked_title || rowKey}: ${row.last_active} is within ${minAgeMinutes} minutes`);
+            results.push({
+              row_key: rowKey,
+              status: "skipped_recent",
+              topic: row.masked_title || "",
+              history_row: row,
+              min_age_minutes: minAgeMinutes,
+              last_checked_at: Date.now() / 1000,
+            });
+            processedCount += 1;
+            continue;
+          }
         }
         seenRowKeys.add(rowKey);
         let result;
@@ -885,6 +939,7 @@ export async function runChromeDingTalkSync(options = {}) {
     processed: results.length,
     downloaded: results.filter((item) => item.status === "downloaded").length,
     skipped_existing: results.filter((item) => item.status === "skipped_existing").length,
+    skipped_recent: results.filter((item) => item.status === "skipped_recent").length,
     permission_requested: results.filter((item) => item.status === "permission_requested").length,
     permission_required: results.filter((item) => item.status === "permission_required" || item.status === "permission_pending").length,
     failed: results.filter((item) => item.status === "failed").length,
@@ -892,7 +947,7 @@ export async function runChromeDingTalkSync(options = {}) {
     results,
   };
   emitProgress(
-    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
+    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} skipped_recent=${summary.skipped_recent} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
   );
   return summary;
 }
