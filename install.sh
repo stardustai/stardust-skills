@@ -19,6 +19,7 @@ for skill in "${ROOT}"/skills/*; do
     --exclude '.storage_state.json' \
     --exclude '.chrome-profile' \
     --exclude 'outputs' \
+    --exclude 'runs' \
     --exclude '*.xlsx' \
     --exclude '*.xlsm' \
     --exclude '*.jsonl' \

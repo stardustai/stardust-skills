@@ -1,4 +1,0 @@
-interface:
-  display_name: "CaseForge测试用例生成"
-  short_description: "根据PRD和业务记忆生成高覆盖率测试用例、Excel并沉淀需求记忆"
-  default_prompt: "请使用该skill读取PRD文档，结合业务记忆生成标准7列测试用例，导出xlsx，并将当前需求沉淀为可复用记忆。"

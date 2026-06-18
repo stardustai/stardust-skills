@@ -4,7 +4,7 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、候选人面试和小青面试系统。具体原子操作仍交给对应工具完成：钉钉能力优先走 `dws`，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径。
+当前仓库覆盖钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、PRD 测试用例生成、候选人面试和小青面试系统。具体原子操作仍交给对应工具完成：钉钉能力优先走 `dws`，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径。
 
 ## 包含的 Skills
 
@@ -15,6 +15,7 @@
 | `dingtalk-knowledge-organize` | 对钉钉知识库做盘点、分类、移动、重命名、去重和 CSV 审批式整理。底层操作优先走 `dws doc` / `dws wiki`。 |
 | `dingtalk-minutes-access-request` | 只处理钉钉 AI 听记权限申请、权限复查和阻塞诊断。听记正文、摘要、转写读取应走 `dws minutes`。 |
 | `dingtalk-oa-approval` | 审阅钉钉 OA 审批，要求读完整审批详情、流水、附件、链接文档和依据材料后再给审批意见。 |
+| `qa-generated-test-case` | 根据 PRD 生成标准 7 列 QA 测试用例，支持外部历史材料索引的 top N 检索、CSV/XLSX 导出和格式校验。 |
 | `stardust-interview` | 星尘候选人面试工作流：读取小青候选人材料和岗位画像，按需结合 DWS AI 听记，按 Derek 的证据链标准准备面试建议、结构化面评，并在确认后 dry run + 提交小青面评。 |
 
 ## 适用场景
@@ -48,6 +49,7 @@
 - `.storage_state.json`
 - `.chrome-profile`
 - 导出的 Excel、JSONL、日志和输出目录
+- 运行产物目录 `runs`
 
 ## 从本机 Skills 更新仓库
 
@@ -94,6 +96,7 @@
 | `dingtalk-minutes-access-request` | 当前不需要开放平台 key。它使用浏览器登录态申请或复查 AI 听记访问权限；正文读取走 `dws minutes`。 |
 | `dingtalk-knowledge-organize` | 通常需要可用的 `dws` 授权，部分旧脚本也支持读取本机 `~/.dingtalk-skills/config`。不要把配置提交到仓库。 |
 | `dingtalk-oa-approval` | 优先使用 `dws oa` 授权；只有在 DWS 详情缺字段且用户已授权时，才会用本机开放平台配置补读。 |
+| `qa-generated-test-case` | 默认不需要业务系统凭证。若需要历史 PRD 上下文，应从用户授权的 memory/document store、私有数据目录或单独数据包检索 top N 片段，不把历史材料提交到仓库。 |
 | `stardust-interview` | 需要可用的 `xiaoqing_interview` MCP OAuth 授权；读取 AI 听记时还需要可用的 `dws minutes` 授权。 |
 
 `dingtang-okr-review` 的 OKR 导出目前不是纯 API 实现。未来如果 `dws okr` 或叮当 OKR 官方 API 可用，才需要根据对应 API 的企业权限、应用授权或服务开通方式配置凭证。
@@ -117,6 +120,7 @@
 │   ├── dingtalk-knowledge-organize/
 │   ├── dingtalk-minutes-access-request/
 │   ├── dingtalk-oa-approval/
+│   ├── qa-generated-test-case/
 │   └── stardust-interview/
 └── README.md
 ```
