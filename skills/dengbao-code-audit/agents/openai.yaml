@@ -1,0 +1,7 @@
+interface:
+  display_name: "等保代码审计"
+  short_description: "按等保三级检查源码安全并输出整改报告"
+  default_prompt: "Use $dengbao-code-audit to scan the current project and produce a Markdown security audit report with remediation actions."
+
+policy:
+  allow_implicit_invocation: true
