@@ -10,6 +10,7 @@ const DEFAULT_MIN_AGE_MINUTES = 15;
 const DEFAULT_PERMISSION_REQUEST_MESSAGE =
   "AI自动抓取，用于会议纪要整理，如和工作内容无关或者涉及个人隐私，请拒绝";
 const DEFAULT_DWS_BIN = "dws";
+const PERMISSION_REQUEST_MESSAGE_FIELD_SELECTOR = "textarea,input,[contenteditable='true'],[role='textbox']";
 
 const GET_PAGE_META_JS = () => ({
   title: document.title,
@@ -79,6 +80,71 @@ const ENSURE_AI_SUMMARY_TAB_JS = () => {
   if (!target) return { clicked: false };
   target.click();
   return { clicked: true, text: normalize(target.innerText || target.textContent) };
+};
+
+export const GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS = ({ index = 0, requestMessage = "" } = {}) => {
+  const normalize = (value) => ((value || '').replace(/\s+/g, ' ')).trim();
+  const isVisible = (el) => {
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+  };
+  const readValue = (el) => {
+    const tagName = String(el.tagName || "").toUpperCase();
+    if (tagName === "INPUT" || tagName === "TEXTAREA") return el.value || "";
+    return el.innerText || el.textContent || "";
+  };
+  const scoreField = (el) => {
+    const tagName = String(el.tagName || "").toUpperCase();
+    const labelText = normalize([
+      el.getAttribute("placeholder"),
+      el.getAttribute("aria-label"),
+      el.getAttribute("name"),
+      el.getAttribute("id"),
+      el.closest("label")?.innerText,
+      el.parentElement?.innerText,
+    ].filter(Boolean).join(" "));
+    let score = 0;
+    if (/申请|理由|备注|说明|原因|reason|message|remark|comment/i.test(labelText)) score += 10;
+    if (tagName === "TEXTAREA") score += 4;
+    if (el.getAttribute("role") === "textbox") score += 3;
+    if (el.isContentEditable) score += 2;
+    return score;
+  };
+  const fields = Array.from(document.querySelectorAll("textarea,input,[contenteditable='true'],[role='textbox']"))
+    .map((el, selectorIndex) => ({ el, selectorIndex }))
+    .filter(({ el }) => {
+      const tagName = String(el.tagName || "").toUpperCase();
+      if (!isVisible(el)) return false;
+      if (tagName === "INPUT" && ["button", "checkbox", "file", "hidden", "radio", "submit"].includes(el.type)) return false;
+      if (el.disabled || el.readOnly) return false;
+      return true;
+    })
+    .sort((a, b) => scoreField(b.el) - scoreField(a.el));
+  const numericIndex = Number(index || 0);
+  const fieldEntry = fields[numericIndex] || null;
+  if (!fieldEntry) {
+    return {
+      found: false,
+      field_count: fields.length,
+      reason: fields.length ? "field_index_missing" : "no_writable_field",
+    };
+  }
+  const field = fieldEntry.el;
+  const value = readValue(field);
+  const expected = String(requestMessage || "");
+  return {
+    found: true,
+    index: numericIndex,
+    selector_index: fieldEntry.selectorIndex,
+    field_count: fields.length,
+    tag: field.tagName,
+    role: field.getAttribute("role") || "",
+    placeholder: field.getAttribute("placeholder") || "",
+    filled: !!expected && normalize(value) === normalize(expected),
+    value_len: value.length,
+    reason: "",
+  };
 };
 
 function emitProgress(message) {
@@ -629,10 +695,36 @@ export async function waitForPermissionState(tab, { timeoutMs = 6000, pollMs = 2
 }
 
 export async function clickSendRequest(tab, requestMessage) {
-  const textarea = tab.playwright.locator("textarea");
-  if (await textarea.count() === 1) {
-    await textarea.fill(requestMessage || "", { timeoutMs: 5000 });
+  if (requestMessage) {
+    const fieldState = await evaluatePage(
+      tab,
+      GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS,
+      {},
+      { timeoutMs: 5000 },
+    );
+    if (!fieldState?.found) {
+      emitProgress(`Permission request reason field was not found: ${fieldState?.reason || "unknown"}`);
+      return false;
+    }
+    const fields = tab.playwright.locator(PERMISSION_REQUEST_MESSAGE_FIELD_SELECTOR);
+    const fieldCount = await fields.count();
+    const selectorIndex = Number(fieldState.selector_index ?? fieldState.index);
+    if (fieldCount <= selectorIndex) {
+      emitProgress(`Permission request reason field index disappeared: index=${selectorIndex} count=${fieldCount}`);
+      return false;
+    }
+    await fields.nth(selectorIndex).fill(requestMessage, { timeoutMs: 5000 });
     await tab.playwright.waitForTimeout(250);
+    const filledState = await evaluatePage(
+      tab,
+      GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS,
+      { index: fieldState.index, requestMessage },
+      { timeoutMs: 5000 },
+    );
+    if (!filledState?.filled) {
+      emitProgress(`Permission request reason was not filled: ${filledState?.reason || "message_not_read_back"}`);
+      return false;
+    }
   }
 
   let button = tab.playwright.getByRole("button", { name: "发送申请", exact: true });
