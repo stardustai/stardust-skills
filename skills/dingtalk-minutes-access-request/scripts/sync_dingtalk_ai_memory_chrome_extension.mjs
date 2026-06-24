@@ -4,12 +4,13 @@ import { execFile } from "node:child_process";
 
 const BROWSER_CLIENT_PATH =
   "/Users/derek/.codex/plugins/cache/openai-bundled/chrome/26.602.40724/scripts/browser-client.mjs";
-const HISTORY_URL = "https://shanji-admin.dingtalk.com/history";
-const TRANSCRIBE_URL_TEMPLATE = "https://shanji.dingtalk.com/app/transcribes/{row_key}";
+const HISTORY_URL = "https://oa.dingtalk.com/meeting_oa#/flash_minutes/history_list";
 const DEFAULT_BASE_DIR = "/Users/derek/Documents/memory/AI听记";
+const DEFAULT_MIN_AGE_MINUTES = 15;
 const DEFAULT_PERMISSION_REQUEST_MESSAGE =
   "AI自动抓取，用于会议纪要整理，如和工作内容无关或者涉及个人隐私，请拒绝";
 const DEFAULT_DWS_BIN = "dws";
+const PERMISSION_REQUEST_MESSAGE_FIELD_SELECTOR = "textarea,input,[contenteditable='true'],[role='textbox']";
 
 const GET_PAGE_META_JS = () => ({
   title: document.title,
@@ -81,6 +82,71 @@ const ENSURE_AI_SUMMARY_TAB_JS = () => {
   return { clicked: true, text: normalize(target.innerText || target.textContent) };
 };
 
+export const GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS = ({ index = 0, requestMessage = "" } = {}) => {
+  const normalize = (value) => ((value || '').replace(/\s+/g, ' ')).trim();
+  const isVisible = (el) => {
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+  };
+  const readValue = (el) => {
+    const tagName = String(el.tagName || "").toUpperCase();
+    if (tagName === "INPUT" || tagName === "TEXTAREA") return el.value || "";
+    return el.innerText || el.textContent || "";
+  };
+  const scoreField = (el) => {
+    const tagName = String(el.tagName || "").toUpperCase();
+    const labelText = normalize([
+      el.getAttribute("placeholder"),
+      el.getAttribute("aria-label"),
+      el.getAttribute("name"),
+      el.getAttribute("id"),
+      el.closest("label")?.innerText,
+      el.parentElement?.innerText,
+    ].filter(Boolean).join(" "));
+    let score = 0;
+    if (/申请|理由|备注|说明|原因|reason|message|remark|comment/i.test(labelText)) score += 10;
+    if (tagName === "TEXTAREA") score += 4;
+    if (el.getAttribute("role") === "textbox") score += 3;
+    if (el.isContentEditable) score += 2;
+    return score;
+  };
+  const fields = Array.from(document.querySelectorAll("textarea,input,[contenteditable='true'],[role='textbox']"))
+    .map((el, selectorIndex) => ({ el, selectorIndex }))
+    .filter(({ el }) => {
+      const tagName = String(el.tagName || "").toUpperCase();
+      if (!isVisible(el)) return false;
+      if (tagName === "INPUT" && ["button", "checkbox", "file", "hidden", "radio", "submit"].includes(el.type)) return false;
+      if (el.disabled || el.readOnly) return false;
+      return true;
+    })
+    .sort((a, b) => scoreField(b.el) - scoreField(a.el));
+  const numericIndex = Number(index || 0);
+  const fieldEntry = fields[numericIndex] || null;
+  if (!fieldEntry) {
+    return {
+      found: false,
+      field_count: fields.length,
+      reason: fields.length ? "field_index_missing" : "no_writable_field",
+    };
+  }
+  const field = fieldEntry.el;
+  const value = readValue(field);
+  const expected = String(requestMessage || "");
+  return {
+    found: true,
+    index: numericIndex,
+    selector_index: fieldEntry.selectorIndex,
+    field_count: fields.length,
+    tag: field.tagName,
+    role: field.getAttribute("role") || "",
+    placeholder: field.getAttribute("placeholder") || "",
+    filled: !!expected && normalize(value) === normalize(expected),
+    value_len: value.length,
+    reason: "",
+  };
+};
+
 function emitProgress(message) {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, "0");
@@ -113,6 +179,40 @@ function parseLocalTimestamp(value) {
     Number(second),
     0,
   );
+}
+
+function parseChinaTimestamp(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (!match) return null;
+  const [, year, month, day, hour = "00", minute = "00", second = "00"] = match;
+  return new Date(Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour) - 8,
+    Number(minute),
+    Number(second),
+    0,
+  ));
+}
+
+function decodeRowKey(rowKey) {
+  try {
+    return Buffer.from(String(rowKey || ""), "hex").toString("utf8");
+  } catch {
+    return "";
+  }
+}
+
+function buildTranscribeUrl(rowKey) {
+  const decoded = decodeRowKey(rowKey);
+  const match = decoded.match(/^v2uid(\d+)_[^_]+_(\d+)$/);
+  if (match) {
+    return `https://shanji.dingtalk.com/app/transcribes/${rowKey}/${match[1]}/${match[2]}?from=15`;
+  }
+  return `https://shanji.dingtalk.com/app/transcribes/${rowKey}?from=15`;
 }
 
 function buildMarkdownFilename(title, timestamp) {
@@ -438,7 +538,7 @@ async function waitForHistoryReady(tab, timeoutMs = 15000) {
   while (Date.now() < deadline) {
     const ready = await evaluatePage(tab,
     () => {
-        if (location.pathname !== '/history') return false;
+        if (location.hostname !== 'oa.dingtalk.com' || !location.hash.includes('/flash_minutes/history_list')) return false;
         if (document.querySelector('tr[data-row-key]')) return true;
         const body = (document.body.innerText || '').replace(/\u00a0/g, ' ');
         return body.includes('No content') || body.includes('暂无数据');
@@ -457,14 +557,16 @@ async function getHistoryPage(tab) {
     () => {
       const rows = Array.from(document.querySelectorAll('tr[data-row-key]')).map((tr) => {
         const tds = Array.from(tr.querySelectorAll('td'));
-        const button = tr.querySelector('button');
+        const titleLink = tds[1]?.querySelector('a') || null;
         return {
           row_key: tr.getAttribute('data-row-key') || '',
-          masked_title: button ? (button.innerText || '').trim() : '',
+          masked_title: titleLink ? (titleLink.innerText || '').trim() : (tds[1] ? (tds[1].innerText || '').trim() : ''),
           role: tds[2] ? (tds[2].innerText || '').trim() : '',
           initiator: tds[3] ? (tds[3].innerText || '').trim() : '',
-          size: tds[4] ? (tds[4].innerText || '').trim() : '',
-          last_active: tds[5] ? (tds[5].innerText || '').trim() : ''
+          duration: tds[4] ? (tds[4].innerText || '').trim() : '',
+          size: tds[5] ? (tds[5].innerText || '').trim() : '',
+          source: tds[6] ? (tds[6].innerText || '').trim() : '',
+          last_active: tds[7] ? (tds[7].innerText || '').trim() : ''
         };
       });
       const currentPage = Number(document.querySelector('li.dtd-pagination-item-active')?.getAttribute('title') || '1');
@@ -593,10 +695,36 @@ export async function waitForPermissionState(tab, { timeoutMs = 6000, pollMs = 2
 }
 
 export async function clickSendRequest(tab, requestMessage) {
-  const textarea = tab.playwright.locator("textarea");
-  if (await textarea.count() === 1) {
-    await textarea.fill(requestMessage || "", { timeoutMs: 5000 });
+  if (requestMessage) {
+    const fieldState = await evaluatePage(
+      tab,
+      GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS,
+      {},
+      { timeoutMs: 5000 },
+    );
+    if (!fieldState?.found) {
+      emitProgress(`Permission request reason field was not found: ${fieldState?.reason || "unknown"}`);
+      return false;
+    }
+    const fields = tab.playwright.locator(PERMISSION_REQUEST_MESSAGE_FIELD_SELECTOR);
+    const fieldCount = await fields.count();
+    const selectorIndex = Number(fieldState.selector_index ?? fieldState.index);
+    if (fieldCount <= selectorIndex) {
+      emitProgress(`Permission request reason field index disappeared: index=${selectorIndex} count=${fieldCount}`);
+      return false;
+    }
+    await fields.nth(selectorIndex).fill(requestMessage, { timeoutMs: 5000 });
     await tab.playwright.waitForTimeout(250);
+    const filledState = await evaluatePage(
+      tab,
+      GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS,
+      { index: fieldState.index, requestMessage },
+      { timeoutMs: 5000 },
+    );
+    if (!filledState?.filled) {
+      emitProgress(`Permission request reason was not filled: ${filledState?.reason || "message_not_read_back"}`);
+      return false;
+    }
   }
 
   let button = tab.playwright.getByRole("button", { name: "发送申请", exact: true });
@@ -627,7 +755,7 @@ async function processRow(detailTab, baseDir, row, requestPermissions, requestMe
     return { row_key: rowKey, status: "skipped_existing", topic: row.masked_title || "" };
   }
 
-  await detailTab.goto(TRANSCRIBE_URL_TEMPLATE.replace("{row_key}", rowKey));
+  await detailTab.goto(buildTranscribeUrl(rowKey));
   await detailTab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 15000 }).catch(() => {});
   const ready = await waitForDetailReady(detailTab);
   const url = ready.url || (await detailTab.url());
@@ -770,18 +898,21 @@ async function processRow(detailTab, baseDir, row, requestPermissions, requestMe
 }
 
 export async function runChromeDingTalkSync(options = {}) {
-  const { setupBrowserRuntime } = await import(options.browserClientPath || BROWSER_CLIENT_PATH);
-  await setupBrowserRuntime({ globals: globalThis });
-  if (!options.agent && typeof agent === "undefined") {
+  if (!options.browser) {
+    const { setupBrowserRuntime } = await import(options.browserClientPath || BROWSER_CLIENT_PATH);
+    await setupBrowserRuntime({ globals: globalThis });
+  }
+  if (!options.browser && !options.agent && typeof agent === "undefined") {
     throw new Error("runChromeDingTalkSync must run inside the Codex browser runtime with an agent object.");
   }
-  const runtimeAgent = options.agent || agent;
+  const runtimeAgent = options.agent || (typeof agent === "undefined" ? null : agent);
   const browser = options.browser || (await runtimeAgent.browsers.get("extension"));
 
   const baseDir = options.baseDir || DEFAULT_BASE_DIR;
   const cutoffDate = parseLocalTimestamp(options.stopBeforeDate || "");
   const maxItems = Number(options.maxItems || 0);
   const maxPages = Number(options.maxPages || 0);
+  const minAgeMinutes = Number(options.minAgeMinutes ?? DEFAULT_MIN_AGE_MINUTES);
   const requestPermissions = options.requestPermissions !== false;
   const requestMessage = options.permissionRequestMessage || DEFAULT_PERMISSION_REQUEST_MESSAGE;
   const extractOptions = {
@@ -794,17 +925,18 @@ export async function runChromeDingTalkSync(options = {}) {
   };
   fs.mkdirSync(baseDir, { recursive: true });
 
-  const openTabs = await browser.user.openTabs();
-  const historyInfo =
-    openTabs.find((tab) => (tab.url || "").includes("shanji-admin.dingtalk.com/history")) ||
-    openTabs.find((tab) => (tab.title || "").includes("AI") && (tab.title || "").includes("听记")) ||
-    openTabs[0];
-  const historyTab = await browser.user.claimTab(historyInfo);
+  let historyTab;
+  if (options.useExistingHistoryTab === true) {
+    const openTabs = await browser.user.openTabs();
+    const historyInfo =
+      openTabs.find((tab) => (tab.url || "").includes("oa.dingtalk.com/meeting_oa#/flash_minutes/history_list")) ||
+      openTabs.find((tab) => (tab.title || "").includes("AI") && (tab.title || "").includes("听记")) ||
+      openTabs[0];
+    historyTab = await browser.user.claimTab(historyInfo);
+  } else {
+    historyTab = await browser.tabs.new();
+  }
   const detailTab = await browser.tabs.new();
-
-  emitProgress(`Opening DingTalk AI history through real Chrome`);
-  await waitForHistoryReady(historyTab);
-  emitProgress(`History ready; scratch tab opened`);
 
   const results = [];
   const seenRowKeys = new Set();
@@ -812,6 +944,10 @@ export async function runChromeDingTalkSync(options = {}) {
   let stopDueToCutoff = false;
 
   try {
+    emitProgress(`Opening DingTalk AI history through real Chrome`);
+    await waitForHistoryReady(historyTab, Number(options.historyReadyTimeoutMs || 60000));
+    emitProgress(`History ready; scratch tab opened`);
+
     while (true) {
       const pageState = await getHistoryPage(historyTab);
       const currentPage = Number(pageState.current_page || 1);
@@ -829,6 +965,23 @@ export async function runChromeDingTalkSync(options = {}) {
           );
           stopDueToCutoff = true;
           break;
+        }
+        const rowLastActiveChina = parseChinaTimestamp(row.last_active || "");
+        if (minAgeMinutes > 0 && rowLastActiveChina) {
+          const ageMs = Date.now() - rowLastActiveChina.getTime();
+          if (ageMs < minAgeMinutes * 60 * 1000) {
+            emitProgress(`Skipped recent ${row.masked_title || rowKey}: ${row.last_active} is within ${minAgeMinutes} minutes`);
+            results.push({
+              row_key: rowKey,
+              status: "skipped_recent",
+              topic: row.masked_title || "",
+              history_row: row,
+              min_age_minutes: minAgeMinutes,
+              last_checked_at: Date.now() / 1000,
+            });
+            processedCount += 1;
+            continue;
+          }
         }
         seenRowKeys.add(rowKey);
         let result;
@@ -865,6 +1018,9 @@ export async function runChromeDingTalkSync(options = {}) {
     }
   } finally {
     await detailTab.close().catch(() => {});
+    if (options.useExistingHistoryTab !== true) {
+      await historyTab.close().catch(() => {});
+    }
   }
 
   const summary = {
@@ -875,6 +1031,7 @@ export async function runChromeDingTalkSync(options = {}) {
     processed: results.length,
     downloaded: results.filter((item) => item.status === "downloaded").length,
     skipped_existing: results.filter((item) => item.status === "skipped_existing").length,
+    skipped_recent: results.filter((item) => item.status === "skipped_recent").length,
     permission_requested: results.filter((item) => item.status === "permission_requested").length,
     permission_required: results.filter((item) => item.status === "permission_required" || item.status === "permission_pending").length,
     failed: results.filter((item) => item.status === "failed").length,
@@ -882,7 +1039,7 @@ export async function runChromeDingTalkSync(options = {}) {
     results,
   };
   emitProgress(
-    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
+    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} skipped_recent=${summary.skipped_recent} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
   );
   return summary;
 }
