@@ -1,4 +1,6 @@
 .DS_Store
+.idea/
+*.iml
 node_modules/
 __pycache__/
 *.pyc
@@ -7,6 +9,7 @@ config.json
 .storage_state.json
 .chrome-profile/
 outputs/
+runs/
 *.xlsx
 *.xlsm
 *.jsonl

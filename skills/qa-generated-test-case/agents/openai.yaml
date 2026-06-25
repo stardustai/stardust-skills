@@ -1,0 +1,4 @@
+interface:
+  display_name: "QA测试用例生成"
+  short_description: "根据PRD和可选检索结果生成标准7列测试用例并导出CSV/XLSX"
+  default_prompt: "请使用该skill读取PRD文档，在需要时只读取外部索引召回的top N片段，生成标准7列测试用例并完成格式验证。"
