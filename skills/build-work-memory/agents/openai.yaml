@@ -1,4 +1,0 @@
-interface:
-  display_name: "Build Work Memory"
-  short_description: "Import existing work context into Friday Memory."
-  default_prompt: "Help me import my existing work context into Friday Memory."
