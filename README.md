@@ -10,6 +10,7 @@
 
 | Skill | 作用 |
 | --- | --- |
+| `build-work-memory` | 引导用户首次初始化 Friday Memory：按用户指定范围读取本地文档、钉钉知识库/文档、钉钉 AI 听记和其他钉钉数据，标准化来源信息后提交到 Memory 后台图谱化处理。 |
 | `dengbao-code-audit` | 从等保三级 / MLPS 2.0 视角检查源码、配置、部署文件和项目文档，覆盖登录认证、权限控制、安全审计、数据安全、接口安全、传输安全、运维暴露面、备份恢复、发布变更和文档材料，并输出 Markdown 风险报告和整改路线图。 |
 | `dingtang-okr-review` | 从叮当 OKR 页面导出 OKR Excel，并按 CEO 视角在 KR 层级做证据核实、打分和超时折扣。 |
 | `dingtalk-browser-export` | 从已登录 Chrome 当前打开的 DingTalk/Alidocs 文档导出为 docx、PDF 或 Markdown，用作网页导出兜底。 |
@@ -68,6 +69,10 @@
 安装后，在支持 skills 的 Agent 中直接提出任务即可。例如：
 
 ```text
+帮我把已有工作上下文导入 Friday Memory
+```
+
+```text
 导出 2026 Q2 叮当 OKR，整理成每个人一个 tab 的 Excel，并审核韩露的 KR 完成情况
 ```
 
@@ -97,6 +102,7 @@
 
 | Skill | 是否需要开放平台 AppKey/AppSecret |
 | --- | --- |
+| `build-work-memory` | 不需要开放平台 key。它需要已安装并鉴权的 Friday Memory MCP，以及已安装并登录的 `dws`；本地文档只有在用户明确指定路径时才读取。 |
 | `dengbao-code-audit` | 不需要开放平台 key。它读取用户授权范围内的本地源码、配置、部署文件和项目文档；报告中不得暴露 token、密码、私钥、连接串等敏感值。 |
 | `dingtang-okr-review` | 当前导出不需要。它使用已登录 Chrome 中的叮当 OKR 页面，前提是当前浏览器账号本身有 OKR 查看权限。CEO review 阶段会按用户授权读取本地文件、`memory_recall` 和 `dws` 资料核实 KR。 |
 | `dingtalk-browser-export` | 当前不需要。它使用已登录 Chrome 中当前打开的 DingTalk/Alidocs 页面。 |
@@ -122,6 +128,7 @@
 .
 ├── install.sh
 ├── skills/
+│   ├── build-work-memory/
 │   ├── dengbao-code-audit/
 │   ├── dingtang-okr-review/
 │   ├── dingtalk-browser-export/
