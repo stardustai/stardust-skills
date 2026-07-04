@@ -198,6 +198,19 @@ function parseChinaTimestamp(value) {
   ));
 }
 
+function parseDurationMinutes(value) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  if (!text) return null;
+  const hourMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:小时|hour|hours|hr|hrs|h)/i);
+  const minuteMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:分钟|minute|minutes|min|mins|m)/i);
+  const secondMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:秒|second|seconds|sec|secs|s)/i);
+  if (!hourMatch && !minuteMatch && !secondMatch) return null;
+  const hours = hourMatch ? Number(hourMatch[1]) : 0;
+  const minutes = minuteMatch ? Number(minuteMatch[1]) : 0;
+  const seconds = secondMatch ? Number(secondMatch[1]) : 0;
+  return hours * 60 + minutes + seconds / 60;
+}
+
 function decodeRowKey(rowKey) {
   try {
     return Buffer.from(String(rowKey || ""), "hex").toString("utf8");
@@ -541,7 +554,7 @@ async function waitForHistoryReady(tab, timeoutMs = 15000) {
         if (location.hostname !== 'oa.dingtalk.com' || !location.hash.includes('/flash_minutes/history_list')) return false;
         if (document.querySelector('tr[data-row-key]')) return true;
         const body = (document.body.innerText || '').replace(/\u00a0/g, ' ');
-        return body.includes('No content') || body.includes('暂无数据');
+        return body.includes('No content') || body.includes('暂无数据') || body.includes('暂无内容');
       },
       undefined,
       { timeoutMs: 5000 },
@@ -912,7 +925,9 @@ export async function runChromeDingTalkSync(options = {}) {
   const cutoffDate = parseLocalTimestamp(options.stopBeforeDate || "");
   const maxItems = Number(options.maxItems || 0);
   const maxPages = Number(options.maxPages || 0);
-  const minAgeMinutes = Number(options.minAgeMinutes ?? DEFAULT_MIN_AGE_MINUTES);
+  const minDurationMinutes = Number(
+    options.minDurationMinutes ?? options.minAgeMinutes ?? DEFAULT_MIN_AGE_MINUTES,
+  );
   const requestPermissions = options.requestPermissions !== false;
   const requestMessage = options.permissionRequestMessage || DEFAULT_PERMISSION_REQUEST_MESSAGE;
   const extractOptions = {
@@ -966,17 +981,16 @@ export async function runChromeDingTalkSync(options = {}) {
           stopDueToCutoff = true;
           break;
         }
-        const rowLastActiveChina = parseChinaTimestamp(row.last_active || "");
-        if (minAgeMinutes > 0 && rowLastActiveChina) {
-          const ageMs = Date.now() - rowLastActiveChina.getTime();
-          if (ageMs < minAgeMinutes * 60 * 1000) {
-            emitProgress(`Skipped recent ${row.masked_title || rowKey}: ${row.last_active} is within ${minAgeMinutes} minutes`);
+        const durationMinutes = parseDurationMinutes(row.duration || "");
+        if (minDurationMinutes > 0 && durationMinutes !== null) {
+          if (durationMinutes < minDurationMinutes) {
+            emitProgress(`Skipped short ${row.masked_title || rowKey}: ${row.duration} is under ${minDurationMinutes} minutes`);
             results.push({
               row_key: rowKey,
-              status: "skipped_recent",
+              status: "skipped_short",
               topic: row.masked_title || "",
               history_row: row,
-              min_age_minutes: minAgeMinutes,
+              min_duration_minutes: minDurationMinutes,
               last_checked_at: Date.now() / 1000,
             });
             processedCount += 1;
@@ -1032,6 +1046,7 @@ export async function runChromeDingTalkSync(options = {}) {
     downloaded: results.filter((item) => item.status === "downloaded").length,
     skipped_existing: results.filter((item) => item.status === "skipped_existing").length,
     skipped_recent: results.filter((item) => item.status === "skipped_recent").length,
+    skipped_short: results.filter((item) => item.status === "skipped_short").length,
     permission_requested: results.filter((item) => item.status === "permission_requested").length,
     permission_required: results.filter((item) => item.status === "permission_required" || item.status === "permission_pending").length,
     failed: results.filter((item) => item.status === "failed").length,
@@ -1039,7 +1054,7 @@ export async function runChromeDingTalkSync(options = {}) {
     results,
   };
   emitProgress(
-    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} skipped_recent=${summary.skipped_recent} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
+    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} skipped_recent=${summary.skipped_recent} skipped_short=${summary.skipped_short} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
   );
   return summary;
 }
