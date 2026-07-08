@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Spec Driven Intake Schema",
+  "type": "object",
+  "required": [
+    "spec_version",
+    "spec_id",
+    "title",
+    "status",
+    "priority",
+    "spec_type",
+    "owners",
+    "business_context",
+    "business_objects",
+    "scope",
+    "input_materials",
+    "workflow",
+    "capability_boundaries",
+    "evidence_requirements",
+    "data_governance",
+    "acceptance_standards",
+    "testing_standards",
+    "operation_standards",
+    "review_gates",
+    "missing_fields",
+    "readiness_label"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "spec_version": { "type": "string" },
+    "spec_id": { "type": "string" },
+    "title": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "spec_review",
+        "ready_for_engineering",
+        "in_development",
+        "qa_gate",
+        "devops_gate",
+        "business_acceptance",
+        "launched",
+        "rejected",
+        "archived"
+      ]
+    },
+    "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "unknown"] },
+    "spec_type": {
+      "type": "string",
+      "enum": [
+        "customer_poc",
+        "domain_pack",
+        "product_feature",
+        "internal_tool",
+        "data_project",
+        "automation",
+        "platform_capability"
+      ]
+    },
+    "product_line": { "type": ["string", "null"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "owners": {
+      "type": "object",
+      "required": [
+        "business_owner",
+        "product_owner",
+        "engineering_owner",
+        "qa_owner",
+        "devops_owner",
+        "compliance_owner",
+        "decision_owner"
+      ],
+      "properties": {
+        "business_owner": { "type": ["string", "null"] },
+        "product_owner": { "type": ["string", "null"] },
+        "engineering_owner": { "type": ["string", "null"] },
+        "qa_owner": { "type": ["string", "null"] },
+        "devops_owner": { "type": ["string", "null"] },
+        "compliance_owner": { "type": ["string", "null"] },
+        "decision_owner": { "type": ["string", "null"] }
+      }
+    },
+    "business_context": {
+      "type": "object",
+      "required": ["user_scenario", "pain_evidence", "target_outcome"],
+      "properties": {
+        "user_scenario": {
+          "type": "object",
+          "properties": {
+            "user_role": { "type": ["string", "null"] },
+            "customer_type": { "type": ["string", "null"] },
+            "business_scene": { "type": ["string", "null"] },
+            "current_workflow": { "type": ["string", "null"] },
+            "target_workflow": { "type": ["string", "null"] }
+          }
+        },
+        "pain_evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": { "type": "string" },
+              "source": { "type": ["string", "null"] },
+              "evidence": { "type": ["string", "null"] },
+              "date": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "target_outcome": {
+          "type": "object",
+          "properties": {
+            "user_success_result": { "type": ["string", "null"] },
+            "business_result": { "type": ["string", "null"] },
+            "measurable_kpi": { "type": "array" }
+          }
+        },
+        "buyer_chain": { "type": "object" }
+      }
+    },
+    "business_objects": {
+      "type": "object",
+      "required": [
+        "durable_assets",
+        "generated_artifacts",
+        "temporary_artifacts",
+        "future_reusable_assets"
+      ],
+      "properties": {
+        "durable_assets": { "type": "array" },
+        "generated_artifacts": { "type": "array" },
+        "temporary_artifacts": { "type": "array" },
+        "future_reusable_assets": { "type": "array" }
+      }
+    },
+    "spec_decomposition": {
+      "type": "object",
+      "properties": {
+        "current_spec_choice": { "type": "string" },
+        "why_not_split_now": { "type": ["string", "null"] },
+        "recommended_followups": { "type": "array" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "in_scope",
+        "out_of_scope",
+        "non_goals",
+        "delivery_boundary",
+        "assumptions",
+        "open_questions"
+      ],
+      "properties": {
+        "in_scope": { "type": "array" },
+        "out_of_scope": { "type": "array" },
+        "non_goals": { "type": "array" },
+        "delivery_boundary": { "type": ["string", "null"] },
+        "assumptions": { "type": "array" },
+        "open_questions": { "type": "array" }
+      }
+    },
+    "input_materials": {
+      "type": "object",
+      "required": [
+        "durable_sources",
+        "per_case_inputs",
+        "temporary_sources",
+        "excluded_inputs",
+        "update_frequency"
+      ],
+      "properties": {
+        "durable_sources": { "type": "array" },
+        "per_case_inputs": { "type": "array" },
+        "temporary_sources": { "type": "array" },
+        "excluded_inputs": { "type": "array" },
+        "update_frequency": { "type": ["string", "null"] }
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["phases", "steps", "roles"],
+      "properties": {
+        "phases": { "type": "array" },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "step_id",
+              "phase",
+              "actor",
+              "input",
+              "action",
+              "output",
+              "human_review_required",
+              "failure_handling"
+            ],
+            "properties": {
+              "step_id": { "type": "string" },
+              "phase": { "type": "string" },
+              "actor": { "type": "string" },
+              "input": { "type": ["string", "array", "object", "null"] },
+              "action": { "type": "string" },
+              "output": { "type": ["string", "array", "object", "null"] },
+              "human_review_required": { "type": "boolean" },
+              "failure_handling": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "roles": { "type": "array" }
+      }
+    },
+    "capability_boundaries": {
+      "type": "object",
+      "required": [
+        "memory_layer",
+        "agent_or_recipe_layer",
+        "product_ui_layer",
+        "external_business_systems",
+        "human_or_compliance_review",
+        "explicitly_not_owned"
+      ],
+      "properties": {
+        "memory_layer": { "type": "array" },
+        "agent_or_recipe_layer": { "type": "array" },
+        "product_ui_layer": { "type": "array" },
+        "external_business_systems": { "type": "array" },
+        "human_or_compliance_review": { "type": "array" },
+        "explicitly_not_owned": { "type": "array" }
+      }
+    },
+    "evidence_requirements": {
+      "type": "object",
+      "required": [
+        "must_trace",
+        "source_granularity",
+        "unknown_or_uncertain_handling"
+      ],
+      "properties": {
+        "must_trace": { "type": "array" },
+        "source_granularity": { "type": "array" },
+        "unknown_or_uncertain_handling": { "type": "array" }
+      }
+    },
+    "data_governance": {
+      "type": "object",
+      "required": [
+        "sensitivity",
+        "permission_model",
+        "versioning",
+        "retention",
+        "audit_log"
+      ],
+      "properties": {
+        "sensitivity": { "type": "array" },
+        "permission_model": { "type": "array" },
+        "versioning": { "type": "array" },
+        "retention": { "type": "array" },
+        "audit_log": { "type": "array" }
+      }
+    },
+    "product_requirements": { "type": "object" },
+    "technical_requirements": { "type": "object" },
+    "acceptance_standards": { "type": "object" },
+    "poc_metrics": { "type": "object" },
+    "testing_standards": { "type": "object" },
+    "operation_standards": { "type": "object" },
+    "commercial_standards": { "type": "object" },
+    "reuse_standards": { "type": "object" },
+    "story_points": { "type": "object" },
+    "review_gates": { "type": "object" },
+    "missing_fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field", "status", "note"],
+        "properties": {
+          "field": { "type": "string" },
+          "status": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "decision_log": { "type": "array" },
+    "change_log": { "type": "array" },
+    "readiness_label": {
+      "type": "string",
+      "enum": ["not_ready", "business_ready", "engineering_ready", "review_required"]
+    }
+  }
+}
