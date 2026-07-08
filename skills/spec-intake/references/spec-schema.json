@@ -8,6 +8,7 @@
     "title",
     "status",
     "priority",
+    "product_context",
     "spec_type",
     "owners",
     "business_context",
@@ -15,6 +16,8 @@
     "scope",
     "input_materials",
     "workflow",
+    "domain_pack_context",
+    "ui_requirements",
     "capability_boundaries",
     "evidence_requirements",
     "data_governance",
@@ -46,6 +49,33 @@
       ]
     },
     "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "unknown"] },
+    "product_context": {
+      "type": "object",
+      "required": [
+        "build_target",
+        "company_product",
+        "product_assumptions",
+        "product_open_questions"
+      ],
+      "properties": {
+        "build_target": {
+          "type": "string",
+          "enum": [
+            "friday_agent",
+            "domain_pack",
+            "friday_memory",
+            "morningstar",
+            "internal_tool",
+            "standalone_product",
+            "demo",
+            "unknown"
+          ]
+        },
+        "company_product": { "type": ["string", "null"] },
+        "product_assumptions": { "type": "array" },
+        "product_open_questions": { "type": "array" }
+      }
+    },
     "spec_type": {
       "type": "string",
       "enum": [
@@ -210,6 +240,200 @@
           }
         },
         "roles": { "type": "array" }
+      }
+    },
+    "domain_pack_context": {
+      "type": "object",
+      "required": [
+        "applicable",
+        "pack_definition",
+        "target_industry_or_scene",
+        "pack_goal",
+        "commercial_or_delivery_unit",
+        "domain_workflow",
+        "memory_assets",
+        "recipe_assets",
+        "connector_assets",
+        "interface_configuration",
+        "permission_scope",
+        "non_memory_boundaries",
+        "workspace_instance_policy",
+        "first_recipe",
+        "iteration_loop",
+        "self_learning_policy",
+        "versioning_policy",
+        "evaluation_assets",
+        "marketplace_or_delivery",
+        "workspace_design"
+      ],
+      "properties": {
+        "applicable": { "type": "boolean" },
+        "pack_definition": { "type": ["string", "null"] },
+        "target_industry_or_scene": { "type": ["string", "null"] },
+        "pack_goal": { "type": ["string", "null"] },
+        "commercial_or_delivery_unit": {
+          "type": "string",
+          "enum": [
+            "marketplace_pack",
+            "ka_poc_pack",
+            "smb_pack",
+            "private_deployment_pack",
+            "internal_pack",
+            "demo_pack",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "domain_workflow": { "type": ["string", "null"] },
+        "memory_assets": { "type": "array" },
+        "recipe_assets": { "type": "array" },
+        "connector_assets": { "type": "array" },
+        "interface_configuration": { "type": "array" },
+        "permission_scope": { "type": "array" },
+        "non_memory_boundaries": { "type": "array" },
+        "workspace_instance_policy": {
+          "type": "object",
+          "required": [
+            "workspace_created_by",
+            "workspace_lifecycle",
+            "room_granularity",
+            "artifact_types",
+            "local_changes_policy",
+            "master_pack_update_policy"
+          ],
+          "properties": {
+            "workspace_created_by": { "type": ["string", "null"] },
+            "workspace_lifecycle": { "type": "array" },
+            "room_granularity": { "type": ["string", "null"] },
+            "artifact_types": { "type": "array" },
+            "local_changes_policy": { "type": "array" },
+            "master_pack_update_policy": { "type": "array" }
+          }
+        },
+        "first_recipe": {
+          "type": "object",
+          "required": [
+            "name",
+            "goal",
+            "input",
+            "output",
+            "execution_logic",
+            "constraints",
+            "required_evidence",
+            "human_review",
+            "owner"
+          ],
+          "properties": {
+            "name": { "type": ["string", "null"] },
+            "goal": { "type": ["string", "null"] },
+            "input": { "type": "array" },
+            "output": { "type": "array" },
+            "execution_logic": { "type": "array" },
+            "constraints": { "type": "array" },
+            "required_evidence": { "type": "array" },
+            "human_review": { "type": "array" },
+            "owner": { "type": ["string", "null"] }
+          }
+        },
+        "iteration_loop": { "type": "array" },
+        "self_learning_policy": { "type": "array" },
+        "versioning_policy": {
+          "type": "object",
+          "required": [
+            "domain_pack_versioned",
+            "recipe_versioned",
+            "workspace_versioned",
+            "memory_backup_or_rollback",
+            "release_policy",
+            "upgrade_policy",
+            "rollback_policy"
+          ],
+          "properties": {
+            "domain_pack_versioned": { "type": "boolean" },
+            "recipe_versioned": { "type": "boolean" },
+            "workspace_versioned": { "type": "boolean" },
+            "memory_backup_or_rollback": { "type": "array" },
+            "release_policy": { "type": "array" },
+            "upgrade_policy": { "type": "array" },
+            "rollback_policy": { "type": "array" }
+          }
+        },
+        "evaluation_assets": {
+          "type": "object",
+          "required": [
+            "golden_tasks",
+            "rubrics",
+            "failure_cases",
+            "acceptance_checklist",
+            "regression_set"
+          ],
+          "properties": {
+            "golden_tasks": { "type": "array" },
+            "rubrics": { "type": "array" },
+            "failure_cases": { "type": "array" },
+            "acceptance_checklist": { "type": "array" },
+            "regression_set": { "type": "array" }
+          }
+        },
+        "marketplace_or_delivery": {
+          "type": "object",
+          "required": [
+            "offer_name",
+            "target_buyers_or_users",
+            "pricing_or_packaging_notes",
+            "deployment_notes",
+            "success_metrics"
+          ],
+          "properties": {
+            "offer_name": { "type": ["string", "null"] },
+            "target_buyers_or_users": { "type": "array" },
+            "pricing_or_packaging_notes": { "type": "array" },
+            "deployment_notes": { "type": "array" },
+            "success_metrics": { "type": "array" }
+          }
+        },
+        "workspace_design": {
+          "type": "object",
+          "required": [
+            "screens",
+            "artifacts",
+            "controls",
+            "open_questions"
+          ],
+          "properties": {
+            "screens": { "type": "array" },
+            "artifacts": { "type": "array" },
+            "controls": { "type": "array" },
+            "open_questions": { "type": "array" }
+          }
+        }
+      }
+    },
+    "ui_requirements": {
+      "type": "object",
+      "required": [
+        "has_ui",
+        "wireframe_required",
+        "wireframe_status",
+        "key_screens",
+        "wireframe_artifacts",
+        "confirmation_method",
+        "open_questions"
+      ],
+      "properties": {
+        "has_ui": { "type": "boolean" },
+        "wireframe_required": { "type": "boolean" },
+        "wireframe_status": {
+          "type": "string",
+          "enum": ["not_required", "needed", "drafted", "reviewed", "unknown"]
+        },
+        "key_screens": { "type": "array" },
+        "wireframe_artifacts": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "confirmation_method": { "type": ["string", "null"] },
+        "open_questions": { "type": "array" }
       }
     },
     "capability_boundaries": {

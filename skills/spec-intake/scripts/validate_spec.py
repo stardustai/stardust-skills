@@ -32,6 +32,68 @@ DATA_GOVERNANCE_KEYS = [
     "audit_log",
 ]
 
+DOMAIN_PACK_KEYS = [
+    "applicable",
+    "pack_definition",
+    "target_industry_or_scene",
+    "pack_goal",
+    "commercial_or_delivery_unit",
+    "domain_workflow",
+    "memory_assets",
+    "recipe_assets",
+    "connector_assets",
+    "interface_configuration",
+    "permission_scope",
+    "non_memory_boundaries",
+    "workspace_instance_policy",
+    "first_recipe",
+    "iteration_loop",
+    "self_learning_policy",
+    "versioning_policy",
+    "evaluation_assets",
+    "marketplace_or_delivery",
+    "workspace_design",
+]
+
+WORKSPACE_INSTANCE_KEYS = [
+    "workspace_created_by",
+    "workspace_lifecycle",
+    "room_granularity",
+    "artifact_types",
+    "local_changes_policy",
+    "master_pack_update_policy",
+]
+
+FIRST_RECIPE_KEYS = [
+    "name",
+    "goal",
+    "input",
+    "output",
+    "execution_logic",
+    "constraints",
+    "required_evidence",
+    "human_review",
+    "owner",
+]
+
+VERSIONING_KEYS = [
+    "domain_pack_versioned",
+    "recipe_versioned",
+    "workspace_versioned",
+    "memory_backup_or_rollback",
+    "release_policy",
+    "upgrade_policy",
+    "rollback_policy",
+]
+
+EVALUATION_ASSET_KEYS = [
+    "golden_tasks",
+    "rubrics",
+    "failure_cases",
+    "acceptance_checklist",
+    "regression_set",
+]
+
 WORKFLOW_STEP_KEYS = [
     "step_id",
     "phase",
@@ -51,6 +113,41 @@ def _load_json(path: Path) -> Any:
 
 def _missing_keys(obj: dict[str, Any], keys: list[str], prefix: str) -> list[str]:
     return [f"{prefix}.{key}" for key in keys if key not in obj]
+
+
+def _is_unknown_or_empty(value: Any) -> bool:
+    if value is None:
+        return True
+    if value == "":
+        return True
+    if value == "unknown":
+        return True
+    if value == "not_applicable":
+        return True
+    if isinstance(value, (list, dict)) and not value:
+        return True
+    return False
+
+
+def _svg_wireframe_errors(ui_requirements: dict[str, Any], spec_path: Path) -> list[str]:
+    artifacts = ui_requirements.get("wireframe_artifacts")
+    if not isinstance(artifacts, list):
+        return ["ui_requirements.wireframe_artifacts must be an array"]
+
+    svg_artifacts = [item for item in artifacts if isinstance(item, str) and item.lower().endswith(".svg")]
+    if not svg_artifacts:
+        return ["ui_requirements.wireframe_artifacts must include a produced .svg wireframe for UI specs"]
+
+    errors: list[str] = []
+    for artifact in svg_artifacts:
+        if artifact.startswith(("http://", "https://")):
+            continue
+        artifact_path = Path(artifact)
+        if not artifact_path.is_absolute():
+            artifact_path = spec_path.parent / artifact_path
+        if not artifact_path.exists():
+            errors.append(f"ui_requirements.wireframe_artifacts SVG does not exist: {artifact}")
+    return errors
 
 
 def _type_matches(value: Any, expected_type: str) -> bool:
@@ -160,6 +257,25 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
     else:
         errors.append("data_governance must be an object")
 
+    domain_pack = spec.get("domain_pack_context")
+    if isinstance(domain_pack, dict):
+        errors.extend(_missing_keys(domain_pack, DOMAIN_PACK_KEYS, "domain_pack_context"))
+        if domain_pack.get("applicable") is True or spec.get("spec_type") == "domain_pack":
+            nested_checks = [
+                ("workspace_instance_policy", WORKSPACE_INSTANCE_KEYS),
+                ("first_recipe", FIRST_RECIPE_KEYS),
+                ("versioning_policy", VERSIONING_KEYS),
+                ("evaluation_assets", EVALUATION_ASSET_KEYS),
+            ]
+            for key, required_keys in nested_checks:
+                value = domain_pack.get(key)
+                if isinstance(value, dict):
+                    errors.extend(_missing_keys(value, required_keys, f"domain_pack_context.{key}"))
+                else:
+                    errors.append(f"domain_pack_context.{key} must be an object")
+    else:
+        errors.append("domain_pack_context must be an object")
+
     missing_fields = spec.get("missing_fields")
     if missing_fields is not None:
         if not isinstance(missing_fields, list):
@@ -171,14 +287,69 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
                     continue
                 errors.extend(_missing_keys(item, ["field", "status", "note"], f"missing_fields[{index}]"))
 
+    ui_requirements = spec.get("ui_requirements")
+    ui_needs_wireframe = False
+    if isinstance(ui_requirements, dict):
+        ui_needs_wireframe = (
+            ui_requirements.get("has_ui") is True
+            and ui_requirements.get("wireframe_required") is True
+        )
+        if ui_needs_wireframe:
+            errors.extend(_svg_wireframe_errors(ui_requirements, spec_path))
+    else:
+        errors.append("ui_requirements must be an object")
+
     readiness = spec.get("readiness_label")
     if readiness == "engineering_ready":
         blockers = []
+        product_context = spec.get("product_context", {})
+        if isinstance(product_context, dict):
+            if product_context.get("build_target") in (None, "", "unknown"):
+                blockers.append("product_context.build_target")
         owners = spec.get("owners", {})
         if isinstance(owners, dict):
             for key in ["business_owner", "product_owner", "engineering_owner", "qa_owner", "devops_owner"]:
                 if owners.get(key) in (None, "", "unknown"):
                     blockers.append(f"owners.{key}")
+        if isinstance(domain_pack, dict) and (
+            domain_pack.get("applicable") is True
+            or spec.get("spec_type") == "domain_pack"
+            or (isinstance(product_context, dict) and product_context.get("build_target") == "domain_pack")
+        ):
+            required_domain_values = [
+                "pack_definition",
+                "target_industry_or_scene",
+                "pack_goal",
+                "commercial_or_delivery_unit",
+                "domain_workflow",
+                "memory_assets",
+                "recipe_assets",
+                "non_memory_boundaries",
+                "iteration_loop",
+                "self_learning_policy",
+            ]
+            for key in required_domain_values:
+                if _is_unknown_or_empty(domain_pack.get(key)):
+                    blockers.append(f"domain_pack_context.{key}")
+
+            for nested_key, nested_required in [
+                ("workspace_instance_policy", WORKSPACE_INSTANCE_KEYS),
+                ("first_recipe", FIRST_RECIPE_KEYS),
+                ("versioning_policy", VERSIONING_KEYS),
+                ("evaluation_assets", EVALUATION_ASSET_KEYS),
+            ]:
+                nested_value = domain_pack.get(nested_key)
+                if isinstance(nested_value, dict):
+                    for key in nested_required:
+                        if _is_unknown_or_empty(nested_value.get(key)):
+                            blockers.append(f"domain_pack_context.{nested_key}.{key}")
+                else:
+                    blockers.append(f"domain_pack_context.{nested_key}")
+
+        if isinstance(ui_requirements, dict):
+            if ui_needs_wireframe:
+                if ui_requirements.get("wireframe_status") != "reviewed":
+                    blockers.append("ui_requirements.wireframe_status")
         if missing_fields:
             blockers.append("missing_fields")
         if blockers:

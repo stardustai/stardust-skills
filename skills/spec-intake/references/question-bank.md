@@ -4,9 +4,49 @@ Use this as a menu, not a script. Ask the next question that most reduces ambigu
 
 ## Classify Spec Type
 
+- 这个需求第一版应该基于我们哪个产品形态来做：Friday Agent、Domain Pack、Friday Memory、MorningStar、内部工具、全新独立产品，还是 demo？
+- 这个需求是为了验证产品方向、交付客户 POC、沉淀可复用 Domain Pack，还是解决内部流程效率？
+- 如果不是基于现有产品，为什么需要全新独立产品？
 - 这个需求更像给单个客户验证，还是要沉淀成可复用能力？
 - 第一版是内部工具、客户 POC、产品功能、自动化任务、数据项目，还是平台能力？
 - 成功后是给一个销售团队用，还是要变成 Domain Pack 给多个客户/行业复用？
+
+## Product Basis
+
+- 这是 Friday Agent 要执行的 workflow，还是 Friday Memory 要提供的记忆/证据能力？
+- 这是一个 Domain Pack，还是只是未来可能沉淀成 Domain Pack？
+- 这是 MorningStar 的产品能力，还是公司内部运营工具？
+- 这是客户 demo，还是要成为可长期使用的产品？
+- 如果是 demo，demo 要证明什么，不证明什么？
+
+## Domain Pack
+
+- 这个 Domain Pack 是给个人、团队、公司、客户私有使用，还是 owner 做好后选择分享出去？
+- 这个 Pack 的行业/场景边界是什么？它为什么不是单个 recipe、单个 prompt、一次性 demo，或为了通用 marketplace 先设计的包？
+- 这个 Domain Pack 要包装哪个可重复领域工作流？
+- 这个 Pack 里至少包含哪些 Recipe、Memory、Connector、界面配置、权限和版本信息？
+- 哪些领域资料、模板、规则、案例、反馈应该成为 Memory 资产？
+- 哪些只是单次客户/候选人/项目上下文，不能进入长期 Memory？
+- 第一版 Recipe 输入是什么，输出是什么，人在哪里 review？
+- Recipe 的第一版由谁生产：业务专家、产品、AI 工程师，还是已有材料自动生成？
+- Recipe 里沉淀的是方法、rubric、流程和纠偏规则，还是事实和客户材料？事实材料应该进 Memory 还是 Evidence？
+- Workspace 加载这个 Pack 后，会创建什么客户/团队实例？Room 是围绕哪个真实任务实例和 Artifact 展开的？
+- Workspace 里的本地修改如何进入待审队列？哪些可以更新 Workspace，哪些必须经过发布流程才能更新主 Pack？
+- 用户修改输出后，哪些修改可以作为学习信号？谁批准后才能更新 Recipe 或 Memory？
+- Domain Pack、Recipe、Workspace 如何标版本？如何发布、升级、回滚？客户是否需要手动确认升级？
+- 这个 Pack 的测试资产是什么：golden tasks、rubrics、失败样例、验收 checklist、回归集？
+- Domain Pack 的 Workspace 里用户需要看到哪些对象、状态、操作和 AI 建议？
+- Domain Pack 如何从一个客户/团队扩展到多个客户/团队？哪些配置必须可变？
+
+## UI And Wireframe
+
+- 这个需求有没有 UI、工作台、编辑器、审批页、看板或配置页？
+- 用户第一屏应该看到什么对象列表？
+- 点击一个对象后，详情页左边/右边分别看什么？
+- 哪些 AI 建议可以直接采纳，哪些必须人工确认？
+- 哪些操作必须放在主界面，哪些可以放在设置或后台？
+- 需要生产哪些 SVG 线框图才能确认意图：列表页、详情页、配置页、roundtable 页、输出编辑页？
+- SVG 线框图文件应该保存在哪里，并如何在 spec 的 `ui_requirements.wireframe_artifacts` 中引用？
 
 ## User And Scenario
 

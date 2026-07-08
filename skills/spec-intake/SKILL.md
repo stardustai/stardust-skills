@@ -19,11 +19,12 @@ If the request is vague, ask the next highest-leverage question. Do not dump the
 
 A valid spec must answer five questions:
 
-1. Who has the problem?
-2. What evidence proves the problem is real?
-3. What result counts as success?
-4. What is inside and outside the delivery boundary?
-5. How will product, engineering, QA, and DevOps know it is acceptable?
+1. Which company product form is this based on?
+2. Who has the problem?
+3. What evidence proves the problem is real?
+4. What result counts as success?
+5. What is inside and outside the delivery boundary?
+6. How will product, engineering, QA, and DevOps know it is acceptable?
 
 ## Required References
 
@@ -49,7 +50,58 @@ Example:
 
 > 我先理解成：保险经纪人希望基于公司给的产品资料和客户画像，快速生成可解释的报销组合销售方案。现在最关键还不清楚的是：这个方案是给经纪人内部参考，还是要直接发给客户。
 
-### 2. Classify the Spec Type
+### 2. Classify Product Basis
+
+Before classifying the work item, ask which company product form this should be built on.
+
+Use one `product_context.build_target`:
+
+- `friday_agent`
+- `domain_pack`
+- `friday_memory`
+- `morningstar`
+- `internal_tool`
+- `standalone_product`
+- `demo`
+- `unknown`
+
+Good first product-basis question:
+
+> 这个需求第一版应该基于我们哪个产品形态来做？A. Friday Agent；B. Domain Pack；C. Friday Memory；D. MorningStar；E. 内部工具；F. 全新独立产品；G. 只是 demo。
+
+Do not silently assume product basis from the use case. A "面试流程管理工具" could be an internal tool, a Friday Agent workflow, a Domain Pack, or a standalone product; the downstream spec is different.
+
+If the user chooses `domain_pack`, immediately switch on the Domain Pack questions before implementation details.
+
+Use this company product model:
+
+- Domain Pack is an industry or scene-level resource package, not a single recipe, prompt, folder, or one-off demo.
+- Domain Pack is private by default: produced for a person, team, company, or customer and used in that private context. It is not designed to be generic first.
+- Sharing or marketplace distribution is an optional later choice by the Pack owner, not the default product goal.
+- Domain Pack is the reusable workbench and delivery unit for that private context. It can be shared, deployed, upgraded, versioned, and rolled back.
+- A Domain Pack can contain runnable Recipes, Memory assets, Connectors, interface/workspace configuration, permissions, evaluation assets, and version metadata.
+- Recipe is the method asset inside the Domain Pack: reusable task method, rubric, strategy, flow, expert judgment structure, and failure-correction rule.
+- Memory is the factual/context asset: enterprise, project, customer, person, time, fact, history, decision, and source evidence.
+- Workspace is the customer runtime instance that loads a Domain Pack. Workspace may collect feedback and local updates, but it must not silently mutate the master Pack.
+- Friday is the execution substrate for running the Pack through Workspace, Room, Artifact, Memory, Recipe, Connector, review, and versioned updates.
+
+Domain Pack anti-patterns:
+
+- Treating the Pack as only a prompt or one Recipe.
+- Treating Memory as a document folder.
+- Treating Workspace as the master Pack.
+- Letting a customer's Workspace changes silently contaminate the reusable Pack.
+- Designing self-learning without review, versioning, evaluation, and rollback.
+- Building a full business operating system when Friday should only own the shared artifact / conclusion layer.
+
+- What repeatable domain workflow is being packaged?
+- What domain materials should become Memory?
+- What should not be remembered?
+- What Recipe produces the first version?
+- What feedback loop improves the Recipe after real use?
+- What Workspace screens or artifacts does the user operate in?
+
+### 3. Classify the Spec Type
 
 Classify the requirement into one `spec_type`:
 
@@ -69,7 +121,7 @@ Good:
 
 Do not continue into detailed fields until `spec_type` is clear enough.
 
-### 3. Ask One Question at a Time
+### 4. Ask One Question at a Time
 
 Ask only one question per message.
 
@@ -77,21 +129,24 @@ Prefer multiple-choice questions when the user may not know how to answer. Use o
 
 Use this default order, but skip fields already answered:
 
-1. User and scenario
-2. Pain evidence
-3. Target outcome
-4. Input materials
-5. Workflow
-6. Scope boundary
-7. Acceptance standards
-8. Testing standards
-9. Operation standards
-10. Commercial or reuse value
-11. Review gates
+1. Product basis
+2. Domain Pack / Memory / Recipe / Workspace fit, if applicable
+3. UI surface and wireframe need
+4. User and scenario
+5. Pain evidence
+6. Target outcome
+7. Input materials
+8. Workflow
+9. Scope boundary
+10. Acceptance standards
+11. Testing standards
+12. Operation standards
+13. Commercial or reuse value
+14. Review gates
 
 Do not mechanically ask every field. Ask the next question that most reduces ambiguity or risk.
 
-### 4. Pull Evidence, Not Opinions
+### 5. Pull Evidence, Not Opinions
 
 Business users often state conclusions. Convert conclusions into evidence.
 
@@ -105,7 +160,7 @@ If the user says "资料很多", ask what kinds of files, who owns them, update 
 
 If the user says "给客户方案", ask whether it is advisory material, regulated recommendation, quote/proposal, or final sales document.
 
-### 5. Maintain a Working Spec
+### 6. Maintain a Working Spec
 
 Maintain a working draft internally while interviewing.
 
@@ -118,7 +173,7 @@ After every 3-5 user answers, summarize:
 
 Keep summaries short enough that a business user can correct them quickly.
 
-### 5.5 Identify Business Objects
+### 6.5 Identify Business Objects
 
 Before asking implementation questions, identify the business objects the spec is really about.
 
@@ -134,7 +189,7 @@ If a requirement includes both a durable asset and a generated artifact, represe
 
 For the insurance example, the durable asset is the versioned insurance product library. The generated artifact is the editable customer proposal draft. The future reusable asset is the insurance Domain Pack.
 
-### 6. Inspect Technical Context When Needed
+### 7. Inspect Technical Context When Needed
 
 If the requirement mentions an existing system, repo, API, MCP tool, Memory, Friday, Agent, Recipe, Domain Pack, Workspace, document upload, CRM, policy database, or customer system, inspect the relevant local code/docs before filling technical boundaries.
 
@@ -148,7 +203,61 @@ For Friday Memory / memory-connector style work, use these boundary rules unless
 
 Do not promise capabilities such as pricing, compliance approval, plan recommendation, CRM writeback, or customer-facing quote generation unless the spec includes data source, owner, validation method, and review gate.
 
-### 7. Scope Check
+### 7.5 Domain Pack Design Gate
+
+If `product_context.build_target` is `domain_pack` or the user says the result should become a reusable Domain Pack, the spec must include `domain_pack_context`.
+
+Ask these questions before final JSON:
+
+1. What industry or scene-level workflow is being packaged, and why is it reusable across customers or teams?
+2. What is the Pack's private production/use boundary: individual, team, company, customer deployment, internal demo, or shared Pack after the owner chooses to publish it?
+3. What Memory assets are part of the Pack?
+4. What facts, customer case details, private transcripts, salaries, medical data, pricing, or one-off project context must not become reusable Memory?
+5. Which runnable Recipes are in the Pack, and which one creates the first useful output?
+6. Which Connectors are required, and which external systems remain authoritative?
+7. What Workspace instance is created when the Pack is loaded?
+8. What Rooms and Artifacts exist inside that Workspace? A Room should usually be one real task instance around one shared artifact, not a generic department room.
+9. What human review updates a Recipe, Memory asset, rubric, or Pack version?
+10. What self-learning signal is allowed, what only creates an update candidate, and what requires explicit approval?
+11. What versioning, release, upgrade, rollback, and customer-instance policy applies?
+12. What evaluation assets prove the Pack works: golden tasks, rubrics, failure cases, acceptance checklist, regression set?
+13. What Workspace screens, artifacts, or controls does the user need?
+
+The first Recipe should usually be simple and reviewable. Do not design a self-learning autonomous system by default. Prefer: generate first artifact -> human edits/reviews -> capture approved correction -> update Recipe or Memory after review.
+
+For Domain Pack specs, make the following distinction explicit:
+
+| Object | Owns |
+| --- | --- |
+| Domain Pack | private reusable workbench/package, recipe list, memory scope, connector list, UI config, permission scope, version, delivery/sharing metadata |
+| Recipe | task method, rubric, execution steps, constraints, required evidence, review hints |
+| Memory | durable facts, context, source-backed history, decisions, reusable domain knowledge |
+| Evidence / References | original source snippets and files used for traceability, not all loaded into runtime context |
+| Workspace | customer/team instance that loads a Pack, runs rooms/artifacts, captures local feedback |
+| Room | one real task instance around one target artifact or conclusion |
+| Artifact | draft, report, plan, decision record, feedback summary, or other reviewable output |
+
+### 7.6 UI Wireframe Gate
+
+If the feature has a UI, dashboard, workspace, editor, approval screen, or visual workflow, create a low-fidelity wireframe before final JSON and ask the user to confirm it.
+
+The wireframe must include a produced `.svg` image artifact. Markdown, Mermaid, or ASCII wireframes may be used as explanatory companions, but they do not satisfy the UI wireframe requirement by themselves.
+
+The purpose is not visual polish; the purpose is to confirm object relationships, screen flow, and user intent.
+
+At minimum, discuss:
+
+- Primary screens.
+- Left/right panel or list/detail layout.
+- Main objects shown on each screen.
+- Critical actions.
+- Which AI suggestions are editable, confirmable, or only informational.
+
+Do not mark a UI-bearing spec `engineering_ready` or `review_required` if no `.svg` wireframe artifact has been produced and referenced in `ui_requirements.wireframe_artifacts`.
+
+If you save the final JSON to disk and the spec has UI, run `scripts/validate_spec.py`; it enforces that `ui_requirements.wireframe_artifacts` includes an existing `.svg` file or an `.svg` URL.
+
+### 8. Scope Check
 
 Before producing final JSON, check whether the request is one spec or multiple specs.
 
@@ -162,7 +271,7 @@ Say:
 
 Then ask which one to complete first.
 
-### 8. Readiness Decision
+### 9. Readiness Decision
 
 Before final output, assign one readiness label:
 
@@ -173,7 +282,11 @@ Before final output, assign one readiness label:
 
 Do not call a spec `engineering_ready` if the data source, workflow, acceptance standards, and operation standards are still unknown.
 
-### 8.5 Finalization Gate
+Do not call a Domain Pack spec `engineering_ready` if Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace surface are unknown.
+
+Do not call a UI-bearing spec `engineering_ready` if wireframes have not been shown and confirmed.
+
+### 9.5 Finalization Gate
 
 Before outputting final JSON, ask one explicit finalization question unless the user already asked for the final JSON:
 
@@ -181,7 +294,7 @@ Before outputting final JSON, ask one explicit finalization question unless the 
 
 If the user says to continue, ask the next missing high-value question. If the user says to output, produce the final JSON.
 
-### 9. Final Output
+### 10. Final Output
 
 When enough information is available, output:
 
@@ -210,6 +323,7 @@ Required top-level sections are:
 - `title`
 - `status`
 - `priority`
+- `product_context`
 - `spec_type`
 - `owners`
 - `business_context`
@@ -217,6 +331,8 @@ Required top-level sections are:
 - `scope`
 - `input_materials`
 - `workflow`
+- `domain_pack_context`
+- `ui_requirements`
 - `capability_boundaries`
 - `acceptance_standards`
 - `testing_standards`
@@ -233,6 +349,9 @@ For spec v0.2 and later, also include these sections when relevant to the requir
 
 The final JSON should include these high-signal sections when relevant:
 
+- `product_context`: which company product form the work is based on.
+- `domain_pack_context`: Memory, non-memory, Recipe, self-learning, and Workspace decisions for Domain Pack work.
+- `ui_requirements`: whether UI exists, wireframe status, confirmed screens, and the `.svg` wireframe artifact path.
 - `business_objects`: durable assets and generated artifacts.
 - `spec_decomposition`: current spec choice and recommended follow-up specs.
 - `capability_boundaries`: what belongs to Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
@@ -241,20 +360,23 @@ The final JSON should include these high-signal sections when relevant:
 
 Use structured workflow step objects with actor, input, action, output, review requirement, and failure handling. Avoid a bare list of step strings in final JSON.
 
-### 10. Final Self-Review
+### 11. Final Self-Review
 
 Before saving or returning the final spec, do a short self-review:
 
 1. JSON parses as JSON.
 2. All required top-level keys are present.
-3. `business_objects` separates durable assets from generated artifacts.
-4. `workflow.steps` uses structured step objects, not only strings.
-5. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
-6. `evidence_requirements` states what needs source traceability.
-7. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
-8. `readiness_label` matches the actual risk level.
-9. Important unknowns are explicit instead of silently invented.
-10. Unknown owners, export format, retention, permission model, or acceptance method prevent `engineering_ready`.
+3. `product_context.build_target` is explicit.
+4. If Domain Pack is involved, `domain_pack_context` covers Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace.
+5. If UI is involved, `ui_requirements.wireframe_status` is reviewed or unresolved, not silently skipped, and `ui_requirements.wireframe_artifacts` includes a produced `.svg` file.
+6. `business_objects` separates durable assets from generated artifacts.
+7. `workflow.steps` uses structured step objects, not only strings.
+8. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
+9. `evidence_requirements` states what needs source traceability.
+10. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
+11. `readiness_label` matches the actual risk level.
+12. Important unknowns are explicit instead of silently invented.
+13. Unknown owners, export format, retention, permission model, acceptance method, product basis, Domain Pack boundaries, or UI wireframes prevent `engineering_ready`.
 
 If the environment allows shell commands and you saved the JSON to a file, run `python3 -m json.tool <file>` before claiming it is valid.
 
