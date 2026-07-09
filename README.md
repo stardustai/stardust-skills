@@ -64,6 +64,16 @@
 
 脚本只会更新仓库 `skills/` 里已经存在的同名目录，不会把本机其他 skill 自动加入仓库。同步时会排除 `config.json`、`.env`、浏览器状态、输出目录、日志和导出文件。
 
+## 从 GitHub 更新本机 Skills
+
+当 GitHub 上的 `main` 有新 skill 更新，需要同步到本机 `~/.agents/skills`，可以运行：
+
+```bash
+./scripts/sync-to-agents.sh
+```
+
+脚本会先确认本机已安装的同名 skill 与当前仓库一致，再 `fetch origin/main`。只有当前仓库是干净的 `main` 且可以安全 fast-forward 时，才会更新本地仓库并同步到 `~/.agents/skills`。如果本地 skill 已有未回写改动、本地有未提交修改、分支不对、本地领先远端或出现分叉，脚本会停止，避免覆盖本地改动或把未审阅状态混进本机 skill。同步到本机时同样会排除 `config.json`、`.env`、浏览器状态、输出目录、日志和导出文件。
+
 ## 使用方式
 
 安装后，在支持 skills 的 Agent 中直接提出任务即可。例如：
