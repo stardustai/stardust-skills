@@ -9,6 +9,8 @@ Turn a one-line business requirement into a structured Spec Driven JSON document
 
 This skill is for business, sales, solution, product, and engineering collaboration. The goal is not to write code. The goal is to make the requirement clear enough that product, AI engineers, QA, and DevOps can evaluate and execute it without relying on oral context.
 
+The intake is staged. A one-line need first becomes a business feasibility JSON. After commercial feasibility is clear, the user can hand it to product or continue to product shape. After product shape is clear, the user can hand the JSON to technology or continue to technical specification. Do not force business users through technical questions before the business gate is clear.
+
 ## Hard Gate
 
 Do not write implementation code, create tickets, assign engineers, or propose a final technical architecture until the spec has enough business context, scope, acceptance standards, test standards, operation standards, and review gates.
@@ -17,7 +19,7 @@ If the request is vague, ask the next highest-leverage question. Do not dump the
 
 ## Core Principle
 
-A valid spec must answer five questions:
+A valid spec must answer these core questions:
 
 1. Which company product form is this based on?
 2. Who has the problem?
@@ -25,6 +27,13 @@ A valid spec must answer five questions:
 4. What result counts as success?
 5. What is inside and outside the delivery boundary?
 6. How will product, engineering, QA, and DevOps know it is acceptable?
+
+For a Domain Pack candidate or market-facing idea, a valid intake must also answer:
+
+7. Is this commercially worth product attention now?
+8. Is it KA, SMB, hybrid, internal, or still unknown?
+9. Is it an L2 scenario, an L3 aggregation of multiple L2 scenarios, or still unclear?
+10. Which handoff gate is the user choosing now: handoff to product, continue product shape, handoff to technology, or continue technical spec?
 
 ## Required References
 
@@ -101,6 +110,37 @@ Domain Pack anti-patterns:
 - What feedback loop improves the Recipe after real use?
 - What Workspace screens or artifacts does the user operate in?
 
+### 2.5 Business Feasibility Gate
+
+For every one-line Domain Pack idea, customer POC, commercial product idea, or Pack prioritization discussion, start with business feasibility before product or technical detail.
+
+The first goal is to determine whether the idea is worth product attention and whether it should be handed to product now. Do not ask about Recipe internals, Memory partitioning, Workspace implementation, SVG wireframes, or engineering architecture until the commercial gate is clear enough.
+
+Ask the minimum questions needed to fill `commercial_context`:
+
+1. KA, SMB, hybrid, internal, or unknown.
+2. L2 scenario, L3 aggregation, L2-to-L3 path, or unknown.
+3. Target buyer and target user.
+4. Customer pain and current alternative.
+5. Real evidence: customer meeting, sales lead, paid POC, quote, usage data, or other source.
+6. Deliverable and why the customer would pay.
+7. Market or customer pool, design partner, POC path, cooperation model, and pricing hypothesis.
+8. Biggest delivery risk and next sales action.
+
+After this gate, present a short decision:
+
+- `business_ready`: enough business context exists to hand JSON to product.
+- `not_ready`: commercial feasibility is still vague; continue business interview.
+- `review_required`: the idea is commercially important but needs leadership, legal, compliance, security, or delivery review before product shaping.
+
+Then ask one explicit handoff question:
+
+> 商业可行性已经能形成第一版 JSON。现在是 A. 交给产品继续判断产品形态，还是 B. 我们继续把产品形态也补清楚？
+
+If the user chooses handoff, set `intake_stage` to `business_feasibility`, `handoff_options.selected_next_action` to `handoff_to_product`, and do not keep asking product/technical questions.
+
+If the user chooses to continue, set `handoff_options.selected_next_action` to `continue_product_shape` and proceed to product shape.
+
 ### 3. Classify the Spec Type
 
 Classify the requirement into one `spec_type`:
@@ -129,20 +169,19 @@ Prefer multiple-choice questions when the user may not know how to answer. Use o
 
 Use this default order, but skip fields already answered:
 
-1. Product basis
-2. Domain Pack / Memory / Recipe / Workspace fit, if applicable
-3. UI surface and wireframe need
-4. User and scenario
-5. Pain evidence
-6. Target outcome
-7. Input materials
-8. Workflow
-9. Scope boundary
-10. Acceptance standards
-11. Testing standards
-12. Operation standards
-13. Commercial or reuse value
-14. Review gates
+1. Business feasibility, if the idea is a Domain Pack candidate, customer POC, commercial product idea, or prioritization candidate.
+2. Product basis.
+3. Product shape: spec type, user/scenario, business objects, scope, workflow, UI need.
+4. Handoff to product or continue to technical spec.
+5. Domain Pack / Memory / Recipe / Workspace fit, if applicable.
+6. Input materials.
+7. Workflow details.
+8. Acceptance standards.
+9. Testing standards.
+10. Operation standards.
+11. Capability boundaries.
+12. Review gates.
+13. Handoff to technology or continue technical detail.
 
 Do not mechanically ask every field. Ask the next question that most reduces ambiguity or risk.
 
@@ -206,6 +245,15 @@ Do not promise capabilities such as pricing, compliance approval, plan recommend
 ### 7.5 Domain Pack Design Gate
 
 If `product_context.build_target` is `domain_pack` or the user says the result should become a reusable Domain Pack, the spec must include `domain_pack_context`.
+
+Do not enter this gate until the business feasibility gate is either `business_ready` or explicitly skipped because the user is not discussing commercial prioritization.
+
+Before Recipe, Memory, Connector, and Workspace details, confirm the product shape:
+
+1. Is this Pack a KA custom/private-delivery Pack, SMB self-serve Pack, hybrid Pack, internal Pack, or demo Pack?
+2. Is it one L2 scene, or an L3 solution composed from several L2 scenes?
+3. If L3, which L2 scenes compose the closed business loop?
+4. Does the product team receive the JSON now, or should intake continue into technology detail?
 
 Ask these questions before final JSON:
 
@@ -277,10 +325,15 @@ Before final output, assign one readiness label:
 
 - `not_ready`: too vague; continue business interview.
 - `business_ready`: business scenario and value are clear; product review needed.
+- `product_ready`: commercial feasibility and product shape are clear enough for technology review, but technical details may still need expansion.
 - `engineering_ready`: scope, workflow, acceptance, testing, and operation standards are clear.
 - `review_required`: high-risk spec requiring technical committee, QA, DevOps, security, compliance, or business decision review.
 
 Do not call a spec `engineering_ready` if the data source, workflow, acceptance standards, and operation standards are still unknown.
+
+Do not call a spec `business_ready` if target buyer, customer pain, current alternative, evidence, deliverable, willingness-to-pay reason, delivery risk, or next sales action is missing for a commercial Domain Pack or POC.
+
+Do not call a spec `product_ready` if product basis, spec type, user/scenario, scope boundary, business objects, UI need, and Domain Pack product shape are still unknown.
 
 Do not call a Domain Pack spec `engineering_ready` if Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace surface are unknown.
 
@@ -290,7 +343,14 @@ Do not call a UI-bearing spec `engineering_ready` if wireframes have not been sh
 
 Before outputting final JSON, ask one explicit finalization question unless the user already asked for the final JSON:
 
-> 我已经能形成第一版 spec。现在是直接输出 JSON，还是再补一个具体字段，例如导出格式、版本规则、owner 姓名或测试样例？
+Use the question that matches the current stage:
+
+- Business feasibility gate:
+  > 商业可行性已经能形成第一版 JSON。现在是直接交给产品，还是继续把产品形态补清楚？
+- Product shape gate:
+  > 产品形态已经能形成第一版 JSON。现在是交给技术，还是继续把技术规格补清楚？
+- Technical spec gate:
+  > 我已经能形成工程可评审 spec。现在是直接输出 JSON，还是再补一个具体字段，例如导出格式、版本规则、owner 姓名或测试样例？
 
 If the user says to continue, ask the next missing high-value question. If the user says to output, produce the final JSON.
 
@@ -323,6 +383,9 @@ Required top-level sections are:
 - `title`
 - `status`
 - `priority`
+- `intake_stage`
+- `commercial_context`
+- `handoff_options`
 - `product_context`
 - `spec_type`
 - `owners`
@@ -332,25 +395,30 @@ Required top-level sections are:
 - `input_materials`
 - `workflow`
 - `domain_pack_context`
+- `priority_decision`
 - `ui_requirements`
 - `capability_boundaries`
+- `evidence_requirements`
+- `data_governance`
 - `acceptance_standards`
 - `testing_standards`
 - `operation_standards`
 - `review_gates`
+- `missing_fields`
 - `readiness_label`
 
 For spec v0.2 and later, also include these sections when relevant to the requirement:
 
 - `spec_decomposition`
-- `evidence_requirements`
-- `data_governance`
-- `missing_fields`
 
 The final JSON should include these high-signal sections when relevant:
 
+- `intake_stage`: whether the current output is business feasibility, product shape, or technical spec.
+- `commercial_context`: KA/SMB, L2/L3, buyer, pain, evidence, deliverable, willingness to pay, POC, pricing, risk, and sales action.
+- `handoff_options`: whether the user chose to hand off to product, continue product shape, hand off to technology, or continue technical spec.
 - `product_context`: which company product form the work is based on.
 - `domain_pack_context`: Memory, non-memory, Recipe, self-learning, and Workspace decisions for Domain Pack work.
+- `priority_decision`: whether a Domain Pack candidate should be top 8, backlog, rejected, or needs more evidence.
 - `ui_requirements`: whether UI exists, wireframe status, confirmed screens, and the `.svg` wireframe artifact path.
 - `business_objects`: durable assets and generated artifacts.
 - `spec_decomposition`: current spec choice and recommended follow-up specs.
@@ -366,17 +434,20 @@ Before saving or returning the final spec, do a short self-review:
 
 1. JSON parses as JSON.
 2. All required top-level keys are present.
-3. `product_context.build_target` is explicit.
-4. If Domain Pack is involved, `domain_pack_context` covers Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace.
-5. If UI is involved, `ui_requirements.wireframe_status` is reviewed or unresolved, not silently skipped, and `ui_requirements.wireframe_artifacts` includes a produced `.svg` file.
-6. `business_objects` separates durable assets from generated artifacts.
-7. `workflow.steps` uses structured step objects, not only strings.
-8. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
-9. `evidence_requirements` states what needs source traceability.
-10. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
-11. `readiness_label` matches the actual risk level.
-12. Important unknowns are explicit instead of silently invented.
-13. Unknown owners, export format, retention, permission model, acceptance method, product basis, Domain Pack boundaries, or UI wireframes prevent `engineering_ready`.
+3. `intake_stage` and `handoff_options.selected_next_action` match the user's chosen handoff point.
+4. If the current stage is business feasibility, `commercial_context` contains buyer, pain, evidence, deliverable, willingness-to-pay reason, POC path, risk, and next sales action.
+5. `product_context.build_target` is explicit before product or technical handoff.
+6. If Domain Pack is involved, `commercial_context` distinguishes KA/SMB/hybrid and L2/L3 before technical details.
+7. If Domain Pack technical detail is involved, `domain_pack_context` covers Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace.
+8. If UI is involved, `ui_requirements.wireframe_status` is reviewed or unresolved, not silently skipped, and `ui_requirements.wireframe_artifacts` includes a produced `.svg` file.
+9. `business_objects` separates durable assets from generated artifacts.
+10. `workflow.steps` uses structured step objects, not only strings.
+11. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
+12. `evidence_requirements` states what needs source traceability.
+13. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
+14. `readiness_label` matches the actual risk level.
+15. Important unknowns are explicit instead of silently invented.
+16. Unknown owners, export format, retention, permission model, acceptance method, product basis, Domain Pack boundaries, or UI wireframes prevent `engineering_ready`.
 
 If the environment allows shell commands and you saved the JSON to a file, run `python3 -m json.tool <file>` before claiming it is valid.
 

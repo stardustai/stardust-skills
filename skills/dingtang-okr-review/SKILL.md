@@ -204,6 +204,17 @@ Recommended scale:
 
 The base score must be based on independent evidence, not on self-reported progress.
 
+Outcome/substitution gate:
+
+- Before assigning any partial score, identify the KR's original promised outcome (`A`) from the KR wording: the required product behavior, launch state, embedded workflow, business/customer effect, adoption metric, efficiency result, or measurable target.
+- Score `0` when the evidence shows only activity, intent, meetings, drafts, forms, temporary workarounds, or internal materials but no verified landing effect for `A`. Do not award process points just because someone "did work".
+- Score `0` when the KR originally promised `A` but the person later delivered a different substitute `B`, even if `B` is useful. A manual form, spreadsheet, side process, demo, or one-off workaround cannot replace a promised productized/embedded/online capability unless the KR explicitly allowed that substitution.
+- If a KR promised a metric or effect, such as NPS, usage frequency, adoption rate, self-service success rate, ROI improvement, cycle-time reduction, or quality improvement, the metric/effect must exist and be tied to the intended workflow. If the metric was not launched, not measured, or measured through an unrelated substitute, score `0`.
+- If the KR itself is explicitly an activity deliverable, such as "complete two workshops" or "publish one document", the completed activity can score, but only when the expected deliverable actually happened and evidence confirms it. Do not infer business value beyond the KR.
+- Evidence of progress comments, self-progress changes, or "已完成设计/已准备/已推进" is a lead, not proof of outcome. Keep the score at `0` until the expected outcome is shipped, adopted, accepted, measured, or otherwise independently validated.
+
+Example: if a KR promised "embed NPS and usage feedback into the product, collect NPS, and use it for product iteration", but the product NPS was never launched and a temporary form was used instead, the KR scores `0`; the form is `B`, not the promised `A`.
+
 ### 4. Time Discount
 
 Compare actual completion time with the KR required time.

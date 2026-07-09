@@ -32,6 +32,44 @@ DATA_GOVERNANCE_KEYS = [
     "audit_log",
 ]
 
+COMMERCIAL_CONTEXT_KEYS = [
+    "customer_segment",
+    "pack_level",
+    "l2_scenario",
+    "l3_aggregation_logic",
+    "target_buyer",
+    "target_user",
+    "customer_pain",
+    "current_alternative",
+    "evidence",
+    "deliverable",
+    "why_customer_will_pay",
+    "market_or_customer_pool",
+    "design_partners",
+    "poc_path",
+    "cooperation_model",
+    "pricing_hypothesis",
+    "biggest_delivery_risk",
+    "next_sales_action",
+    "pmf_confidence",
+]
+
+HANDOFF_OPTION_KEYS = [
+    "current_gate",
+    "available_next_actions",
+    "selected_next_action",
+    "handoff_target",
+    "handoff_notes",
+]
+
+PRIORITY_DECISION_KEYS = [
+    "candidate_rank",
+    "recommendation",
+    "reason",
+    "missing_evidence",
+    "decision_owner",
+]
+
 DOMAIN_PACK_KEYS = [
     "applicable",
     "pack_definition",
@@ -150,6 +188,94 @@ def _svg_wireframe_errors(ui_requirements: dict[str, Any], spec_path: Path) -> l
     return errors
 
 
+def _commercial_blockers(spec: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    commercial = spec.get("commercial_context")
+    if not isinstance(commercial, dict):
+        return ["commercial_context"]
+
+    for key in [
+        "customer_segment",
+        "pack_level",
+        "target_buyer",
+        "target_user",
+        "customer_pain",
+        "current_alternative",
+        "evidence",
+        "deliverable",
+        "why_customer_will_pay",
+        "poc_path",
+        "biggest_delivery_risk",
+        "next_sales_action",
+        "pmf_confidence",
+    ]:
+        if _is_unknown_or_empty(commercial.get(key)):
+            blockers.append(f"commercial_context.{key}")
+    return blockers
+
+
+def _product_shape_blockers(spec: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    product_context = spec.get("product_context")
+    if not isinstance(product_context, dict):
+        blockers.append("product_context")
+    elif _is_unknown_or_empty(product_context.get("build_target")):
+        blockers.append("product_context.build_target")
+
+    if _is_unknown_or_empty(spec.get("spec_type")):
+        blockers.append("spec_type")
+
+    business_context = spec.get("business_context")
+    if isinstance(business_context, dict):
+        user_scenario = business_context.get("user_scenario")
+        target_outcome = business_context.get("target_outcome")
+        if not isinstance(user_scenario, dict) or _is_unknown_or_empty(user_scenario.get("user_role")):
+            blockers.append("business_context.user_scenario.user_role")
+        if not isinstance(target_outcome, dict) or _is_unknown_or_empty(target_outcome.get("user_success_result")):
+            blockers.append("business_context.target_outcome.user_success_result")
+    else:
+        blockers.append("business_context")
+
+    business_objects = spec.get("business_objects")
+    if isinstance(business_objects, dict):
+        if _is_unknown_or_empty(business_objects.get("durable_assets")) and _is_unknown_or_empty(
+            business_objects.get("generated_artifacts")
+        ):
+            blockers.append("business_objects")
+    else:
+        blockers.append("business_objects")
+
+    scope = spec.get("scope")
+    if isinstance(scope, dict):
+        for key in ["in_scope", "out_of_scope", "delivery_boundary"]:
+            if _is_unknown_or_empty(scope.get(key)):
+                blockers.append(f"scope.{key}")
+    else:
+        blockers.append("scope")
+
+    ui_requirements = spec.get("ui_requirements")
+    if isinstance(ui_requirements, dict):
+        if ui_requirements.get("has_ui") is None or ui_requirements.get("wireframe_required") is None:
+            blockers.append("ui_requirements")
+    else:
+        blockers.append("ui_requirements")
+
+    domain_pack = spec.get("domain_pack_context")
+    if (
+        isinstance(product_context, dict)
+        and product_context.get("build_target") == "domain_pack"
+        or spec.get("spec_type") == "domain_pack"
+    ):
+        if isinstance(domain_pack, dict):
+            for key in ["pack_definition", "commercial_or_delivery_unit", "target_industry_or_scene", "pack_goal"]:
+                if _is_unknown_or_empty(domain_pack.get(key)):
+                    blockers.append(f"domain_pack_context.{key}")
+        else:
+            blockers.append("domain_pack_context")
+
+    return blockers
+
+
 def _type_matches(value: Any, expected_type: str) -> bool:
     if expected_type == "object":
         return isinstance(value, dict)
@@ -257,6 +383,24 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
     else:
         errors.append("data_governance must be an object")
 
+    commercial = spec.get("commercial_context")
+    if isinstance(commercial, dict):
+        errors.extend(_missing_keys(commercial, COMMERCIAL_CONTEXT_KEYS, "commercial_context"))
+    else:
+        errors.append("commercial_context must be an object")
+
+    handoff_options = spec.get("handoff_options")
+    if isinstance(handoff_options, dict):
+        errors.extend(_missing_keys(handoff_options, HANDOFF_OPTION_KEYS, "handoff_options"))
+    else:
+        errors.append("handoff_options must be an object")
+
+    priority_decision = spec.get("priority_decision")
+    if isinstance(priority_decision, dict):
+        errors.extend(_missing_keys(priority_decision, PRIORITY_DECISION_KEYS, "priority_decision"))
+    else:
+        errors.append("priority_decision must be an object")
+
     domain_pack = spec.get("domain_pack_context")
     if isinstance(domain_pack, dict):
         errors.extend(_missing_keys(domain_pack, DOMAIN_PACK_KEYS, "domain_pack_context"))
@@ -300,8 +444,46 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
         errors.append("ui_requirements must be an object")
 
     readiness = spec.get("readiness_label")
+    if readiness == "business_ready":
+        blockers = _commercial_blockers(spec)
+        if missing_fields:
+            missing_business_fields = [
+                str(item.get("field"))
+                for item in missing_fields
+                if isinstance(item, dict)
+                and item.get("field") is not None
+                and str(item.get("field", "")).startswith("commercial_context.")
+            ]
+            blockers.extend(missing_business_fields)
+        if blockers:
+            errors.append("business_ready is invalid while commercial fields are unknown: " + ", ".join(blockers))
+
+    if readiness == "product_ready":
+        blockers = _commercial_blockers(spec) + _product_shape_blockers(spec)
+        if missing_fields:
+            missing_product_fields = [
+                str(item.get("field"))
+                for item in missing_fields
+                if isinstance(item, dict)
+                and item.get("field") is not None
+                and str(item.get("field", "")).startswith(
+                    (
+                        "commercial_context.",
+                        "product_context.",
+                        "business_context.",
+                        "business_objects.",
+                        "scope.",
+                        "domain_pack_context.",
+                        "ui_requirements.",
+                    )
+                )
+            ]
+            blockers.extend(missing_product_fields)
+        if blockers:
+            errors.append("product_ready is invalid while product-shape fields are unknown: " + ", ".join(blockers))
+
     if readiness == "engineering_ready":
-        blockers = []
+        blockers = _commercial_blockers(spec) + _product_shape_blockers(spec)
         product_context = spec.get("product_context", {})
         if isinstance(product_context, dict):
             if product_context.get("build_target") in (None, "", "unknown"):

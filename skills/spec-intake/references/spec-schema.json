@@ -8,6 +8,9 @@
     "title",
     "status",
     "priority",
+    "intake_stage",
+    "commercial_context",
+    "handoff_options",
     "product_context",
     "spec_type",
     "owners",
@@ -17,6 +20,7 @@
     "input_materials",
     "workflow",
     "domain_pack_context",
+    "priority_decision",
     "ui_requirements",
     "capability_boundaries",
     "evidence_requirements",
@@ -49,6 +53,51 @@
       ]
     },
     "priority": { "type": "string", "enum": ["P0", "P1", "P2", "P3", "unknown"] },
+    "intake_stage": {
+      "type": "string",
+      "enum": [
+        "business_feasibility",
+        "product_shape",
+        "technical_spec",
+        "unknown"
+      ]
+    },
+    "handoff_options": {
+      "type": "object",
+      "required": [
+        "current_gate",
+        "available_next_actions",
+        "selected_next_action",
+        "handoff_target",
+        "handoff_notes"
+      ],
+      "properties": {
+        "current_gate": {
+          "type": "string",
+          "enum": [
+            "business_to_product",
+            "product_to_technology",
+            "technology_to_delivery",
+            "continue_intake",
+            "unknown"
+          ]
+        },
+        "available_next_actions": { "type": "array" },
+        "selected_next_action": {
+          "type": "string",
+          "enum": [
+            "handoff_to_product",
+            "continue_product_shape",
+            "handoff_to_technology",
+            "continue_technical_spec",
+            "stop",
+            "unknown"
+          ]
+        },
+        "handoff_target": { "type": ["string", "null"] },
+        "handoff_notes": { "type": "array" }
+      }
+    },
     "product_context": {
       "type": "object",
       "required": [
@@ -147,6 +196,83 @@
           }
         },
         "buyer_chain": { "type": "object" }
+      }
+    },
+    "commercial_context": {
+      "type": "object",
+      "required": [
+        "customer_segment",
+        "pack_level",
+        "l2_scenario",
+        "l3_aggregation_logic",
+        "target_buyer",
+        "target_user",
+        "customer_pain",
+        "current_alternative",
+        "evidence",
+        "deliverable",
+        "why_customer_will_pay",
+        "market_or_customer_pool",
+        "design_partners",
+        "poc_path",
+        "cooperation_model",
+        "pricing_hypothesis",
+        "biggest_delivery_risk",
+        "next_sales_action",
+        "pmf_confidence"
+      ],
+      "properties": {
+        "customer_segment": {
+          "type": "string",
+          "enum": ["KA", "SMB", "hybrid", "internal", "unknown", "not_applicable"]
+        },
+        "pack_level": {
+          "type": "string",
+          "enum": ["L2", "L3", "L2_to_L3", "unknown", "not_applicable"]
+        },
+        "l2_scenario": { "type": ["string", "null"] },
+        "l3_aggregation_logic": { "type": ["string", "null"] },
+        "target_buyer": { "type": ["string", "null"] },
+        "target_user": { "type": ["string", "null"] },
+        "customer_pain": { "type": ["string", "null"] },
+        "current_alternative": { "type": ["string", "null"] },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "description", "source_link"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "customer_meeting",
+                  "sales_lead",
+                  "paid_poc",
+                  "internal_observation",
+                  "customer_quote",
+                  "usage_data",
+                  "other",
+                  "unknown"
+                ]
+              },
+              "description": { "type": ["string", "null"] },
+              "source_link": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "deliverable": { "type": ["string", "null"] },
+        "why_customer_will_pay": { "type": ["string", "null"] },
+        "market_or_customer_pool": { "type": ["string", "null"] },
+        "design_partners": { "type": "array" },
+        "poc_path": { "type": ["string", "null"] },
+        "cooperation_model": { "type": ["string", "null"] },
+        "pricing_hypothesis": { "type": ["string", "null"] },
+        "biggest_delivery_risk": { "type": ["string", "null"] },
+        "next_sales_action": { "type": ["string", "null"] },
+        "pmf_confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "unknown", "not_applicable"]
+        }
       }
     },
     "business_objects": {
@@ -409,6 +535,33 @@
         }
       }
     },
+    "priority_decision": {
+      "type": "object",
+      "required": [
+        "candidate_rank",
+        "recommendation",
+        "reason",
+        "missing_evidence",
+        "decision_owner"
+      ],
+      "properties": {
+        "candidate_rank": { "type": ["integer", "null"] },
+        "recommendation": {
+          "type": "string",
+          "enum": [
+            "top_8",
+            "backlog",
+            "reject",
+            "needs_more_evidence",
+            "not_applicable",
+            "unknown"
+          ]
+        },
+        "reason": { "type": ["string", "null"] },
+        "missing_evidence": { "type": "array" },
+        "decision_owner": { "type": ["string", "null"] }
+      }
+    },
     "ui_requirements": {
       "type": "object",
       "required": [
@@ -511,7 +664,7 @@
     "change_log": { "type": "array" },
     "readiness_label": {
       "type": "string",
-      "enum": ["not_ready", "business_ready", "engineering_ready", "review_required"]
+      "enum": ["not_ready", "business_ready", "product_ready", "engineering_ready", "review_required"]
     }
   }
 }
