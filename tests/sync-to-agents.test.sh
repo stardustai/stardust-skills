@@ -80,9 +80,25 @@ if [ -n "$(git -C "${repo_dir}" status --porcelain)" ]; then
   exit 1
 fi
 
-printf 'unsynced local edit\n' > "${dest_dir}/existing-skill/SKILL.md"
+printf 'local helper edit\n' > "${dest_dir}/existing-skill/scripts/local-only.sh"
+printf 'remote readme\n' > "${work_dir}/skills/existing-skill/README.md"
+git -C "${work_dir}" add skills/existing-skill/README.md
+git -C "${work_dir}" commit -m "Add remote readme" >/dev/null
+git -C "${work_dir}" push origin main >/dev/null
+
+bash "${SCRIPT}" --repo "${repo_dir}" --dest "${dest_dir}" --remote origin --branch main
+
+assert_file_contains "${dest_dir}/existing-skill/scripts/local-only.sh" "local helper edit"
+assert_file_contains "${dest_dir}/existing-skill/README.md" "remote readme"
+
+printf 'local conflicting edit\n' > "${dest_dir}/existing-skill/SKILL.md"
+printf 'remote conflicting edit\n' > "${work_dir}/skills/existing-skill/SKILL.md"
+git -C "${work_dir}" add skills/existing-skill/SKILL.md
+git -C "${work_dir}" commit -m "Add remote conflict" >/dev/null
+git -C "${work_dir}" push origin main >/dev/null
+
 if bash "${SCRIPT}" --repo "${repo_dir}" --dest "${dest_dir}" --remote origin --branch main >/dev/null 2>&1; then
-  echo "expected sync to fail when local installed skill differs from repository" >&2
+  echo "expected sync to fail when local and remote edit the same skill file" >&2
   exit 1
 fi
 

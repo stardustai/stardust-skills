@@ -72,7 +72,7 @@
 ./scripts/sync-to-agents.sh
 ```
 
-脚本会先确认本机已安装的同名 skill 与当前仓库一致，再 `fetch origin/main`。只有当前仓库是干净的 `main` 且可以安全 fast-forward 时，才会更新本地仓库并同步到 `~/.agents/skills`。如果本地 skill 已有未回写改动、本地有未提交修改、分支不对、本地领先远端或出现分叉，脚本会停止，避免覆盖本地改动或把未审阅状态混进本机 skill。同步到本机时同样会排除 `config.json`、`.env`、浏览器状态、输出目录、日志和导出文件。
+脚本会先 `fetch origin/main`。只有当前仓库是干净的 `main` 且可以安全 fast-forward 时，才会更新本地仓库，并把 GitHub 上的新 skill 版本同步到 `~/.agents/skills`。如果本机 skill 只是落后于 GitHub，会直接更新；如果本机 skill 也有修改，脚本会用上次同步的 repo 版本、本机版本和 GitHub 版本尝试三方合并；只有同一文件发生无法自动合并的冲突时才会停止。同步到本机时同样会排除 `config.json`、`.env`、浏览器状态、输出目录、日志和导出文件。
 
 ## 使用方式
 
