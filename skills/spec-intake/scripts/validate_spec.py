@@ -38,10 +38,6 @@ COMMERCIAL_CONTEXT_KEYS = [
     "l2_scenario",
     "l3_aggregation_logic",
     "target_buyer",
-    "target_user",
-    "customer_pain",
-    "current_alternative",
-    "evidence",
     "deliverable",
     "why_customer_will_pay",
     "market_or_customer_pool",
@@ -52,6 +48,43 @@ COMMERCIAL_CONTEXT_KEYS = [
     "biggest_delivery_risk",
     "next_sales_action",
     "pmf_confidence",
+]
+
+PMF_VALIDATION_KEYS = [
+    "use_case_id",
+    "source_entry",
+    "current_state",
+    "target_icp",
+    "workflow",
+    "pain_evidence",
+    "current_alternative",
+    "buyer_language",
+    "competitive_gap",
+    "decision_chain",
+    "paid_signal",
+    "four_factor_scores",
+    "overall_decision",
+    "next_action",
+    "owner",
+    "evidence_links",
+    "last_reviewed",
+    "poc_entry_criteria",
+]
+
+PMF_SCORE_KEYS = [
+    "customer_willingness",
+    "market_clarity",
+    "technical_value",
+    "gtm_repeatability",
+]
+
+POC_ENTRY_CRITERIA_KEYS = [
+    "customer_evidence",
+    "paid_signal",
+    "data_available",
+    "baseline_defined",
+    "acceptance_method",
+    "timebox_and_resource_cap",
 ]
 
 HANDOFF_OPTION_KEYS = [
@@ -65,6 +98,14 @@ HANDOFF_OPTION_KEYS = [
 PRIORITY_DECISION_KEYS = [
     "candidate_rank",
     "recommendation",
+    "business_value_score",
+    "commercial_signal_clarity_score",
+    "product_engineering_effort_score",
+    "opportunity_priority_score",
+    "formula_name",
+    "formula",
+    "scope_expansion_risk",
+    "scope_reduction_recommendation",
     "reason",
     "missing_evidence",
     "decision_owner",
@@ -198,10 +239,6 @@ def _commercial_blockers(spec: dict[str, Any]) -> list[str]:
         "customer_segment",
         "pack_level",
         "target_buyer",
-        "target_user",
-        "customer_pain",
-        "current_alternative",
-        "evidence",
         "deliverable",
         "why_customer_will_pay",
         "poc_path",
@@ -211,6 +248,102 @@ def _commercial_blockers(spec: dict[str, Any]) -> list[str]:
     ]:
         if _is_unknown_or_empty(commercial.get(key)):
             blockers.append(f"commercial_context.{key}")
+    return blockers
+
+
+def _score_out_of_range(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (value < 1 or value > 5)
+    )
+
+
+def _pmf_blockers(spec: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    pmf = spec.get("pmf_validation")
+    if not isinstance(pmf, dict):
+        return ["pmf_validation"]
+
+    for key in [
+        "source_entry",
+        "current_state",
+        "target_icp",
+        "workflow",
+        "pain_evidence",
+        "current_alternative",
+        "buyer_language",
+        "decision_chain",
+        "paid_signal",
+        "overall_decision",
+        "next_action",
+        "owner",
+        "evidence_links",
+    ]:
+        if _is_unknown_or_empty(pmf.get(key)):
+            blockers.append(f"pmf_validation.{key}")
+
+    scores = pmf.get("four_factor_scores")
+    if not isinstance(scores, dict):
+        blockers.append("pmf_validation.four_factor_scores")
+    else:
+        for key in PMF_SCORE_KEYS:
+            score_item = scores.get(key)
+            if not isinstance(score_item, dict):
+                blockers.append(f"pmf_validation.four_factor_scores.{key}")
+                continue
+            score = score_item.get("score")
+            if _is_unknown_or_empty(score):
+                blockers.append(f"pmf_validation.four_factor_scores.{key}.score")
+            elif _score_out_of_range(score):
+                blockers.append(f"pmf_validation.four_factor_scores.{key}.score")
+            if _is_unknown_or_empty(score_item.get("evidence")):
+                blockers.append(f"pmf_validation.four_factor_scores.{key}.evidence")
+
+    return blockers
+
+
+def _priority_blockers(spec: dict[str, Any]) -> list[str]:
+    blockers: list[str] = []
+    priority = spec.get("priority_decision")
+    if not isinstance(priority, dict):
+        return ["priority_decision"]
+
+    expected_formula = "机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量"
+    if priority.get("formula_name") != "机会优先级指数":
+        blockers.append("priority_decision.formula_name")
+    if priority.get("formula") != expected_formula:
+        blockers.append("priority_decision.formula")
+
+    for key in [
+        "business_value_score",
+        "commercial_signal_clarity_score",
+        "product_engineering_effort_score",
+        "opportunity_priority_score",
+        "scope_expansion_risk",
+        "reason",
+        "decision_owner",
+    ]:
+        if _is_unknown_or_empty(priority.get(key)):
+            blockers.append(f"priority_decision.{key}")
+
+    for key in [
+        "business_value_score",
+        "commercial_signal_clarity_score",
+        "product_engineering_effort_score",
+    ]:
+        if _score_out_of_range(priority.get(key)):
+            blockers.append(f"priority_decision.{key}")
+
+    effort = priority.get("product_engineering_effort_score")
+    if isinstance(effort, (int, float)) and not isinstance(effort, bool) and effort <= 0:
+        blockers.append("priority_decision.product_engineering_effort_score")
+
+    if priority.get("scope_expansion_risk") == "high" and _is_unknown_or_empty(
+        priority.get("scope_reduction_recommendation")
+    ):
+        blockers.append("priority_decision.scope_reduction_recommendation")
+
     return blockers
 
 
@@ -389,6 +522,31 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
     else:
         errors.append("commercial_context must be an object")
 
+    pmf_validation = spec.get("pmf_validation")
+    if isinstance(pmf_validation, dict):
+        errors.extend(_missing_keys(pmf_validation, PMF_VALIDATION_KEYS, "pmf_validation"))
+        scores = pmf_validation.get("four_factor_scores")
+        if isinstance(scores, dict):
+            errors.extend(_missing_keys(scores, PMF_SCORE_KEYS, "pmf_validation.four_factor_scores"))
+            for key in PMF_SCORE_KEYS:
+                value = scores.get(key)
+                if isinstance(value, dict):
+                    errors.extend(
+                        _missing_keys(value, ["score", "evidence", "notes"], f"pmf_validation.four_factor_scores.{key}")
+                    )
+                elif key in scores:
+                    errors.append(f"pmf_validation.four_factor_scores.{key} must be an object")
+        elif "four_factor_scores" in pmf_validation:
+            errors.append("pmf_validation.four_factor_scores must be an object")
+
+        poc_entry = pmf_validation.get("poc_entry_criteria")
+        if isinstance(poc_entry, dict):
+            errors.extend(_missing_keys(poc_entry, POC_ENTRY_CRITERIA_KEYS, "pmf_validation.poc_entry_criteria"))
+        elif "poc_entry_criteria" in pmf_validation:
+            errors.append("pmf_validation.poc_entry_criteria must be an object")
+    else:
+        errors.append("pmf_validation must be an object")
+
     handoff_options = spec.get("handoff_options")
     if isinstance(handoff_options, dict):
         errors.extend(_missing_keys(handoff_options, HANDOFF_OPTION_KEYS, "handoff_options"))
@@ -445,21 +603,23 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
 
     readiness = spec.get("readiness_label")
     if readiness == "business_ready":
-        blockers = _commercial_blockers(spec)
+        blockers = _commercial_blockers(spec) + _pmf_blockers(spec) + _priority_blockers(spec)
         if missing_fields:
             missing_business_fields = [
                 str(item.get("field"))
                 for item in missing_fields
                 if isinstance(item, dict)
                 and item.get("field") is not None
-                and str(item.get("field", "")).startswith("commercial_context.")
+                and str(item.get("field", "")).startswith(
+                    ("commercial_context.", "pmf_validation.", "priority_decision.")
+                )
             ]
             blockers.extend(missing_business_fields)
         if blockers:
-            errors.append("business_ready is invalid while commercial fields are unknown: " + ", ".join(blockers))
+            errors.append("business_ready is invalid while business validation fields are unknown: " + ", ".join(blockers))
 
     if readiness == "product_ready":
-        blockers = _commercial_blockers(spec) + _product_shape_blockers(spec)
+        blockers = _commercial_blockers(spec) + _pmf_blockers(spec) + _priority_blockers(spec) + _product_shape_blockers(spec)
         if missing_fields:
             missing_product_fields = [
                 str(item.get("field"))
@@ -469,6 +629,8 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
                 and str(item.get("field", "")).startswith(
                     (
                         "commercial_context.",
+                        "pmf_validation.",
+                        "priority_decision.",
                         "product_context.",
                         "business_context.",
                         "business_objects.",
@@ -483,7 +645,7 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
             errors.append("product_ready is invalid while product-shape fields are unknown: " + ", ".join(blockers))
 
     if readiness == "engineering_ready":
-        blockers = _commercial_blockers(spec) + _product_shape_blockers(spec)
+        blockers = _commercial_blockers(spec) + _pmf_blockers(spec) + _priority_blockers(spec) + _product_shape_blockers(spec)
         product_context = spec.get("product_context", {})
         if isinstance(product_context, dict):
             if product_context.get("build_target") in (None, "", "unknown"):
@@ -536,6 +698,38 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
             blockers.append("missing_fields")
         if blockers:
             errors.append("engineering_ready is invalid while critical fields are unknown: " + ", ".join(blockers))
+
+    if isinstance(pmf_validation, dict):
+        decision = pmf_validation.get("overall_decision")
+        evidence_links = pmf_validation.get("evidence_links")
+        if decision in ("批准 PoC", "主线候选") and _is_unknown_or_empty(evidence_links):
+            errors.append(f"pmf_validation.overall_decision={decision} requires evidence_links")
+        if decision == "批准 PoC":
+            poc_entry = pmf_validation.get("poc_entry_criteria")
+            if isinstance(poc_entry, dict):
+                missing_poc = [
+                    key for key in POC_ENTRY_CRITERIA_KEYS if _is_unknown_or_empty(poc_entry.get(key))
+                ]
+                if missing_poc:
+                    errors.append(
+                        "批准 PoC requires complete poc_entry_criteria: "
+                        + ", ".join(f"pmf_validation.poc_entry_criteria.{key}" for key in missing_poc)
+                    )
+            else:
+                errors.append("批准 PoC requires pmf_validation.poc_entry_criteria")
+        if decision == "主线候选":
+            scores = pmf_validation.get("four_factor_scores")
+            if isinstance(scores, dict):
+                low_scores: list[str] = []
+                for key in PMF_SCORE_KEYS:
+                    value = scores.get(key)
+                    score = value.get("score") if isinstance(value, dict) else None
+                    if not isinstance(score, (int, float)) or isinstance(score, bool) or score < 4:
+                        low_scores.append(f"pmf_validation.four_factor_scores.{key}.score")
+                if low_scores:
+                    errors.append("主线候选 requires all PMF four-factor scores >= 4: " + ", ".join(low_scores))
+            else:
+                errors.append("主线候选 requires pmf_validation.four_factor_scores")
 
     return errors
 

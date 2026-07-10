@@ -10,6 +10,9 @@
         "Asks which company product form the first version should be based on before assuming internal_tool, Domain Pack, Friday Agent, Friday Memory, MorningStar, standalone product, or demo.",
         "Final JSON includes product_context, domain_pack_context, ui_requirements, business_objects, capability_boundaries, evidence_requirements, data_governance, review_gates, missing_fields, and readiness_label.",
         "Final JSON distinguishes durable product library from generated proposal draft.",
+        "Final JSON includes pmf_validation with PMF state, four-factor scores, owner, next_action, and evidence_links.",
+        "Final JSON includes priority_decision with formula_name=机会优先级指数 and opportunity_priority_score calculated from business value, commercial signal clarity, and product/engineering effort.",
+        "The assistant challenges oversized first-version scope by explaining that higher product/engineering effort lowers the opportunity priority score.",
         "If Domain Pack is chosen, final JSON distinguishes Domain Pack, Recipe, Memory, Evidence, Workspace, Room, and Artifact boundaries.",
         "If UI is required, final JSON includes wireframe status, references a produced .svg wireframe artifact, and does not mark engineering_ready before wireframe review.",
         "Final JSON includes Memory, Agent/Recipe, product UI, external business systems, and human/compliance boundaries."
@@ -22,6 +25,8 @@
       "assertions": [
         "Reads local memory-connector docs or code before declaring technical boundaries.",
         "Does not claim Memory generates final insurance recommendations or formal quotes.",
+        "Uses PMF validation to distinguish customer willingness, market clarity, technical value, and GTM repeatability before recommending PoC or product handoff.",
+        "Uses 机会优先级指数 to penalize broad scope, heavy integrations, or unclear commercial signals.",
         "Marks pricing, compliance, customer-facing delivery, and CRM writeback as external/human/product-layer concerns unless explicitly scoped.",
         "For Domain Pack output, includes pack_definition, commercial_or_delivery_unit, recipe_assets, workspace_instance_policy, versioning_policy, evaluation_assets, and marketplace_or_delivery.",
         "Final JSON passes scripts/validate_spec.py."

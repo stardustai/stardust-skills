@@ -10,6 +10,7 @@
     "priority",
     "intake_stage",
     "commercial_context",
+    "pmf_validation",
     "handoff_options",
     "product_context",
     "spec_type",
@@ -163,10 +164,12 @@
     },
     "business_context": {
       "type": "object",
-      "required": ["user_scenario", "pain_evidence", "target_outcome"],
+      "additionalProperties": false,
+      "required": ["user_scenario", "target_outcome"],
       "properties": {
         "user_scenario": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "user_role": { "type": ["string", "null"] },
             "customer_type": { "type": ["string", "null"] },
@@ -175,41 +178,26 @@
             "target_workflow": { "type": ["string", "null"] }
           }
         },
-        "pain_evidence": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "type": { "type": "string" },
-              "source": { "type": ["string", "null"] },
-              "evidence": { "type": ["string", "null"] },
-              "date": { "type": ["string", "null"] }
-            }
-          }
-        },
         "target_outcome": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "user_success_result": { "type": ["string", "null"] },
             "business_result": { "type": ["string", "null"] },
             "measurable_kpi": { "type": "array" }
           }
-        },
-        "buyer_chain": { "type": "object" }
+        }
       }
     },
     "commercial_context": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "customer_segment",
         "pack_level",
         "l2_scenario",
         "l3_aggregation_logic",
         "target_buyer",
-        "target_user",
-        "customer_pain",
-        "current_alternative",
-        "evidence",
         "deliverable",
         "why_customer_will_pay",
         "market_or_customer_pool",
@@ -233,33 +221,6 @@
         "l2_scenario": { "type": ["string", "null"] },
         "l3_aggregation_logic": { "type": ["string", "null"] },
         "target_buyer": { "type": ["string", "null"] },
-        "target_user": { "type": ["string", "null"] },
-        "customer_pain": { "type": ["string", "null"] },
-        "current_alternative": { "type": ["string", "null"] },
-        "evidence": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": ["type", "description", "source_link"],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "customer_meeting",
-                  "sales_lead",
-                  "paid_poc",
-                  "internal_observation",
-                  "customer_quote",
-                  "usage_data",
-                  "other",
-                  "unknown"
-                ]
-              },
-              "description": { "type": ["string", "null"] },
-              "source_link": { "type": ["string", "null"] }
-            }
-          }
-        },
         "deliverable": { "type": ["string", "null"] },
         "why_customer_will_pay": { "type": ["string", "null"] },
         "market_or_customer_pool": { "type": ["string", "null"] },
@@ -272,6 +233,106 @@
         "pmf_confidence": {
           "type": "string",
           "enum": ["high", "medium", "low", "unknown", "not_applicable"]
+        }
+      }
+    },
+    "pmf_validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "use_case_id",
+        "source_entry",
+        "current_state",
+        "target_icp",
+        "workflow",
+        "pain_evidence",
+        "current_alternative",
+        "buyer_language",
+        "competitive_gap",
+        "decision_chain",
+        "paid_signal",
+        "four_factor_scores",
+        "overall_decision",
+        "next_action",
+        "owner",
+        "evidence_links",
+        "last_reviewed",
+        "poc_entry_criteria"
+      ],
+      "properties": {
+        "use_case_id": { "type": ["string", "null"] },
+        "source_entry": {
+          "type": "string",
+          "enum": ["销售线索池", "市场/客户线索池 → 场景归类", "internal", "unknown", "not_applicable"]
+        },
+        "current_state": {
+          "type": "string",
+          "enum": [
+            "销售线索池",
+            "市场/客户线索池 → 场景归类",
+            "痛点诊断",
+            "产研评估",
+            "PoC / GTM 实验",
+            "复盘判定",
+            "主线 / 停损",
+            "unknown",
+            "not_applicable"
+          ]
+        },
+        "target_icp": { "type": ["string", "null"] },
+        "workflow": { "type": ["string", "null"] },
+        "pain_evidence": { "type": "array" },
+        "current_alternative": { "type": ["string", "null"] },
+        "buyer_language": { "type": ["string", "null"] },
+        "competitive_gap": { "type": ["string", "null"] },
+        "decision_chain": { "type": ["string", "null"] },
+        "paid_signal": { "type": ["string", "null"] },
+        "four_factor_scores": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "customer_willingness",
+            "market_clarity",
+            "technical_value",
+            "gtm_repeatability"
+          ],
+          "properties": {
+            "customer_willingness": { "$ref": "#/$defs/pmf_score" },
+            "market_clarity": { "$ref": "#/$defs/pmf_score" },
+            "technical_value": { "$ref": "#/$defs/pmf_score" },
+            "gtm_repeatability": { "$ref": "#/$defs/pmf_score" }
+          }
+        },
+        "overall_decision": {
+          "type": "string",
+          "enum": ["继续诊断", "进入产研评估", "批准 PoC", "主线候选", "停止/归档", "unknown", "not_applicable"]
+        },
+        "next_action": { "type": ["string", "null"] },
+        "owner": { "type": ["string", "null"] },
+        "evidence_links": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "last_reviewed": { "type": ["string", "null"] },
+        "poc_entry_criteria": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "customer_evidence",
+            "paid_signal",
+            "data_available",
+            "baseline_defined",
+            "acceptance_method",
+            "timebox_and_resource_cap"
+          ],
+          "properties": {
+            "customer_evidence": { "type": ["string", "null"] },
+            "paid_signal": { "type": ["string", "null"] },
+            "data_available": { "type": ["string", "null"] },
+            "baseline_defined": { "type": ["string", "null"] },
+            "acceptance_method": { "type": ["string", "null"] },
+            "timebox_and_resource_cap": { "type": ["string", "null"] }
+          }
         }
       }
     },
@@ -540,6 +601,14 @@
       "required": [
         "candidate_rank",
         "recommendation",
+        "business_value_score",
+        "commercial_signal_clarity_score",
+        "product_engineering_effort_score",
+        "opportunity_priority_score",
+        "formula_name",
+        "formula",
+        "scope_expansion_risk",
+        "scope_reduction_recommendation",
         "reason",
         "missing_evidence",
         "decision_owner"
@@ -557,6 +626,23 @@
             "unknown"
           ]
         },
+        "business_value_score": { "type": ["number", "null"] },
+        "commercial_signal_clarity_score": { "type": ["number", "null"] },
+        "product_engineering_effort_score": { "type": ["number", "null"] },
+        "opportunity_priority_score": { "type": ["number", "null"] },
+        "formula_name": {
+          "type": "string",
+          "enum": ["机会优先级指数"]
+        },
+        "formula": {
+          "type": "string",
+          "enum": ["机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量"]
+        },
+        "scope_expansion_risk": {
+          "type": "string",
+          "enum": ["high", "medium", "low", "unknown", "not_applicable"]
+        },
+        "scope_reduction_recommendation": { "type": ["string", "null"] },
         "reason": { "type": ["string", "null"] },
         "missing_evidence": { "type": "array" },
         "decision_owner": { "type": ["string", "null"] }
@@ -665,6 +751,18 @@
     "readiness_label": {
       "type": "string",
       "enum": ["not_ready", "business_ready", "product_ready", "engineering_ready", "review_required"]
+    }
+  },
+  "$defs": {
+    "pmf_score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "evidence", "notes"],
+      "properties": {
+        "score": { "type": ["number", "null"] },
+        "evidence": { "type": "array" },
+        "notes": { "type": ["string", "null"] }
+      }
     }
   }
 }

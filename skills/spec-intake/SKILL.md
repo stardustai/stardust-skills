@@ -33,7 +33,9 @@ For a Domain Pack candidate or market-facing idea, a valid intake must also answ
 7. Is this commercially worth product attention now?
 8. Is it KA, SMB, hybrid, internal, or still unknown?
 9. Is it an L2 scenario, an L3 aggregation of multiple L2 scenarios, or still unclear?
-10. Which handoff gate is the user choosing now: handoff to product, continue product shape, handoff to technology, or continue technical spec?
+10. Where does the use case sit in the Friday PMF state flow?
+11. What is the `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`?
+12. Which handoff gate is the user choosing now: handoff to product, continue product shape, handoff to technology, or continue technical spec?
 
 ## Required References
 
@@ -110,28 +112,65 @@ Domain Pack anti-patterns:
 - What feedback loop improves the Recipe after real use?
 - What Workspace screens or artifacts does the user operate in?
 
-### 2.5 Business Feasibility Gate
+### 2.5 Business Feasibility and PMF Validation Gate
 
 For every one-line Domain Pack idea, customer POC, commercial product idea, or Pack prioritization discussion, start with business feasibility before product or technical detail.
 
-The first goal is to determine whether the idea is worth product attention and whether it should be handed to product now. Do not ask about Recipe internals, Memory partitioning, Workspace implementation, SVG wireframes, or engineering architecture until the commercial gate is clear enough.
+The first goal is to determine whether the idea is worth product attention, whether it belongs in the PMF funnel, and whether the scope is small enough to produce a high priority score. Do not ask about Recipe internals, Memory partitioning, Workspace implementation, SVG wireframes, or engineering architecture until the commercial gate is clear enough.
 
 Ask the minimum questions needed to fill `commercial_context`:
 
 1. KA, SMB, hybrid, internal, or unknown.
 2. L2 scenario, L3 aggregation, L2-to-L3 path, or unknown.
-3. Target buyer and target user.
-4. Customer pain and current alternative.
-5. Real evidence: customer meeting, sales lead, paid POC, quote, usage data, or other source.
-6. Deliverable and why the customer would pay.
-7. Market or customer pool, design partner, POC path, cooperation model, and pricing hypothesis.
-8. Biggest delivery risk and next sales action.
+3. Target buyer.
+4. Deliverable and why the customer would pay.
+5. Market or customer pool, design partner, POC path, cooperation model, and pricing hypothesis.
+6. Biggest delivery risk and next sales action.
+
+Then fill `pmf_validation` using the Friday PMF framework. The evaluation unit is a use case, not a single customer request and not a technology module.
+
+Capture the evidence and PMF judgment in `pmf_validation`:
+
+1. `source_entry`: sales lead pool or market/customer lead pool.
+2. `current_state`: sales lead pool, scenario classification, pain diagnosis, product/engineering evaluation, PoC / GTM experiment, review decision, or mainline / stop-loss.
+3. Target ICP, workflow, customer pain evidence, current alternative, buyer language, competitive gap, decision chain, paid signal, owner, evidence links, and next action.
+4. Four PMF factor scores from 1 to 5: customer willingness, market clarity, technical value, and GTM repeatability.
+5. `overall_decision`: continue diagnosis, enter product/engineering evaluation, approve PoC, mainline candidate, or stop/archive.
+
+Use these anchors:
+
+- 1 = weak or missing evidence.
+- 2 = scattered anecdotal evidence.
+- 3 = credible single-case evidence.
+- 4 = repeated evidence across customers, flows, or channels.
+- 5 = repeated evidence plus commercial, delivery, or expansion proof.
+
+Do not approve PoC unless the spec has customer evidence, paid signal or committed customer resources, available data, a defined baseline, an acceptance method, and a timebox/resource cap.
+
+Do not mark a use case as a mainline candidate unless all four PMF factors are at least 4 and the evidence supports repeatability.
+
+Use `priority_decision` to calculate and explain the opportunity priority:
+
+`机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`
+
+Where:
+
+- `商业价值` means the expected customer/business value if the use case succeeds.
+- `商业信号清晰度` means how clear the buyer, budget, paid signal, decision chain, evidence links, and next sales action are.
+- `产研投入量` means the required product, design, AI engineering, engineering, QA, DevOps, integration, compliance, and maintenance effort.
+
+This formula exists to prevent "sales wants everything" from becoming bloated product scope. If the requested scope is large, custom, or cross-system heavy, increase `产研投入量`, lower the opportunity priority score, and ask the user to cut the first version down to a sharper wedge. A high-value idea can still rank low when the commercial signal is fuzzy or the product/engineering effort is too large.
+
+When `scope_expansion_risk` is high, ask a scope-reduction question before handing off:
+
+> 这个需求如果全做，产研投入会明显拉高，机会优先级指数会下降。第一版你更愿意砍掉哪一块来提高优先级：A. 重集成；B. 复杂 UI；C. 多角色流程；D. 自动化闭环；E. 先只做一个高价值输出？
 
 After this gate, present a short decision:
 
 - `business_ready`: enough business context exists to hand JSON to product.
 - `not_ready`: commercial feasibility is still vague; continue business interview.
 - `review_required`: the idea is commercially important but needs leadership, legal, compliance, security, or delivery review before product shaping.
+- `stop/archive`: the use case lacks owner, evidence, paid signal, data, or a credible next action and should not consume product attention now.
 
 Then ask one explicit handoff question:
 
@@ -331,7 +370,9 @@ Before final output, assign one readiness label:
 
 Do not call a spec `engineering_ready` if the data source, workflow, acceptance standards, and operation standards are still unknown.
 
-Do not call a spec `business_ready` if target buyer, customer pain, current alternative, evidence, deliverable, willingness-to-pay reason, delivery risk, or next sales action is missing for a commercial Domain Pack or POC.
+Do not call a spec `business_ready` if `commercial_context` lacks target buyer, deliverable, willingness-to-pay reason, delivery risk, or next sales action.
+
+Do not call a spec `business_ready` if `pmf_validation` lacks pain evidence, current alternative, buyer language, decision chain, paid signal, owner, evidence links, PMF factor scores, or next action.
 
 Do not call a spec `product_ready` if product basis, spec type, user/scenario, scope boundary, business objects, UI need, and Domain Pack product shape are still unknown.
 
@@ -414,7 +455,8 @@ For spec v0.2 and later, also include these sections when relevant to the requir
 The final JSON should include these high-signal sections when relevant:
 
 - `intake_stage`: whether the current output is business feasibility, product shape, or technical spec.
-- `commercial_context`: KA/SMB, L2/L3, buyer, pain, evidence, deliverable, willingness to pay, POC, pricing, risk, and sales action.
+- `commercial_context`: KA/SMB, L2/L3, buyer, deliverable, willingness to pay, POC, pricing, risk, and sales action.
+- `pmf_validation`: PMF state, pain evidence, current alternative, buyer language, decision chain, paid signal, four-factor scores, evidence links, owner, and next action.
 - `handoff_options`: whether the user chose to hand off to product, continue product shape, hand off to technology, or continue technical spec.
 - `product_context`: which company product form the work is based on.
 - `domain_pack_context`: Memory, non-memory, Recipe, self-learning, and Workspace decisions for Domain Pack work.
@@ -435,19 +477,20 @@ Before saving or returning the final spec, do a short self-review:
 1. JSON parses as JSON.
 2. All required top-level keys are present.
 3. `intake_stage` and `handoff_options.selected_next_action` match the user's chosen handoff point.
-4. If the current stage is business feasibility, `commercial_context` contains buyer, pain, evidence, deliverable, willingness-to-pay reason, POC path, risk, and next sales action.
-5. `product_context.build_target` is explicit before product or technical handoff.
-6. If Domain Pack is involved, `commercial_context` distinguishes KA/SMB/hybrid and L2/L3 before technical details.
-7. If Domain Pack technical detail is involved, `domain_pack_context` covers Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace.
-8. If UI is involved, `ui_requirements.wireframe_status` is reviewed or unresolved, not silently skipped, and `ui_requirements.wireframe_artifacts` includes a produced `.svg` file.
-9. `business_objects` separates durable assets from generated artifacts.
-10. `workflow.steps` uses structured step objects, not only strings.
-11. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
-12. `evidence_requirements` states what needs source traceability.
-13. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
-14. `readiness_label` matches the actual risk level.
-15. Important unknowns are explicit instead of silently invented.
-16. Unknown owners, export format, retention, permission model, acceptance method, product basis, Domain Pack boundaries, or UI wireframes prevent `engineering_ready`.
+4. If the current stage is business feasibility, `commercial_context` contains buyer, deliverable, willingness-to-pay reason, POC path, risk, and next sales action.
+5. If the current stage is business feasibility, `pmf_validation` contains pain evidence, current alternative, buyer language, decision chain, paid signal, evidence links, owner, PMF factor scores, and next action.
+6. `product_context.build_target` is explicit before product or technical handoff.
+7. If Domain Pack is involved, `commercial_context` distinguishes KA/SMB/hybrid and L2/L3 before technical details.
+8. If Domain Pack technical detail is involved, `domain_pack_context` covers Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace.
+9. If UI is involved, `ui_requirements.wireframe_status` is reviewed or unresolved, not silently skipped, and `ui_requirements.wireframe_artifacts` includes a produced `.svg` file.
+10. `business_objects` separates durable assets from generated artifacts.
+11. `workflow.steps` uses structured step objects, not only strings.
+12. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
+13. `evidence_requirements` states what needs source traceability.
+14. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
+15. `readiness_label` matches the actual risk level.
+16. Important unknowns are explicit instead of silently invented.
+17. Unknown owners, export format, retention, permission model, acceptance method, product basis, Domain Pack boundaries, or UI wireframes prevent `engineering_ready`.
 
 If the environment allows shell commands and you saved the JSON to a file, run `python3 -m json.tool <file>` before claiming it is valid.
 
@@ -462,8 +505,9 @@ A spec is not ready for engineering unless these are filled:
 - `owners.business_owner`
 - `owners.product_owner`
 - `business_context.user_scenario`
-- `business_context.pain_evidence`
 - `business_context.target_outcome`
+- `pmf_validation.pain_evidence`
+- `pmf_validation.evidence_links`
 - `scope.in_scope`
 - `scope.out_of_scope`
 - `workflow.steps`

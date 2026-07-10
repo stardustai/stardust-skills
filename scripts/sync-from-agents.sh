@@ -60,7 +60,7 @@ for repo_skill in "${REPO}"/skills/*; do
     exit 1
   fi
 
-  rsync -a --delete --delete-excluded \
+  rsync -a --checksum --delete --delete-excluded \
     --exclude 'node_modules' \
     --exclude '__pycache__' \
     --exclude '*.pyc' \

@@ -1,0 +1,771 @@
+{
+  "spec_version": "1.1",
+  "spec_id": "SPEC-INS-BROKER-PROPOSAL-001",
+  "title": "保险经纪人客户报销组合方案生成 Domain Pack",
+  "status": "spec_review",
+  "priority": "P1",
+  "intake_stage": "product_shape",
+  "commercial_context": {
+    "customer_segment": "KA",
+    "pack_level": "L2",
+    "l2_scenario": "保险经纪人基于客户资料和保险产品资料生成可审阅方案草稿",
+    "l3_aggregation_logic": null,
+    "target_buyer": "保险经纪公司负责人或销售负责人",
+    "deliverable": "一个私有保险经纪 Domain Pack，第一版交付可审阅的客户方案草稿工作台",
+    "why_customer_will_pay": "缩短经纪人从客户需求到方案草稿的时间，提高方案解释一致性，减少资深经纪人反复人工查资料的瓶颈",
+    "market_or_customer_pool": "中大型保险经纪公司、企业员工福利顾问团队、需要频繁生成客户方案的经纪团队",
+    "design_partners": [
+      "1-2 家愿意提供脱敏客户样例和产品资料的保险经纪团队"
+    ],
+    "poc_path": "4 周付费试点：导入一组产品资料，跑 10 个脱敏客户样例，经纪人 review 输出质量和修改量",
+    "cooperation_model": "paid_poc",
+    "pricing_hypothesis": "按付费试点包收费；验证后按私有 Domain Pack + 使用席位或团队订阅收费",
+    "biggest_delivery_risk": "客户资料敏感、保险产品条款更新频繁、合规边界容易被误解为正式报价或购买建议",
+    "next_sales_action": "约设计伙伴确认样例资料、预算 owner、合规 review 人和 4 周 POC 验收方式",
+    "pmf_confidence": "medium"
+  },
+  "pmf_validation": {
+    "use_case_id": "UC-INS-001",
+    "source_entry": "市场/客户线索池 → 场景归类",
+    "current_state": "痛点诊断",
+    "target_icp": "中大型保险经纪公司；已有稳定销售或顾问团队；每月需要反复生成客户定制方案；有销售效率、赢单或顾问产能预算",
+    "workflow": "经纪人收到客户画像和需求后，结合公司保险产品资料、适用条件、历史方案和合规口径，生成一份可审阅的报销组合方案草稿",
+    "pain_evidence": [
+      "假设证据：经纪人需要在多个 PDF、Excel、销售手册之间查找产品条件，方案生成依赖资深人员经验",
+      "假设证据：客户经常问不同产品如何组合最划算，经纪人需要解释适用原因、不适用原因和风险提示"
+    ],
+    "current_alternative": "人工查产品资料、复制历史方案、在 ChatGPT 中临时粘贴资料生成草稿，再由资深经纪人修改",
+    "buyer_language": "我们不是缺一个聊天机器人，而是希望新人也能按公司口径快速做出一版能被资深经纪人审的方案",
+    "competitive_gap": "通用 LLM 无法稳定使用最新产品资料、不能保证引用可追溯，也不会把经纪团队的历史偏好和合规口径沉淀为可复用方法",
+    "decision_chain": "经纪团队负责人感知痛点；销售负责人或公司负责人评估付费；合规负责人阻塞或批准可用边界；资深经纪人负责验收输出质量",
+    "paid_signal": "需要通过设计伙伴确认；当前假设是客户愿意为 4 周 POC 投入真实资料、review 人和试点费用",
+    "four_factor_scores": {
+      "customer_willingness": {
+        "score": 3,
+        "evidence": [
+          "痛点与高频工作流明确，但还需要真实设计伙伴确认预算 owner 和付费试点意愿"
+        ],
+        "notes": "有可信单场景假设，付费信号还未闭环"
+      },
+      "market_clarity": {
+        "score": 3,
+        "evidence": [
+          "ICP、用户、买方语言和当前替代方案可以讲清"
+        ],
+        "notes": "还缺跨客户复述和销售话术验证"
+      },
+      "technical_value": {
+        "score": 4,
+        "evidence": [
+          "需要结合资料召回、可追溯引用、Recipe、人工 review 和持续沉淀，明显不是一次 prompt"
+        ],
+        "notes": "技术价值成立，但需要黄金样例和 baseline 对比"
+      },
+      "gtm_repeatability": {
+        "score": 2,
+        "evidence": [
+          "目前只有场景假设，尚未形成标准 pitch、demo flow、案例素材和下一批客户名单"
+        ],
+        "notes": "GTM 可复制性是当前最低分"
+      }
+    },
+    "overall_decision": "进入产研评估",
+    "next_action": "一周内找 1 家设计伙伴确认样例资料、付费 POC 意愿和验收标准；同时准备 10 个脱敏样例做产品评估",
+    "owner": "业务 owner / PMF owner 待确认",
+    "evidence_links": [
+      "https://example.com/customer-discovery-insurance-broker",
+      "https://example.com/sanitized-insurance-product-samples"
+    ],
+    "last_reviewed": "2026-07-09",
+    "poc_entry_criteria": {
+      "customer_evidence": "需要至少 1 次客户访谈、1 组脱敏客户画像、1 组真实产品资料或销售手册",
+      "paid_signal": "需要确认付费 POC 或明确客户投入数据、人力、review 资源",
+      "data_available": "客户需提供产品资料、历史方案样例、合规口径和脱敏客户需求样例",
+      "baseline_defined": "当前 baseline 是人工查资料 + 历史方案复制 + 通用 LLM 临时生成",
+      "acceptance_method": "资深经纪人和合规负责人对 10 个样例打分，比较生成时间、修改量、引用准确率和不可接受错误",
+      "timebox_and_resource_cap": "4 周；限制在一个险种或一个产品组合类型；不做正式报价、自动定价、CRM 写回"
+    }
+  },
+  "handoff_options": {
+    "current_gate": "product_to_technology",
+    "available_next_actions": [
+      "handoff_to_technology",
+      "continue_technical_spec"
+    ],
+    "selected_next_action": "handoff_to_technology",
+    "handoff_target": "产品 owner + AI 工程 owner",
+    "handoff_notes": [
+      "产品需要确认第一版工作台对象和用户 review 流程",
+      "AI 工程需要评估资料召回、引用证据、Recipe 和黄金样例评测方式"
+    ]
+  },
+  "product_context": {
+    "build_target": "domain_pack",
+    "company_product": "Friday",
+    "product_assumptions": [
+      "第一版不是独立保险 SaaS，而是 Friday 私有 Domain Pack + Workspace",
+      "客户最终方案必须由经纪人确认，系统只生成可审阅草稿和证据解释"
+    ],
+    "product_open_questions": [
+      "第一版覆盖哪一个险种或产品组合类型",
+      "是否有真实设计伙伴愿意提供资料并完成 POC review"
+    ]
+  },
+  "spec_type": "domain_pack",
+  "product_line": "Friday Domain Pack",
+  "created_at": "2026-07-09",
+  "updated_at": "2026-07-09",
+  "owners": {
+    "business_owner": "待确认",
+    "product_owner": "待确认",
+    "engineering_owner": null,
+    "qa_owner": null,
+    "devops_owner": null,
+    "compliance_owner": "客户侧合规负责人 + 内部合规顾问待确认",
+    "decision_owner": "PMF owner"
+  },
+  "business_context": {
+    "user_scenario": {
+      "user_role": "保险经纪人",
+      "customer_type": "需要定制报销组合方案的企业客户或个人客户",
+      "business_scene": "客户咨询或方案会前，经纪人需要快速准备一份可解释、可追溯、可人工审阅的报销组合方案草稿",
+      "current_workflow": "经纪人收集客户需求后，在产品资料、历史方案、Excel、PDF 和聊天记录中人工查找适用产品，再复制历史方案改写",
+      "target_workflow": "经纪人选择客户案例，系统基于私有产品资料和 Recipe 生成方案草稿、证据引用、风险提示和待补问题，经纪人 review 后导出"
+    },
+    "target_outcome": {
+      "user_success_result": "经纪人在 15 分钟内得到一份可审阅方案草稿，而不是从零查资料和写方案",
+      "business_result": "提高经纪人产能和方案一致性，减少资深经纪人的重复 review 压力",
+      "measurable_kpi": [
+        "10 个样例中 8 个可进入人工修改阶段",
+        "平均方案草稿生成时间低于 15 分钟",
+        "关键推荐理由 100% 带证据链接",
+        "不可接受错误为 0：不得生成正式报价、不得承诺合规或购买决定"
+      ]
+    }
+  },
+  "business_objects": {
+    "durable_assets": [
+      "版本化保险产品资料库",
+      "经纪团队方案口径和合规注意事项",
+      "优秀历史方案模板",
+      "保险经纪方案生成 Recipe"
+    ],
+    "generated_artifacts": [
+      "客户方案草稿",
+      "产品组合推荐理由",
+      "不适用产品说明",
+      "风险提示和待补问题",
+      "证据引用清单"
+    ],
+    "temporary_artifacts": [
+      "单个客户的脱敏需求输入",
+      "本次方案生成中间草稿"
+    ],
+    "future_reusable_assets": [
+      "保险经纪 Domain Pack Memory",
+      "方案生成黄金样例集",
+      "失败样例和合规红线库",
+      "销售 demo flow"
+    ]
+  },
+  "spec_decomposition": {
+    "current_spec_choice": "第一版把产品资料库、方案生成 Recipe 和可审阅工作台放在同一个 spec，因为三者必须一起证明客户价值",
+    "why_not_split_now": "如果只做资料库没有方案输出，无法证明经纪人价值；如果只做生成没有资料和证据，无法满足可追溯和合规边界",
+    "recommended_followups": [
+      "产品资料更新和版本管理独立 spec",
+      "CRM 写回独立 spec",
+      "正式报价或核保系统集成独立 spec",
+      "多险种扩展独立 spec"
+    ]
+  },
+  "scope": {
+    "in_scope": [
+      "导入并索引一组保险产品资料和销售手册",
+      "基于脱敏客户需求生成内部可审阅方案草稿",
+      "每个关键推荐理由必须引用产品资料或历史方案证据",
+      "显示风险提示、资料缺口和建议向客户追问的问题",
+      "经纪人必须人工 review 后才能导出"
+    ],
+    "out_of_scope": [
+      "正式报价",
+      "自动定价",
+      "自动核保",
+      "替客户做最终购买决定",
+      "CRM 写回",
+      "客户自助购买或下单",
+      "跨多个险种的大而全方案"
+    ],
+    "non_goals": [
+      "不做通用保险销售 SaaS",
+      "不承诺合规自动批准",
+      "不把单个客户隐私材料沉淀为通用 Memory"
+    ],
+    "delivery_boundary": "第一版只验证一个可复用保险经纪方案生成工作流，输出是内部可审阅草稿，不是客户可直接签署或购买的正式文件",
+    "assumptions": [
+      "客户愿意提供脱敏样例",
+      "产品资料可被上传或接入 Friday",
+      "经纪人和合规负责人愿意参与人工 review"
+    ],
+    "open_questions": [
+      "第一版具体覆盖哪个险种或产品组合",
+      "设计伙伴是谁",
+      "合规负责人如何定义不可接受错误"
+    ]
+  },
+  "input_materials": {
+    "durable_sources": [
+      "保险产品说明书",
+      "销售手册",
+      "合规口径",
+      "历史优秀方案",
+      "历史失败或被合规退回的方案样例"
+    ],
+    "per_case_inputs": [
+      "脱敏客户画像",
+      "预算范围",
+      "已有保障情况",
+      "客户关注点",
+      "地区或适用条件"
+    ],
+    "temporary_sources": [
+      "本次方案会前补充说明",
+      "经纪人临时备注"
+    ],
+    "excluded_inputs": [
+      "未脱敏健康隐私",
+      "客户身份证件",
+      "支付信息",
+      "没有授权使用的第三方资料"
+    ],
+    "update_frequency": "产品资料由客户或经纪团队指定 owner 更新；每次更新后需要重跑核心回归样例"
+  },
+  "workflow": {
+    "phases": [
+      "资料准备",
+      "方案生成",
+      "人工 review",
+      "导出和学习"
+    ],
+    "steps": [
+      {
+        "step_id": "S1",
+        "phase": "资料准备",
+        "actor": "经纪团队管理员",
+        "input": "产品资料、销售手册、历史方案、合规口径",
+        "action": "上传资料并标注资料类型、版本、适用范围和 owner",
+        "output": "可召回的保险产品资料库和证据索引",
+        "human_review_required": true,
+        "failure_handling": "资料缺版本或 owner 时不能进入 POC 验收"
+      },
+      {
+        "step_id": "S2",
+        "phase": "方案生成",
+        "actor": "保险经纪人",
+        "input": "脱敏客户需求、预算、已有保障情况、关注点",
+        "action": "选择方案生成 Recipe，生成可审阅方案草稿、引用证据、风险提示和待补问题",
+        "output": "客户方案草稿 Artifact",
+        "human_review_required": true,
+        "failure_handling": "资料不足时输出待补问题，不生成确定推荐结论"
+      },
+      {
+        "step_id": "S3",
+        "phase": "人工 review",
+        "actor": "资深经纪人 / 合规负责人",
+        "input": "方案草稿、证据引用、风险提示",
+        "action": "修改方案、标记错误、确认哪些建议可用",
+        "output": "已确认方案草稿和修改反馈",
+        "human_review_required": true,
+        "failure_handling": "出现合规红线时标记失败样例并阻止导出"
+      },
+      {
+        "step_id": "S4",
+        "phase": "导出和学习",
+        "actor": "Friday Workspace",
+        "input": "人工确认后的方案和反馈",
+        "action": "导出内部方案文件，并把经过确认的方法修正进入 Recipe 更新候选",
+        "output": "导出文件、Recipe 更新候选、评测样例更新候选",
+        "human_review_required": true,
+        "failure_handling": "未经确认的客户个案信息不得进入可复用 Memory"
+      }
+    ],
+    "roles": [
+      "保险经纪人",
+      "经纪团队管理员",
+      "资深经纪人",
+      "合规负责人",
+      "Friday Agent"
+    ]
+  },
+  "domain_pack_context": {
+    "applicable": true,
+    "pack_definition": "面向保险经纪团队私有使用的 Domain Pack，封装保险产品资料、方案生成 Recipe、证据引用规则、合规红线和工作台配置",
+    "target_industry_or_scene": "保险经纪客户方案生成",
+    "pack_goal": "让经纪人基于私有资料更快生成可审阅、可追溯、可被资深经纪人校正的客户方案草稿",
+    "commercial_or_delivery_unit": "ka_poc_pack",
+    "domain_workflow": "客户需求输入 -> 产品资料召回 -> 方案草稿生成 -> 证据和风险展示 -> 经纪人 review -> 导出 -> 反馈沉淀",
+    "memory_assets": [
+      "产品资料摘要和原文链接",
+      "合规口径",
+      "历史优秀方案的脱敏结构",
+      "经纪团队确认过的方案表达偏好"
+    ],
+    "recipe_assets": [
+      "客户需求解析 Recipe",
+      "产品组合方案生成 Recipe",
+      "风险和不适用原因检查 Recipe",
+      "人工 review 反馈整理 Recipe"
+    ],
+    "connector_assets": [
+      "文档上传",
+      "未来可选：产品资料库 API",
+      "未来可选：CRM 只读客户上下文"
+    ],
+    "interface_configuration": [
+      "客户案例列表",
+      "方案草稿编辑器",
+      "证据和风险侧栏",
+      "人工确认和导出按钮"
+    ],
+    "permission_scope": [
+      "经纪人只能查看自己或团队授权客户案例",
+      "管理员维护产品资料",
+      "合规负责人可查看风险标记和失败样例"
+    ],
+    "non_memory_boundaries": [
+      "未脱敏客户隐私",
+      "单个客户健康信息",
+      "身份证件和支付信息",
+      "未经确认的临时判断",
+      "与方案质量无关的个人信息"
+    ],
+    "workspace_instance_policy": {
+      "workspace_created_by": "经纪团队管理员或 Friday 交付人员",
+      "workspace_lifecycle": [
+        "POC workspace 创建",
+        "导入 Pack 和资料",
+        "运行 10 个样例",
+        "复盘后决定扩展或归档"
+      ],
+      "room_granularity": "一个客户方案任务一个 Room",
+      "artifact_types": [
+        "方案草稿",
+        "证据引用清单",
+        "风险提示清单",
+        "review 反馈"
+      ],
+      "local_changes_policy": [
+        "经纪人对单个方案的修改只影响该 Workspace 和该 Artifact",
+        "只有被标记为通用方法修正的反馈才进入 Pack 更新候选"
+      ],
+      "master_pack_update_policy": [
+        "Pack 更新必须由产品 owner 或交付 owner 审核",
+        "更新后需要跑回归样例",
+        "客户 workspace 不自动污染主 Pack"
+      ]
+    },
+    "first_recipe": {
+      "name": "Reimbursement Proposal Draft Recipe",
+      "goal": "基于客户需求和产品资料生成可审阅的保险报销组合方案草稿",
+      "input": [
+        "脱敏客户画像",
+        "预算和需求",
+        "保险产品资料",
+        "合规口径",
+        "历史优秀方案样例"
+      ],
+      "output": [
+        "推荐组合",
+        "推荐理由",
+        "不适用产品说明",
+        "风险提示",
+        "证据引用",
+        "待补问题"
+      ],
+      "execution_logic": [
+        "解析客户需求和限制条件",
+        "召回适用产品资料和历史方案片段",
+        "生成候选组合并列出证据",
+        "检查合规红线和资料缺口",
+        "生成可编辑草稿"
+      ],
+      "constraints": [
+        "不得生成正式报价",
+        "不得替客户做最终购买决定",
+        "不得在缺关键资料时输出确定结论",
+        "所有关键结论必须可追溯"
+      ],
+      "required_evidence": [
+        "产品资料原文链接",
+        "历史方案引用",
+        "合规口径引用"
+      ],
+      "human_review": [
+        "经纪人确认方案内容",
+        "资深经纪人确认推荐逻辑",
+        "合规负责人确认红线"
+      ],
+      "owner": "产品 owner / 保险业务专家待确认"
+    },
+    "iteration_loop": [
+      "每次 POC review 后整理经纪人修改点",
+      "把通用方法问题归入 Recipe 更新候选",
+      "把资料缺口归入 Memory 或资料库更新任务",
+      "新增失败样例进入回归集"
+    ],
+    "self_learning_policy": [
+      "人工确认后的方案表达偏好可作为 Recipe 更新候选",
+      "客户个案隐私不能进入通用 Memory",
+      "任何 Pack 主版本更新必须人工审批",
+      "失败样例进入回归集前需要脱敏"
+    ],
+    "versioning_policy": {
+      "domain_pack_versioned": true,
+      "recipe_versioned": true,
+      "workspace_versioned": true,
+      "memory_backup_or_rollback": [
+        "每次产品资料更新记录版本",
+        "Pack 发布前保留上一版可回滚"
+      ],
+      "release_policy": [
+        "POC 内部版本先在设计伙伴 workspace 使用",
+        "通过回归样例后才能发布新 Pack 版本"
+      ],
+      "upgrade_policy": [
+        "客户 workspace 手动确认升级",
+        "升级说明列出 Recipe、Memory 和评测变化"
+      ],
+      "rollback_policy": [
+        "出现严重错误时回滚到上一 Pack 版本",
+        "保留错误样例用于修复后回归"
+      ]
+    },
+    "evaluation_assets": {
+      "golden_tasks": [
+        "10 个脱敏客户需求 + 标准方案草稿或专家评分"
+      ],
+      "rubrics": [
+        "推荐理由准确性",
+        "引用证据完整性",
+        "风险提示覆盖度",
+        "人工修改量",
+        "不可接受错误数量"
+      ],
+      "failure_cases": [
+        "客户预算缺失",
+        "产品资料过期",
+        "适用条件冲突",
+        "客户资料包含敏感健康信息",
+        "系统试图输出正式报价"
+      ],
+      "acceptance_checklist": [
+        "关键结论有证据",
+        "所有风险提示可见",
+        "经纪人可编辑",
+        "导出前必须人工确认"
+      ],
+      "regression_set": [
+        "每次产品资料更新后重跑 10 个黄金样例",
+        "每次 Recipe 更新后重跑失败样例"
+      ]
+    },
+    "marketplace_or_delivery": {
+      "offer_name": "Insurance Broker Proposal Drafting Pack",
+      "target_buyers_or_users": [
+        "保险经纪公司负责人",
+        "销售负责人",
+        "企业员工福利顾问团队"
+      ],
+      "pricing_or_packaging_notes": [
+        "默认私有交付，不默认上 marketplace",
+        "以付费 POC 验证，后续按私有 Pack 和团队席位包装"
+      ],
+      "deployment_notes": [
+        "部署到客户私有 Friday Workspace",
+        "客户资料隔离",
+        "Pack 更新需人工审批"
+      ],
+      "success_metrics": [
+        "方案草稿生成时间",
+        "人工修改量",
+        "引用准确率",
+        "经纪人满意度",
+        "设计伙伴是否愿意继续付费"
+      ]
+    },
+    "workspace_design": {
+      "screens": [
+        "客户案例列表",
+        "方案草稿编辑页",
+        "证据和风险侧栏",
+        "资料管理页"
+      ],
+      "artifacts": [
+        "客户方案草稿",
+        "证据引用清单",
+        "风险提示清单",
+        "review 反馈记录"
+      ],
+      "controls": [
+        "生成方案",
+        "接受建议",
+        "标记错误",
+        "请求合规 review",
+        "导出草稿"
+      ],
+      "open_questions": [
+        "第一版是否需要资料管理页",
+        "导出格式是 PDF、Docx 还是 Friday Artifact"
+      ]
+    }
+  },
+  "priority_decision": {
+    "candidate_rank": 3,
+    "recommendation": "needs_more_evidence",
+    "business_value_score": 4,
+    "commercial_signal_clarity_score": 3,
+    "product_engineering_effort_score": 3,
+    "opportunity_priority_score": 4,
+    "formula_name": "机会优先级指数",
+    "formula": "机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量",
+    "scope_expansion_risk": "high",
+    "scope_reduction_recommendation": "第一版只做一个险种、一个客户方案草稿、一组资料上传和人工 review，不做正式报价、核保、CRM 写回和客户自助界面",
+    "reason": "商业价值明确，但商业信号和 GTM 复用证据不足；如果范围控制在方案草稿和证据引用，产研投入可控",
+    "missing_evidence": [
+      "真实设计伙伴",
+      "预算 owner",
+      "付费 POC 意愿",
+      "10 个脱敏黄金样例"
+    ],
+    "decision_owner": "PMF owner"
+  },
+  "ui_requirements": {
+    "has_ui": true,
+    "wireframe_required": true,
+    "wireframe_status": "drafted",
+    "key_screens": [
+      "客户案例列表",
+      "方案草稿编辑页",
+      "证据和风险侧栏"
+    ],
+    "wireframe_artifacts": [
+      "insurance-broker-workspace-wireframe.svg"
+    ],
+    "confirmation_method": "产品和业务共同确认低保真 SVG 中的对象关系、主操作和 review 流程",
+    "open_questions": [
+      "资料管理页是否进入第一版",
+      "是否需要单独合规 review 队列"
+    ]
+  },
+  "capability_boundaries": {
+    "memory_layer": [
+      "存储和召回产品资料、合规口径、历史方案摘要、经过确认的团队偏好",
+      "提供证据引用和版本信息"
+    ],
+    "agent_or_recipe_layer": [
+      "解析客户需求",
+      "召回相关资料",
+      "生成方案草稿、理由、风险提示和待补问题",
+      "整理人工 feedback 为更新候选"
+    ],
+    "product_ui_layer": [
+      "客户案例列表",
+      "方案草稿编辑",
+      "证据和风险展示",
+      "人工确认和导出",
+      "资料版本和权限展示"
+    ],
+    "external_business_systems": [
+      "正式价格",
+      "核保结果",
+      "CRM 客户主数据",
+      "客户最终购买记录"
+    ],
+    "human_or_compliance_review": [
+      "经纪人确认方案内容",
+      "资深经纪人确认推荐逻辑",
+      "合规负责人确认红线",
+      "客户最终购买决定由人负责"
+    ],
+    "explicitly_not_owned": [
+      "正式报价",
+      "自动核保",
+      "客户购买决策",
+      "未经授权处理敏感健康信息"
+    ]
+  },
+  "evidence_requirements": {
+    "must_trace": [
+      "推荐产品",
+      "推荐理由",
+      "不适用产品说明",
+      "风险提示"
+    ],
+    "source_granularity": [
+      "至少追溯到产品资料文件、章节或条款",
+      "历史方案引用必须能追溯到脱敏样例"
+    ],
+    "unknown_or_uncertain_handling": [
+      "资料缺失时输出待补问题",
+      "条件冲突时标记风险",
+      "不能用猜测补齐产品条款或价格"
+    ]
+  },
+  "data_governance": {
+    "sensitivity": [
+      "客户画像",
+      "预算",
+      "保险需求",
+      "可能涉及健康信息"
+    ],
+    "permission_model": [
+      "按客户 workspace 隔离",
+      "经纪人只能访问授权案例",
+      "管理员维护资料",
+      "合规负责人访问风险和失败样例"
+    ],
+    "versioning": [
+      "产品资料版本化",
+      "Recipe 版本化",
+      "导出方案记录生成版本"
+    ],
+    "retention": [
+      "POC 样例使用脱敏数据",
+      "临时客户输入按客户约定保留",
+      "未经确认的客户隐私不得进入长期 Memory"
+    ],
+    "audit_log": [
+      "记录资料上传",
+      "记录方案生成",
+      "记录人工修改",
+      "记录导出和 review"
+    ]
+  },
+  "product_requirements": {
+    "first_release": [
+      "客户案例列表",
+      "方案草稿编辑器",
+      "证据和风险侧栏",
+      "导出前人工确认"
+    ]
+  },
+  "technical_requirements": {
+    "unknowns": [
+      "资料解析能力边界",
+      "Friday Memory 当前引用粒度",
+      "Artifact 编辑和导出能力",
+      "客户 workspace 权限模型"
+    ]
+  },
+  "acceptance_standards": {
+    "business_acceptance": [
+      "10 个脱敏样例中至少 8 个经纪人认为可继续人工修改",
+      "所有推荐理由都有证据引用",
+      "不可接受错误为 0"
+    ],
+    "product_acceptance": [
+      "用户能从客户案例进入方案草稿",
+      "能看到证据和风险",
+      "能修改并导出草稿"
+    ]
+  },
+  "poc_metrics": {
+    "time_to_draft_minutes": "<=15",
+    "human_edit_rate": "待 POC 定义",
+    "evidence_coverage": "100% critical claims",
+    "blocking_error_count": 0
+  },
+  "testing_standards": {
+    "golden_cases": [
+      "10 个脱敏客户画像 + 产品资料 + 专家参考答案"
+    ],
+    "negative_cases": [
+      "预算缺失",
+      "产品资料过期",
+      "适用条件冲突",
+      "敏感健康信息出现",
+      "用户要求正式报价"
+    ],
+    "regression": [
+      "资料更新后重跑黄金样例",
+      "Recipe 更新后重跑失败样例"
+    ]
+  },
+  "operation_standards": {
+    "monitoring": [
+      "资料上传成功率",
+      "生成失败率",
+      "证据缺失率",
+      "人工修改率",
+      "导出次数"
+    ],
+    "fallback": [
+      "生成失败时回到人工方案流程",
+      "证据不足时只输出待补问题",
+      "合规风险时阻止导出"
+    ],
+    "support": [
+      "POC 阶段由交付 owner 收集问题",
+      "严重错误进入失败样例库"
+    ]
+  },
+  "commercial_standards": {
+    "poc_success": [
+      "设计伙伴愿意继续付费或扩展试点",
+      "经纪人明确表示减少重复查资料和写草稿时间"
+    ]
+  },
+  "reuse_standards": {
+    "domain_pack_reuse": [
+      "同一 Recipe 可在至少 2 个客户样例或 2 个经纪人中复用",
+      "产品资料和合规口径可独立更新",
+      "失败样例可进入回归集"
+    ]
+  },
+  "story_points": {
+    "product": "medium",
+    "ai_engineering": "medium",
+    "engineering": "medium",
+    "qa": "medium",
+    "devops": "low"
+  },
+  "review_gates": {
+    "business_review": [
+      "确认设计伙伴、预算 owner 和 POC 资料"
+    ],
+    "product_review": [
+      "确认第一版只做方案草稿和证据引用，不做正式报价"
+    ],
+    "ai_engineering_review": [
+      "确认资料召回、引用、Recipe 和评测边界"
+    ],
+    "compliance_review": [
+      "确认合规红线和不可接受错误"
+    ],
+    "qa_review": [
+      "确认黄金样例、失败样例和回归标准"
+    ],
+    "devops_review": [
+      "确认 workspace 权限、日志和审计"
+    ]
+  },
+  "missing_fields": [
+    {
+      "field": "owners.engineering_owner",
+      "status": "unknown",
+      "note": "进入 engineering_ready 前必须补齐"
+    }
+  ],
+  "decision_log": [
+    {
+      "date": "2026-07-09",
+      "decision": "先按 Domain Pack + Workspace 草稿生成验证，不做独立保险 SaaS"
+    }
+  ],
+  "change_log": [
+    {
+      "date": "2026-07-09",
+      "change": "创建保险经纪人场景样例 spec，用于检查 schema 是否冗余"
+    }
+  ],
+  "readiness_label": "product_ready"
+}

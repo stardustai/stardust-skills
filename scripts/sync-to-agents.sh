@@ -42,7 +42,7 @@ sync_filtered() {
   local dest_dir="$2"
 
   mkdir -p "${dest_dir}"
-  rsync -a --delete --delete-excluded "${RSYNC_EXCLUDES[@]}" "${source_dir}/" "${dest_dir}/"
+  rsync -a --checksum --delete --delete-excluded "${RSYNC_EXCLUDES[@]}" "${source_dir}/" "${dest_dir}/"
 }
 
 copy_repo_skills_at_commit() {
