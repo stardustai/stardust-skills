@@ -4,32 +4,54 @@
     {
       "id": 0,
       "prompt": "我是一个保险经纪人，我要给客户销售报销组合，我手里有一堆公司给的保险产品资料，如何快速给客户定制化方案？请用 spec-intake 引导我。我是业务人员，不懂技术，只知道客户经常问怎么组合最划算。",
-      "expected_output": "The assistant should not immediately dump a final JSON. It should classify the request, ask one high-leverage question at a time, surface compliance and boundary risks, and eventually produce a JSON spec that passes scripts/validate_spec.py.",
+      "expected_output": "The assistant should not immediately dump a final JSON. It should classify product basis, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require an SVG wireframe for UI, and eventually produce a v1.3 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
         "Asks one question at a time before final JSON.",
+        "Extracts facts already present in the user's message, states clear conclusions, and skips questions that are already answered.",
         "Asks which company product form the first version should be based on before assuming internal_tool, Domain Pack, Friday Agent, Friday Memory, MorningStar, standalone product, or demo.",
-        "Final JSON includes product_context, domain_pack_context, ui_requirements, business_objects, capability_boundaries, evidence_requirements, data_governance, review_gates, missing_fields, and readiness_label.",
-        "Final JSON distinguishes durable product library from generated proposal draft.",
-        "Final JSON includes pmf_validation with PMF state, four-factor scores, owner, next_action, and evidence_links.",
-        "Final JSON includes priority_decision with formula_name=机会优先级指数 and opportunity_priority_score calculated from business value, commercial signal clarity, and product/engineering effort.",
-        "The assistant challenges oversized first-version scope by explaining that higher product/engineering effort lowers the opportunity priority score.",
-        "If Domain Pack is chosen, final JSON distinguishes Domain Pack, Recipe, Memory, Evidence, Workspace, Room, and Artifact boundaries.",
-        "If UI is required, final JSON includes wireframe status, references a produced .svg wireframe artifact, and does not mark engineering_ready before wireframe review.",
-        "Final JSON includes Memory, Agent/Recipe, product UI, external business systems, and human/compliance boundaries."
+        "Final JSON uses spec_version=1.3 and includes stage_gate, opportunity_assessment, friday_object_model, knowledge_and_memory_policy, validation_plan, implementation_mapping, review_gates, and missing_fields.",
+        "Final JSON uses opportunity_assessment.evidence_registry and distinguishes assumptions from non-assumption evidence.",
+        "Final JSON includes opportunity_assessment.minimum_paid_artifact and uses 机会优先级指数 to penalize broad scope, heavy integrations, or unclear commercial signals.",
+        "Final JSON includes opportunity_assessment.competitive_research with a comparison matrix, overlap scores, differentiation scores, and user confirmation status.",
+        "If opportunity_assessment.priority_decision.recommendation is needs_more_evidence, stage_gate does not mark PoC execution ready or engineering ready.",
+        "Final JSON includes product_context.technical_leadership with a claim, proof_or_argument, spec_agent_score, score_rationale, and product_owner_confirmation.",
+        "If Domain Pack is chosen, final JSON declares Workspace Memory, Task, Artifact, Recipe, Feedback/Comment, Room, and their Task -> Artifact -> Feedback -> Recipe/Memory loop.",
+        "If UI is required, final JSON references a produced .svg wireframe artifact and does not move to product_ready or later gates before wireframe_status=reviewed.",
+        "Final JSON includes structured memory_write_rules with source_type, write_allowed, requires_human_approval, target_scope, redaction_required, and rollback_method.",
+        "Final JSON separates poc_design_ready from poc_execution_ready in validation_plan."
       ]
     },
     {
       "id": 1,
-      "prompt": "客户想让 Friday 接入他们的保险产品资料库，然后自动帮销售生成方案。你要看 /Users/derek/Projects/memory-connector 的代码背景来判断 Memory 能做什么、Agent/Recipe/产品层该做什么，再引导我补 spec。",
-      "expected_output": "The assistant should inspect local code/docs, distinguish Memory evidence recall from Agent/Recipe execution and product UI/workflow, ask business questions before finalizing technical boundaries, and produce a JSON spec that passes scripts/validate_spec.py.",
+      "prompt": "客户想让 Friday 接入他们的保险产品资料库，然后自动帮销售生成方案。你要看 /Users/derek/Documents/Projects/memory-connector 和 /Users/derek/Documents/Projects/friday-service 的代码背景来判断 Memory 能做什么、Agent/Recipe/产品层该做什么，再引导我补 spec。",
+      "expected_output": "The assistant should inspect local code/docs, distinguish Memory evidence recall from Agent/Recipe execution and product UI/workflow, ask business questions before finalizing technical boundaries, and produce a v1.3 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
-        "Reads local memory-connector docs or code before declaring technical boundaries.",
-        "Does not claim Memory generates final insurance recommendations or formal quotes.",
-        "Uses PMF validation to distinguish customer willingness, market clarity, technical value, and GTM repeatability before recommending PoC or product handoff.",
-        "Uses 机会优先级指数 to penalize broad scope, heavy integrations, or unclear commercial signals.",
-        "Marks pricing, compliance, customer-facing delivery, and CRM writeback as external/human/product-layer concerns unless explicitly scoped.",
-        "For Domain Pack output, includes pack_definition, commercial_or_delivery_unit, recipe_assets, workspace_instance_policy, versioning_policy, evaluation_assets, and marketplace_or_delivery.",
+        "Reads local friday-service or memory-connector docs/code before declaring technical boundaries.",
+        "Does not re-ask for information already explicit in the prompt; it fills those fields and asks only for the next material gap.",
+        "Does not claim Memory generates final insurance recommendations, formal quotes, compliance approval, or CRM writeback.",
+        "Uses opportunity_assessment.pmf_validation to distinguish customer willingness, market clarity, technical value, and GTM repeatability before recommending PoC or product handoff.",
+        "Uses opportunity_assessment.priority_decision with formula_name=机会优先级指数 and explains how broad scope lowers opportunity priority.",
+        "Uses implementation_mapping to mark each key capability as existing, partial, missing, external, or unknown, with local code paths when available.",
+        "When moving into technical design, includes implementation_mapping.source_code_review with paths_read and implementation_mapping.technical_design_assessment with dimension scores.",
+        "Does not mark engineering_ready unless source code review is completed and AI engineer confirmation is captured.",
+        "For Domain Pack output, includes friday_object_model and knowledge_and_memory_policy instead of only filling a generic domain_pack_context.",
+        "If engineering feasibility is unclear, uses stage_gate.decision=request_engineering_gap_review rather than ready_for_engineering.",
         "Final JSON passes scripts/validate_spec.py."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "销售说客户什么都想要：资料库、自动报价、CRM 写回、客户自助下单、方案生成、合规审批都要。请用 spec-intake 帮我判断这个需求是否应该进入产研。",
+      "expected_output": "The assistant should use commercial evidence and opportunity priority to push back on oversized scope, identify the minimum paid artifact, block premature engineering handoff, and ask for scope reduction before product/technical detail.",
+      "assertions": [
+        "Identifies scope expansion risk before discussing implementation detail.",
+        "Treats the provided broad scope as known input and does not ask the salesperson to repeat it.",
+        "Asks for minimum paid artifact and first-version scope reduction.",
+        "Uses opportunity priority formula to explain why high engineering effort lowers ranking.",
+        "Blocks ready_for_engineering when commercial signal or design partner evidence is missing.",
+        "Separates external authoritative systems such as CRM, quote, pricing, and compliance approval from Friday-owned work.",
+        "If the salesperson has no competitor comparison, the assistant says it will research competitors or substitute workflows and produce a matrix for confirmation.",
+        "Final JSON, if produced, uses stage_gate.blocked_next_actions to prevent premature engineering delivery."
       ]
     }
   ]

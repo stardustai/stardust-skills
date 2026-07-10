@@ -1,549 +1,384 @@
 ---
 name: spec-intake
-description: "Use this when the user gives a one-line business requirement, vague customer request, POC idea, internal tool idea, automation request, Domain Pack idea, or product feature and needs to turn it into the company's Spec Driven JSON format. This skill interactively interviews business users one question at a time, checks evidence and scope, reads relevant code/docs when technical boundaries matter, and produces an engineering-ready spec for business, product, AI engineering, QA, and DevOps collaboration."
+description: "Use this when the user gives a one-line business requirement, vague customer request, POC idea, internal tool idea, automation request, Domain Pack idea, or product feature and needs to turn it into the company's Spec Driven JSON format. This skill interactively interviews business users one question at a time, checks commercial evidence and scope before product detail, requires SVG wireframes for UI specs, reads relevant code/docs when technical boundaries matter, and produces a stage-gated spec for sales, product, AI engineering, QA, and DevOps collaboration."
 ---
 
 # Spec Intake
 
-Turn a one-line business requirement into a structured Spec Driven JSON document through interactive questioning.
+Turn a one-line requirement into a stage-gated Spec Driven JSON document.
 
-This skill is for business, sales, solution, product, and engineering collaboration. The goal is not to write code. The goal is to make the requirement clear enough that product, AI engineers, QA, and DevOps can evaluate and execute it without relying on oral context.
+The goal is not to write code. The goal is to make the requirement clear enough that business, product, AI engineering, QA, DevOps, and compliance can decide what the next gate is without relying on oral context.
 
-The intake is staged. A one-line need first becomes a business feasibility JSON. After commercial feasibility is clear, the user can hand it to product or continue to product shape. After product shape is clear, the user can hand the JSON to technology or continue to technical specification. Do not force business users through technical questions before the business gate is clear.
+## Core Rules
 
-## Hard Gate
+1. Extract first, ask second. If the user has already provided enough information for a field or decision, fill it, state the conclusion, and skip that question.
+2. Ask one question at a time only for the highest-risk missing information.
+3. First identify the company product form: Friday Agent, Domain Pack, Friday Memory, MorningStar, internal tool, standalone product, or demo.
+4. For commercial ideas, validate business feasibility before product or technical detail.
+5. Do not let vague commercial evidence move into engineering delivery.
+6. If UI exists, produce an SVG wireframe and get it reviewed before product-ready or later gates.
+7. If Domain Pack is involved, model Friday objects explicitly: Workspace Memory, Task, Artifact, Recipe, Feedback/Comment, and Room.
+8. Treat engineering gap review as different from engineering delivery. A spec can be ready for technical gap review while still blocked for implementation.
+9. Market validation includes competitor research. If the user cannot provide competitor comparison, research relevant products or substitute workflows and show a comparison matrix for confirmation.
+10. Product validation includes technical leadership and uniqueness. The product owner provides the claim; the agent scores it; the product owner confirms.
+11. Technical design includes source-code reading and AI scoring. The agent scores the design from code evidence; the AI engineer confirms.
+12. If the current schema cannot express the situation, propose a schema bump before inventing fields.
 
-Do not write implementation code, create tickets, assign engineers, or propose a final technical architecture until the spec has enough business context, scope, acceptance standards, test standards, operation standards, and review gates.
+## Extraction Before Questions
 
-If the request is vague, ask the next highest-leverage question. Do not dump the whole JSON template onto a business user at the start.
+The interaction is not a form-filling interview. At the start of each turn:
 
-## Core Principle
+1. Parse the user's latest message and map any explicit facts to spec fields.
+2. State concise conclusions for fields that are already clear.
+3. Mark assumptions separately from confirmed facts.
+4. Ask only the next question that would change the stage gate, priority decision, product shape, or technical readiness.
 
-A valid spec must answer these core questions:
+Good behavior:
 
-1. Which company product form is this based on?
-2. Who has the problem?
-3. What evidence proves the problem is real?
-4. What result counts as success?
-5. What is inside and outside the delivery boundary?
-6. How will product, engineering, QA, and DevOps know it is acceptable?
+> 你已经明确了买方、使用者和第一版目标，所以这三项我先写入 spec，不再追问。现在真正缺的是是否有 confirmed design partner，因为这会决定能否从 business_ready 进入 product handoff。
 
-For a Domain Pack candidate or market-facing idea, a valid intake must also answer:
+Bad behavior:
 
-7. Is this commercially worth product attention now?
-8. Is it KA, SMB, hybrid, internal, or still unknown?
-9. Is it an L2 scenario, an L3 aggregation of multiple L2 scenarios, or still unclear?
-10. Where does the use case sit in the Friday PMF state flow?
-11. What is the `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`?
-12. Which handoff gate is the user choosing now: handoff to product, continue product shape, handoff to technology, or continue technical spec?
+> 请依次回答：买方是谁？使用者是谁？第一版目标是什么？
+
+Do not ask a question just because it appears in `references/question-bank.md`. The question bank is a menu. Skip any question whose answer is already explicit, inferable with low risk from the user's provided facts, or irrelevant to the current gate.
 
 ## Required References
 
-Read these only when needed:
+Read only as needed:
 
-- `references/spec-schema.json` - the output structure and enum values.
-- `references/question-bank.md` - question patterns by missing field and spec type.
-- `scripts/validate_spec.py` - lightweight validator for final JSON shape.
+- `references/spec-schema.json` - v1.3 JSON structure.
+- `references/question-bank.md` - question patterns by gate.
+- `scripts/validate_spec.py` - deterministic validator.
 
-When the spec depends on an existing product, repository, or platform, inspect the relevant local docs/code before declaring a technical boundary. Prefer checked-in architecture docs, API/tool definitions, tests, and runtime contracts over guesses.
+When the spec depends on Friday, Memory, Domain Pack, Recipe, Workspace, MCP, document upload, CRM, policy database, or any existing system, inspect the relevant local docs/code before declaring technical boundaries.
 
-If the current JSON structure cannot cleanly express the business reality, do not silently invent a new shape. First propose a schema change, explain why the existing contract is insufficient, bump `spec_version`, and update `references/spec-schema.json` before using the new structure.
+## Product Basis
 
-## Process
-
-### 1. Restate the One-Line Need
-
-Start by translating the user's one-line requirement into plain business language.
-
-Then say what is still unknown. Keep it short.
-
-Example:
-
-> 我先理解成：保险经纪人希望基于公司给的产品资料和客户画像，快速生成可解释的报销组合销售方案。现在最关键还不清楚的是：这个方案是给经纪人内部参考，还是要直接发给客户。
-
-### 2. Classify Product Basis
-
-Before classifying the work item, ask which company product form this should be built on.
-
-Use one `product_context.build_target`:
-
-- `friday_agent`
-- `domain_pack`
-- `friday_memory`
-- `morningstar`
-- `internal_tool`
-- `standalone_product`
-- `demo`
-- `unknown`
-
-Good first product-basis question:
+Ask this early:
 
 > 这个需求第一版应该基于我们哪个产品形态来做？A. Friday Agent；B. Domain Pack；C. Friday Memory；D. MorningStar；E. 内部工具；F. 全新独立产品；G. 只是 demo。
 
-Do not silently assume product basis from the use case. A "面试流程管理工具" could be an internal tool, a Friday Agent workflow, a Domain Pack, or a standalone product; the downstream spec is different.
+Do not infer this silently. A "tool" may be a Domain Pack, Friday Agent workflow, internal tool, or standalone product.
 
-If the user chooses `domain_pack`, immediately switch on the Domain Pack questions before implementation details.
+## Business Feasibility Gate
 
-Use this company product model:
+For a Domain Pack, customer POC, commercial product idea, or Pack prioritization request, first fill `opportunity_assessment`.
 
-- Domain Pack is an industry or scene-level resource package, not a single recipe, prompt, folder, or one-off demo.
-- Domain Pack is private by default: produced for a person, team, company, or customer and used in that private context. It is not designed to be generic first.
-- Sharing or marketplace distribution is an optional later choice by the Pack owner, not the default product goal.
-- Domain Pack is the reusable workbench and delivery unit for that private context. It can be shared, deployed, upgraded, versioned, and rolled back.
-- A Domain Pack can contain runnable Recipes, Memory assets, Connectors, interface/workspace configuration, permissions, evaluation assets, and version metadata.
-- Recipe is the method asset inside the Domain Pack: reusable task method, rubric, strategy, flow, expert judgment structure, and failure-correction rule.
-- Memory is the factual/context asset: enterprise, project, customer, person, time, fact, history, decision, and source evidence.
-- Workspace is the customer runtime instance that loads a Domain Pack. Workspace may collect feedback and local updates, but it must not silently mutate the master Pack.
-- Friday is the execution substrate for running the Pack through Workspace, Room, Artifact, Memory, Recipe, Connector, review, and versioned updates.
+Ask for:
 
-Domain Pack anti-patterns:
+1. Customer segment: KA, SMB, hybrid, internal, or unknown.
+2. Scenario level: L2, L3, L2-to-L3, or unknown.
+3. Target buyer and daily user.
+4. Current alternative and buyer language.
+5. Minimum paid artifact: the smallest thing the buyer would pay for or commit resources to validate.
+6. Evidence registry: separate assumptions from customer interviews, customer data, paid signals, usage data, and artifacts.
+7. Design partner registry: name/status, budget owner, reviewer, committed resources, data availability.
+8. PMF four-factor scores: customer willingness, market clarity, technical value, GTM repeatability.
+9. Opportunity priority: `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`.
+10. Scope-reduction recommendation when scope expansion risk is high.
+11. Competitive research: user-provided competitor comparison, or agent-researched comparison matrix when the user has none.
 
-- Treating the Pack as only a prompt or one Recipe.
-- Treating Memory as a document folder.
-- Treating Workspace as the master Pack.
-- Letting a customer's Workspace changes silently contaminate the reusable Pack.
-- Designing self-learning without review, versioning, evaluation, and rollback.
-- Building a full business operating system when Friday should only own the shared artifact / conclusion layer.
+Use evidence levels:
 
-- What repeatable domain workflow is being packaged?
-- What domain materials should become Memory?
-- What should not be remembered?
-- What Recipe produces the first version?
-- What feedback loop improves the Recipe after real use?
-- What Workspace screens or artifacts does the user operate in?
+- `hypothesis`: internal assumption.
+- `anecdotal`: loose anecdote.
+- `single_case`: one traceable customer or workflow case.
+- `repeated`: repeated evidence across customers, flows, or channels.
+- `commercial_proof`: paid POC, signed commitment, expansion, or repeatable GTM proof.
 
-### 2.5 Business Feasibility and PMF Validation Gate
+Do not approve PoC unless there is a confirmed design partner, budget owner or committed resources, available data, baseline, acceptance method, timebox, and minimum paid artifact.
 
-For every one-line Domain Pack idea, customer POC, commercial product idea, or Pack prioritization discussion, start with business feasibility before product or technical detail.
+## Competitive Research Gate
 
-The first goal is to determine whether the idea is worth product attention, whether it belongs in the PMF funnel, and whether the scope is small enough to produce a high priority score. Do not ask about Recipe internals, Memory partitioning, Workspace implementation, SVG wireframes, or engineering architecture until the commercial gate is clear enough.
+In market validation, ask whether the business user already has competitor comparison.
 
-Ask the minimum questions needed to fill `commercial_context`:
+Good question:
 
-1. KA, SMB, hybrid, internal, or unknown.
-2. L2 scenario, L3 aggregation, L2-to-L3 path, or unknown.
-3. Target buyer.
-4. Deliverable and why the customer would pay.
-5. Market or customer pool, design partner, POC path, cooperation model, and pricing hypothesis.
-6. Biggest delivery risk and next sales action.
+> 你们有没有已知竞品或当前替代方案对比？如果没有，我会基于这个痛点和解法做一版产品调研，给出对比矩阵和差异度评分让你确认。
 
-Then fill `pmf_validation` using the Friday PMF framework. The evaluation unit is a use case, not a single customer request and not a technology module.
+If the user provides competitors, record them in `opportunity_assessment.competitive_research` with `status=user_provided`.
 
-Capture the evidence and PMF judgment in `pmf_validation`:
+If the user does not provide competitors, research relevant products or substitute workflows. Use current web/product research when available, and cite sources in the comparison matrix. Compare at least:
 
-1. `source_entry`: sales lead pool or market/customer lead pool.
-2. `current_state`: sales lead pool, scenario classification, pain diagnosis, product/engineering evaluation, PoC / GTM experiment, review decision, or mainline / stop-loss.
-3. Target ICP, workflow, customer pain evidence, current alternative, buyer language, competitive gap, decision chain, paid signal, owner, evidence links, and next action.
-4. Four PMF factor scores from 1 to 5: customer willingness, market clarity, technical value, and GTM repeatability.
-5. `overall_decision`: continue diagnosis, enter product/engineering evaluation, approve PoC, mainline candidate, or stop/archive.
+- Target customer.
+- Core workflow.
+- Key capabilities.
+- Pricing or packaging, if available.
+- Strengths.
+- Weaknesses.
+- Overlap score, 1-5.
+- Differentiation score, 1-5.
 
-Use these anchors:
+Use this scoring:
 
-- 1 = weak or missing evidence.
-- 2 = scattered anecdotal evidence.
-- 3 = credible single-case evidence.
-- 4 = repeated evidence across customers, flows, or channels.
-- 5 = repeated evidence plus commercial, delivery, or expansion proof.
+- `overlap_score`: 1 means barely solves the same problem; 5 means it addresses almost the same workflow and buyer need.
+- `differentiation_score`: 1 means our proposed solution has no clear difference; 5 means it has a hard-to-copy difference in workflow, data, product loop, or delivery model.
 
-Do not approve PoC unless the spec has customer evidence, paid signal or committed customer resources, available data, a defined baseline, an acceptance method, and a timebox/resource cap.
+Show the matrix to the user and ask for confirmation. Do not mark product-ready or later gates unless `competitive_research.user_confirmation=confirmed` when research is required.
 
-Do not mark a use case as a mainline candidate unless all four PMF factors are at least 4 and the evidence supports repeatability.
+## Stage Gate
 
-Use `priority_decision` to calculate and explain the opportunity priority:
+Use `stage_gate` as the single source of truth for where the spec can go next.
 
-`机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`
+Valid next gates include:
 
-Where:
+- `continue_business_validation`
+- `handoff_to_product`
+- `continue_product_shape`
+- `request_engineering_gap_review`
+- `continue_technical_spec`
+- `mark_poc_design_ready`
+- `mark_poc_execution_ready`
+- `ready_for_engineering`
+- `stop_archive`
 
-- `商业价值` means the expected customer/business value if the use case succeeds.
-- `商业信号清晰度` means how clear the buyer, budget, paid signal, decision chain, evidence links, and next sales action are.
-- `产研投入量` means the required product, design, AI engineering, engineering, QA, DevOps, integration, compliance, and maintenance effort.
+Important distinctions:
 
-This formula exists to prevent "sales wants everything" from becoming bloated product scope. If the requested scope is large, custom, or cross-system heavy, increase `产研投入量`, lower the opportunity priority score, and ask the user to cut the first version down to a sharper wedge. A high-value idea can still rank low when the commercial signal is fuzzy or the product/engineering effort is too large.
+- `handoff_to_product` means product should shape the product, not engineering should start.
+- `request_engineering_gap_review` means AI engineering may identify capability gaps, not commit to delivery.
+- `ready_for_engineering` means owners, scope, validation, implementation mapping, data policy, and gates are ready for implementation planning.
 
-When `scope_expansion_risk` is high, ask a scope-reduction question before handing off:
+If `opportunity_assessment.priority_decision.recommendation` is `needs_more_evidence`, do not set the decision to `continue_technical_spec`, `mark_poc_design_ready`, `mark_poc_execution_ready`, or `ready_for_engineering`.
 
-> 这个需求如果全做，产研投入会明显拉高，机会优先级指数会下降。第一版你更愿意砍掉哪一块来提高优先级：A. 重集成；B. 复杂 UI；C. 多角色流程；D. 自动化闭环；E. 先只做一个高价值输出？
+## Product Shape Gate
 
-After this gate, present a short decision:
+After the commercial gate, define:
 
-- `business_ready`: enough business context exists to hand JSON to product.
-- `not_ready`: commercial feasibility is still vague; continue business interview.
-- `review_required`: the idea is commercially important but needs leadership, legal, compliance, security, or delivery review before product shaping.
-- `stop/archive`: the use case lacks owner, evidence, paid signal, data, or a credible next action and should not consume product attention now.
+- `product_context`
+- `business_context`
+- `scope`
+- `workflow.canonical_workflow`
+- `friday_object_model`
+- `ui_requirements`
+- `capability_boundaries`
 
-Then ask one explicit handoff question:
+Put `spec_type` inside `product_context.spec_type`; do not output a separate top-level `spec_type`.
 
-> 商业可行性已经能形成第一版 JSON。现在是 A. 交给产品继续判断产品形态，还是 B. 我们继续把产品形态也补清楚？
+The `workflow.canonical_workflow` is the one canonical business flow. Avoid repeating the same workflow in multiple sections with slightly different wording.
 
-If the user chooses handoff, set `intake_stage` to `business_feasibility`, `handoff_options.selected_next_action` to `handoff_to_product`, and do not keep asking product/technical questions.
+Use structured workflow steps with:
 
-If the user chooses to continue, set `handoff_options.selected_next_action` to `continue_product_shape` and proceed to product shape.
+- `step_id`
+- `phase`
+- `actor`
+- `input`
+- `action`
+- `output`
+- `human_review_required`
+- `failure_handling`
 
-### 3. Classify the Spec Type
+## Product Leadership Gate
 
-Classify the requirement into one `spec_type`:
+During product shape, ask the product owner to state the technical leadership or uniqueness claim.
 
-- `customer_poc`
-- `domain_pack`
-- `product_feature`
-- `internal_tool`
-- `data_project`
-- `automation`
-- `platform_capability`
+Good question:
 
-If unclear, ask one multiple-choice question.
+> 这个产品形态的领先性或独特性是什么？请给一个论述或证明：它相对竞品、通用 LLM、客户现有流程，领先在哪里？
 
-Good:
+Record this in `product_context.technical_leadership`.
 
-> 这个需求更像哪一种？A. 给单个客户验证的 POC；B. 可复用的保险 Domain Pack；C. 内部经纪人使用的工具；D. Friday/Memory 平台能力。
+The agent must score the claim from 1 to 5:
 
-Do not continue into detailed fields until `spec_type` is clear enough.
+- 1 = mostly commodity capability; no defensible difference.
+- 2 = difference exists in packaging or UX, but core capability is easy to copy.
+- 3 = clear single-point differentiation in workflow, data, or delivery.
+- 4 = strong differentiation across workflow, data/Memory, review loop, and evaluation loop.
+- 5 = repeated proof that the product has a hard-to-copy advantage across customers or deployments.
 
-### 4. Ask One Question at a Time
+Ask the product owner to confirm or reject the score. Do not mark product-ready or later gates unless `product_context.technical_leadership.product_owner_confirmation=confirmed`, unless the field is not applicable.
 
-Ask only one question per message.
+## Domain Pack Gate
 
-Prefer multiple-choice questions when the user may not know how to answer. Use open-ended questions only when the user clearly has the detail.
+For Domain Pack specs, do not treat the Pack as a single prompt or Recipe.
 
-Use this default order, but skip fields already answered:
+Model these explicitly in `friday_object_model`:
 
-1. Business feasibility, if the idea is a Domain Pack candidate, customer POC, commercial product idea, or prioritization candidate.
-2. Product basis.
-3. Product shape: spec type, user/scenario, business objects, scope, workflow, UI need.
-4. Handoff to product or continue to technical spec.
-5. Domain Pack / Memory / Recipe / Workspace fit, if applicable.
-6. Input materials.
-7. Workflow details.
-8. Acceptance standards.
-9. Testing standards.
-10. Operation standards.
-11. Capability boundaries.
-12. Review gates.
-13. Handoff to technology or continue technical detail.
-
-Do not mechanically ask every field. Ask the next question that most reduces ambiguity or risk.
-
-### 5. Pull Evidence, Not Opinions
-
-Business users often state conclusions. Convert conclusions into evidence.
-
-If the user says "客户很需要", ask for customer quote, workflow observation, failed workaround, or commercial signal.
-
-If the user says "提升效率", ask for baseline time, target time, and measurement method.
-
-If the user says "做一个 agent", ask what human workflow the agent replaces or assists.
-
-If the user says "资料很多", ask what kinds of files, who owns them, update frequency, and whether they can be uploaded or searched.
-
-If the user says "给客户方案", ask whether it is advisory material, regulated recommendation, quote/proposal, or final sales document.
-
-### 6. Maintain a Working Spec
-
-Maintain a working draft internally while interviewing.
-
-After every 3-5 user answers, summarize:
-
-- Confirmed facts
-- Still unclear
-- Current risk or decision needed
-- Next question
-
-Keep summaries short enough that a business user can correct them quickly.
-
-### 6.5 Identify Business Objects
-
-Before asking implementation questions, identify the business objects the spec is really about.
-
-Examples:
-
-- A stable product library.
-- A single customer case.
-- A generated proposal draft.
-- A reusable Domain Pack candidate.
-- An audit log.
-
-If a requirement includes both a durable asset and a generated artifact, represent both explicitly. Do not hide them inside one generic "feature" field.
-
-For the insurance example, the durable asset is the versioned insurance product library. The generated artifact is the editable customer proposal draft. The future reusable asset is the insurance Domain Pack.
-
-### 7. Inspect Technical Context When Needed
-
-If the requirement mentions an existing system, repo, API, MCP tool, Memory, Friday, Agent, Recipe, Domain Pack, Workspace, document upload, CRM, policy database, or customer system, inspect the relevant local code/docs before filling technical boundaries.
-
-For Friday Memory / memory-connector style work, use these boundary rules unless current code/docs prove otherwise:
-
-- Memory stores, ingests, recalls, ranks, and assembles evidence.
-- Memory is not the business workflow owner.
-- Agent or Recipe decides when to call Memory and how to turn recalled evidence into an artifact.
-- Product layer owns UI, proposal editing, workflow state, approval, packaging, and customer-facing experience.
-- Customer business systems own authoritative policy, pricing, eligibility, compliance, and final sales record unless the spec explicitly includes integration.
-
-Do not promise capabilities such as pricing, compliance approval, plan recommendation, CRM writeback, or customer-facing quote generation unless the spec includes data source, owner, validation method, and review gate.
-
-### 7.5 Domain Pack Design Gate
-
-If `product_context.build_target` is `domain_pack` or the user says the result should become a reusable Domain Pack, the spec must include `domain_pack_context`.
-
-Do not enter this gate until the business feasibility gate is either `business_ready` or explicitly skipped because the user is not discussing commercial prioritization.
-
-Before Recipe, Memory, Connector, and Workspace details, confirm the product shape:
-
-1. Is this Pack a KA custom/private-delivery Pack, SMB self-serve Pack, hybrid Pack, internal Pack, or demo Pack?
-2. Is it one L2 scene, or an L3 solution composed from several L2 scenes?
-3. If L3, which L2 scenes compose the closed business loop?
-4. Does the product team receive the JSON now, or should intake continue into technology detail?
-
-Ask these questions before final JSON:
-
-1. What industry or scene-level workflow is being packaged, and why is it reusable across customers or teams?
-2. What is the Pack's private production/use boundary: individual, team, company, customer deployment, internal demo, or shared Pack after the owner chooses to publish it?
-3. What Memory assets are part of the Pack?
-4. What facts, customer case details, private transcripts, salaries, medical data, pricing, or one-off project context must not become reusable Memory?
-5. Which runnable Recipes are in the Pack, and which one creates the first useful output?
-6. Which Connectors are required, and which external systems remain authoritative?
-7. What Workspace instance is created when the Pack is loaded?
-8. What Rooms and Artifacts exist inside that Workspace? A Room should usually be one real task instance around one shared artifact, not a generic department room.
-9. What human review updates a Recipe, Memory asset, rubric, or Pack version?
-10. What self-learning signal is allowed, what only creates an update candidate, and what requires explicit approval?
-11. What versioning, release, upgrade, rollback, and customer-instance policy applies?
-12. What evaluation assets prove the Pack works: golden tasks, rubrics, failure cases, acceptance checklist, regression set?
-13. What Workspace screens, artifacts, or controls does the user need?
-
-The first Recipe should usually be simple and reviewable. Do not design a self-learning autonomous system by default. Prefer: generate first artifact -> human edits/reviews -> capture approved correction -> update Recipe or Memory after review.
-
-For Domain Pack specs, make the following distinction explicit:
-
-| Object | Owns |
+| Object | Purpose |
 | --- | --- |
-| Domain Pack | private reusable workbench/package, recipe list, memory scope, connector list, UI config, permission scope, version, delivery/sharing metadata |
-| Recipe | task method, rubric, execution steps, constraints, required evidence, review hints |
-| Memory | durable facts, context, source-backed history, decisions, reusable domain knowledge |
-| Evidence / References | original source snippets and files used for traceability, not all loaded into runtime context |
-| Workspace | customer/team instance that loads a Pack, runs rooms/artifacts, captures local feedback |
-| Room | one real task instance around one target artifact or conclusion |
-| Artifact | draft, report, plan, decision record, feedback summary, or other reviewable output |
+| Workspace Memory | Reusable facts, source-backed history, confirmed preferences, domain knowledge |
+| Task | The user's real work instance |
+| Artifact | Reviewable output such as draft, report, proposal, decision record |
+| Recipe | Reusable method, rubric, flow, constraints, correction rules |
+| Feedback/Comment | Human review tied to Artifact, used to create update candidates |
+| Room | One task instance around one shared Artifact or conclusion |
 
-### 7.6 UI Wireframe Gate
+The object relationship must state the loop:
 
-If the feature has a UI, dashboard, workspace, editor, approval screen, or visual workflow, create a low-fidelity wireframe before final JSON and ask the user to confirm it.
+`Task -> Artifact -> Feedback/Comment -> human-confirmed Recipe or Memory update candidate`
 
-The wireframe must include a produced `.svg` image artifact. Markdown, Mermaid, or ASCII wireframes may be used as explanatory companions, but they do not satisfy the UI wireframe requirement by themselves.
+Workspace changes must not silently mutate the master Pack.
 
-The purpose is not visual polish; the purpose is to confirm object relationships, screen flow, and user intent.
+## Knowledge And Memory Policy
 
-At minimum, discuss:
+Use `knowledge_and_memory_policy` to decide what can be remembered.
 
-- Primary screens.
-- Left/right panel or list/detail layout.
-- Main objects shown on each screen.
-- Critical actions.
-- Which AI suggestions are editable, confirmable, or only informational.
+For each `memory_write_rules[]` item, specify:
 
-Do not mark a UI-bearing spec `engineering_ready` or `review_required` if no `.svg` wireframe artifact has been produced and referenced in `ui_requirements.wireframe_artifacts`.
+- `source_type`
+- `write_allowed`
+- `requires_human_approval`
+- `target_scope`
+- `redaction_required`
+- `rollback_method`
 
-If you save the final JSON to disk and the spec has UI, run `scripts/validate_spec.py`; it enforces that `ui_requirements.wireframe_artifacts` includes an existing `.svg` file or an `.svg` URL.
+If `write_allowed=true`, require human approval and rollback method. Customer private data, health data, salaries, personal identifiers, and unrelated personal information should generally be task context only or not allowed.
 
-### 8. Scope Check
+## UI Wireframe Gate
 
-Before producing final JSON, check whether the request is one spec or multiple specs.
+If the feature has a UI, dashboard, workspace, editor, approval screen, or visual workflow:
 
-Split the request if it contains multiple independent workflows, users, data sources, products, compliance regimes, or delivery paths.
+1. Produce a low-fidelity `.svg` wireframe.
+2. Add the file path to `ui_requirements.wireframe_artifacts`.
+3. Set `wireframe_status` to `drafted` until the user confirms it.
+4. Do not mark `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready` until `wireframe_status=reviewed`.
 
-If the request has two tightly coupled tracks, such as "maintain a product library" and "generate a customer proposal from that library", keep them in one spec only when the first release needs both to prove value. In that case, add a `spec_decomposition.recommended_followups` section so engineering can later split work cleanly.
+Markdown, Mermaid, or ASCII diagrams can explain the UI, but they do not satisfy the SVG requirement.
 
-Say:
+## Technical Context Gate
 
-> 这个需求现在包含多个独立交付对象，直接放进一个 spec 会让产研边界不清。我建议拆成以下 spec。
+If the requirement mentions an existing product, repo, API, MCP tool, Memory, Friday, Agent, Recipe, Domain Pack, Workspace, document upload, CRM, policy database, or customer system, inspect local docs/code before filling `implementation_mapping`.
 
-Then ask which one to complete first.
+Separate:
 
-### 9. Readiness Decision
+- existing capability
+- partial capability
+- missing API
+- external authoritative system
+- unknown owner or uncertainty
 
-Before final output, assign one readiness label:
+Do not promise pricing, compliance approval, plan recommendation, CRM writeback, or customer-facing quote generation unless the spec includes data source, owner, validation method, and review gate.
 
-- `not_ready`: too vague; continue business interview.
-- `business_ready`: business scenario and value are clear; product review needed.
-- `product_ready`: commercial feasibility and product shape are clear enough for technology review, but technical details may still need expansion.
-- `engineering_ready`: scope, workflow, acceptance, testing, and operation standards are clear.
-- `review_required`: high-risk spec requiring technical committee, QA, DevOps, security, compliance, or business decision review.
+## Technical Design Scoring Gate
 
-Do not call a spec `engineering_ready` if the data source, workflow, acceptance standards, and operation standards are still unknown.
+When the user moves from engineering gap review to technical design, read source code and architecture docs before scoring the design.
 
-Do not call a spec `business_ready` if `commercial_context` lacks target buyer, deliverable, willingness-to-pay reason, delivery risk, or next sales action.
+Fill `implementation_mapping.source_code_review`:
 
-Do not call a spec `business_ready` if `pmf_validation` lacks pain evidence, current alternative, buyer language, decision chain, paid signal, owner, evidence links, PMF factor scores, or next action.
+- `required=true`
+- `status=completed` before technical design or delivery plan
+- `paths_read` with local code/doc paths
+- `summary` with what the code proves
+- `unread_required_paths` empty before technical design can pass
 
-Do not call a spec `product_ready` if product basis, spec type, user/scenario, scope boundary, business objects, UI need, and Domain Pack product shape are still unknown.
+Then score `implementation_mapping.technical_design_assessment`.
 
-Do not call a Domain Pack spec `engineering_ready` if Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace surface are unknown.
+Use these dimensions, each 1-5:
 
-Do not call a UI-bearing spec `engineering_ready` if wireframes have not been shown and confirmed.
+- `architecture_fit`: whether the design fits existing Friday architecture and ownership boundaries.
+- `code_reuse`: whether existing code/docs/APIs can be reused instead of building a parallel system.
+- `integration_complexity`: lower complexity earns higher score; heavy cross-system coupling lowers score.
+- `data_and_memory_fit`: whether data, Memory scope, traceability, and write rules are clear.
+- `security_and_compliance`: whether permissions, privacy, audit, and compliance review are addressed.
+- `testability`: whether the design can be evaluated with fixtures, metrics, and regression.
+- `operability`: whether monitoring, fallback, support, and rollback are defined.
+- `delivery_risk`: lower delivery uncertainty earns higher score.
 
-### 9.5 Finalization Gate
+Overall `ai_score` should reflect the weakest major risk, not the average only. A design with one blocking compliance or architecture issue should not score above 3.
 
-Before outputting final JSON, ask one explicit finalization question unless the user already asked for the final JSON:
+Ask the AI engineer to confirm the score. Do not mark `engineering_ready` unless `source_code_review.status=completed`, required dimensions are scored, and `technical_design_assessment.ai_engineer_confirmation=confirmed`.
 
-Use the question that matches the current stage:
+## QA And PoC Gate
 
-- Business feasibility gate:
-  > 商业可行性已经能形成第一版 JSON。现在是直接交给产品，还是继续把产品形态补清楚？
-- Product shape gate:
-  > 产品形态已经能形成第一版 JSON。现在是交给技术，还是继续把技术规格补清楚？
-- Technical spec gate:
-  > 我已经能形成工程可评审 spec。现在是直接输出 JSON，还是再补一个具体字段，例如导出格式、版本规则、owner 姓名或测试样例？
+Use `validation_plan`, not scattered acceptance/testing fields.
 
-If the user says to continue, ask the next missing high-value question. If the user says to output, produce the final JSON.
+`poc_design_ready` requires:
 
-### 10. Final Output
+- scenario
+- golden cases or fixture plan
+- rubric
+- failure cases
+- acceptance method
+- metric definitions
+
+`poc_execution_ready` additionally requires:
+
+- available or approved assets
+- owners
+- environment
+- data permission
+- privacy approval
+- regression set
+- blocking error definition
+- observability or audit events
+
+Each metric must include:
+
+- `metric_id`
+- definition
+- baseline
+- target
+- measurement method
+- fixture id
+- owner
+- pass/fail rule
+
+## Final Output
 
 When enough information is available, output:
 
 1. Short human-readable summary.
 2. Completed `spec.json` following `references/spec-schema.json`.
-3. Missing fields, if any.
-4. Review recommendation: who must review before engineering starts.
-5. Readiness label.
+3. Missing fields.
+4. Review recommendation.
+5. Current `stage_gate`.
 
-Use `null`, empty arrays, or `"unknown"` for missing facts. Do not invent facts. List important unknowns explicitly.
+Use `null`, empty arrays, or `"unknown"` for missing facts. Do not invent facts. Important unknowns must appear in `missing_fields`.
 
-Before showing the final answer, load `references/spec-schema.json` and check the final JSON against its top-level `required` list. If any required top-level key is missing, add it with the best known facts or explicit unknowns. Do not omit a required section just because the interview did not cover it.
-
-If you save the JSON to disk, run:
-
-```bash
-python3 scripts/validate_spec.py <path-to-spec.json>
-```
-
-Run this from the skill directory, or pass `--schema <path-to-spec-schema.json>` if running elsewhere.
-
-Required top-level sections are:
+Required top-level sections:
 
 - `spec_version`
 - `spec_id`
 - `title`
 - `status`
 - `priority`
-- `intake_stage`
-- `commercial_context`
-- `handoff_options`
+- `stage_gate`
+- `opportunity_assessment`
 - `product_context`
-- `spec_type`
 - `owners`
 - `business_context`
-- `business_objects`
 - `scope`
-- `input_materials`
 - `workflow`
-- `domain_pack_context`
-- `priority_decision`
+- `friday_object_model`
+- `knowledge_and_memory_policy`
 - `ui_requirements`
 - `capability_boundaries`
-- `evidence_requirements`
-- `data_governance`
-- `acceptance_standards`
-- `testing_standards`
+- `validation_plan`
 - `operation_standards`
+- `implementation_mapping`
 - `review_gates`
 - `missing_fields`
-- `readiness_label`
 
-For spec v0.2 and later, also include these sections when relevant to the requirement:
+If saving JSON to disk, run:
 
-- `spec_decomposition`
+```bash
+python3 scripts/validate_spec.py <path-to-spec.json>
+```
 
-The final JSON should include these high-signal sections when relevant:
+## Final Self-Review
 
-- `intake_stage`: whether the current output is business feasibility, product shape, or technical spec.
-- `commercial_context`: KA/SMB, L2/L3, buyer, deliverable, willingness to pay, POC, pricing, risk, and sales action.
-- `pmf_validation`: PMF state, pain evidence, current alternative, buyer language, decision chain, paid signal, four-factor scores, evidence links, owner, and next action.
-- `handoff_options`: whether the user chose to hand off to product, continue product shape, hand off to technology, or continue technical spec.
-- `product_context`: which company product form the work is based on.
-- `domain_pack_context`: Memory, non-memory, Recipe, self-learning, and Workspace decisions for Domain Pack work.
-- `priority_decision`: whether a Domain Pack candidate should be top 8, backlog, rejected, or needs more evidence.
-- `ui_requirements`: whether UI exists, wireframe status, confirmed screens, and the `.svg` wireframe artifact path.
-- `business_objects`: durable assets and generated artifacts.
-- `spec_decomposition`: current spec choice and recommended follow-up specs.
-- `capability_boundaries`: what belongs to Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
-- `evidence_requirements`: what must be traceable to source material.
-- `data_governance`: sensitivity, versioning, retention, and audit requirements.
+Before returning or saving the final spec, check:
 
-Use structured workflow step objects with actor, input, action, output, review requirement, and failure handling. Avoid a bare list of step strings in final JSON.
-
-### 11. Final Self-Review
-
-Before saving or returning the final spec, do a short self-review:
-
-1. JSON parses as JSON.
+1. JSON parses.
 2. All required top-level keys are present.
-3. `intake_stage` and `handoff_options.selected_next_action` match the user's chosen handoff point.
-4. If the current stage is business feasibility, `commercial_context` contains buyer, deliverable, willingness-to-pay reason, POC path, risk, and next sales action.
-5. If the current stage is business feasibility, `pmf_validation` contains pain evidence, current alternative, buyer language, decision chain, paid signal, evidence links, owner, PMF factor scores, and next action.
-6. `product_context.build_target` is explicit before product or technical handoff.
-7. If Domain Pack is involved, `commercial_context` distinguishes KA/SMB/hybrid and L2/L3 before technical details.
-8. If Domain Pack technical detail is involved, `domain_pack_context` covers Memory assets, non-memory boundaries, first Recipe, iteration loop, and Workspace.
-9. If UI is involved, `ui_requirements.wireframe_status` is reviewed or unresolved, not silently skipped, and `ui_requirements.wireframe_artifacts` includes a produced `.svg` file.
-10. `business_objects` separates durable assets from generated artifacts.
-11. `workflow.steps` uses structured step objects, not only strings.
-12. `capability_boundaries` separates Memory, Agent/Recipe, product UI, external systems, and human/compliance review.
-13. `evidence_requirements` states what needs source traceability.
-14. `data_governance` states sensitivity, permissions, versioning, retention, or audit requirements.
-15. `readiness_label` matches the actual risk level.
-16. Important unknowns are explicit instead of silently invented.
-17. Unknown owners, export format, retention, permission model, acceptance method, product basis, Domain Pack boundaries, or UI wireframes prevent `engineering_ready`.
-
-If the environment allows shell commands and you saved the JSON to a file, run `python3 -m json.tool <file>` before claiming it is valid.
-
-If the environment allows running the bundled validator, prefer `scripts/validate_spec.py` because it checks the spec-intake contract, not just JSON syntax.
-
-## Minimum Required Fields
-
-A spec is not ready for engineering unless these are filled:
-
-- `title`
-- `spec_type`
-- `owners.business_owner`
-- `owners.product_owner`
-- `business_context.user_scenario`
-- `business_context.target_outcome`
-- `pmf_validation.pain_evidence`
-- `pmf_validation.evidence_links`
-- `scope.in_scope`
-- `scope.out_of_scope`
-- `workflow.steps`
-- `acceptance_standards`
-- `testing_standards`
-- `operation_standards`
-- `review_gates.spec_review`
+3. `stage_gate.decision` matches the real next gate.
+4. `needs_more_evidence` does not move to engineering delivery.
+5. Evidence refs point to `evidence_registry`.
+6. PMF scores >= 3 have non-assumption evidence.
+7. `competitive_research` has a competitor/substitute matrix, differentiation score, and user confirmation when research is required.
+8. `product_context.technical_leadership` has a claim, proof or argument, agent score, and product owner confirmation before product-ready or later gates.
+9. Domain Pack specs declare the Friday object loop.
+10. Memory write rules have approval, target scope, redaction, and rollback.
+11. UI specs include a produced SVG and reviewed status before product-ready or later gates.
+12. `validation_plan` separates PoC design readiness from execution readiness.
+13. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
+14. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
+15. `engineering_ready` has real owners, no missing fields, and no missing or unknown implementation capabilities.
 
 ## Style
 
-Be direct and concrete.
-
-Do not use abstract product jargon when a concrete question works better.
-
-Bad:
-
-> 请描述你的价值主张。
-
-Good:
-
-> 谁每天会用它？他现在用什么办法完成这件事？哪里最慢或最容易错？
-
-Bad:
-
-> 请提供技术架构。
-
-Good:
-
-> 这些保险产品资料现在在哪里？PDF、网页、Excel、系统 API，还是销售手册？谁负责更新？
-
-## Example Opening
-
-User:
-
-> 我是一个保险经纪人，我要给客户销售报销组合，我手里有一堆公司给的保险产品资料，如何快速给客户定制化方案？
-
-Assistant:
-
-> 我先理解成：经纪人希望把分散的保险产品资料和客户情况结合起来，更快生成一份可解释、可销售、但需要人审的报销组合方案。这个需求可能是 `internal_tool`，也可能是可复用的保险 `domain_pack`。先确认一个问题：第一版主要是给经纪人内部使用，还是要直接生成能发给客户的正式方案？
+- Use concrete business language.
+- Prefer multiple-choice questions for non-technical users.
+- Ask open questions only when the user likely has the detail.
+- Do not dump a giant JSON template at the start.
+- Do not hide uncertainty. Make it a blocker or missing field.

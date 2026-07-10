@@ -1,45 +1,54 @@
 # Spec Intake Question Bank
 
-Use this as a menu, not a script. Ask the next question that most reduces ambiguity or risk.
+Use this as a menu, not a script. Ask the next question that most reduces ambiguity or risk. Ask one question at a time.
 
-## Classify Spec Type
+Before asking:
 
-- 这个需求第一版应该基于我们哪个产品形态来做：Friday Agent、Domain Pack、Friday Memory、MorningStar、内部工具、全新独立产品，还是 demo？
-- 这个需求是为了验证产品方向、交付客户 POC、沉淀可复用 Domain Pack，还是解决内部流程效率？
-- 如果不是基于现有产品，为什么需要全新独立产品？
-- 这个需求更像给单个客户验证，还是要沉淀成可复用能力？
-- 第一版是内部工具、客户 POC、产品功能、自动化任务、数据项目，还是平台能力？
-- 成功后是给一个销售团队用，还是要变成 Domain Pack 给多个客户/行业复用？
+1. Extract every explicit fact the user already gave.
+2. Map those facts to spec fields.
+3. State any clear conclusion and skip the corresponding question.
+4. Ask only for missing, conflicting, or high-risk information.
+
+If a user gives a paragraph, meeting note, transcript excerpt, or partially structured request, do not restart from "one-line requirement" mode. Summarize what is already known, list the remaining unknowns briefly, then ask the single most important next question.
 
 ## Product Basis
 
-- 这是 Friday Agent 要执行的 workflow，还是 Friday Memory 要提供的记忆/证据能力？
+- 这个需求第一版应该基于我们哪个产品形态来做：Friday Agent、Domain Pack、Friday Memory、MorningStar、内部工具、全新独立产品，还是 demo？
 - 这是一个 Domain Pack，还是只是未来可能沉淀成 Domain Pack？
-- 这是 MorningStar 的产品能力，还是公司内部运营工具？
-- 这是客户 demo，还是要成为可长期使用的产品？
+- 如果不是基于现有产品，为什么需要全新独立产品？
 - 如果是 demo，demo 要证明什么，不证明什么？
 
-## Business Feasibility
+## Opportunity Assessment
 
-- 这个想法现在是面向 KA 大客户、SMB 自助客户、两者都有可能，还是内部使用？
-- 这是一个 L2 单点场景，还是多个 L2 拼起来的 L3 行业主流程？如果是 L3，包含哪几个 L2？
+- 这个想法现在面向 KA、SMB、hybrid、内部使用，还是未知？
+- 这是一个 L2 单点场景，还是多个 L2 拼起来的 L3 行业主流程？
 - 谁会付钱？谁每天使用？买方和使用者是不是同一个人？
-- 客户现在痛在哪里？不用我们时，他现在靠什么方案解决？
-- 有什么真实证据说明这不是内部想象：客户会议、销售线索、付费 POC、客户原话、使用数据，还是其他材料？
-- 我们第一版到底交付什么：一个可运行 Pack、一个工作台、一个 POC、一个报告流、一个自动化流程，还是一个 demo？
+- 第一版最小可付费交付物是什么？客户愿意为哪一个具体 Artifact 付钱或投入资源验证？
 - 客户为什么愿意付钱？是省人、省时间、提转化、降风险、增加收入，还是满足刚性合规/交付要求？
 - 目标客户池在哪里？有没有已知设计伙伴或种子客户？
 - POC 怎么跑通？谁参与，跑多久，用什么数据，什么结果算继续推进？
-- 合作模式和价格假设是什么：私有化项目、订阅、按 Pack 收费、按席位、按 POC，还是未知？
-- 最大交付风险是什么：数据拿不到、效果不可验证、集成太重、客户预算不确定、业务 owner 不明确，还是合规风险？
+- 最大交付风险是什么：数据拿不到、效果不可验证、集成太重、预算不确定、owner 不明确，还是合规风险？
 - 下一步销售动作是什么：约客户确认、拿样例数据、确认预算、定 POC 范围、找设计伙伴，还是先内部评审？
-- 这个候选项建议进前 8、放 backlog、先拒绝，还是缺证据后再判断？
+
+## Evidence Registry
+
+- 现在有哪些证据是事实，哪些只是判断或假设？
+- 每条证据来自哪里：客户访谈、客户数据、付费信号、使用数据、历史 artifact、内部判断，还是其他？
+- 这条证据是 hypothesis、anecdotal、single_case、repeated，还是 commercial_proof？
+- 哪条证据能支撑客户愿意买？哪条支撑市场讲得清？哪条支撑技术价值？哪条支撑 GTM 可复制？
+- 如果没有可追溯证据，是否应该把当前状态降级为 `needs_more_evidence`？
+
+## Design Partner Registry
+
+- 真实设计伙伴是谁？状态是 target、contacted、confirmed、rejected，还是 unknown？
+- 预算 owner 是谁？
+- 谁负责 review 生成结果？
+- 客户愿意承诺哪些资源：真实资料、脱敏样例、review 时间、付费 POC、采购流程？
+- 数据是否可用：yes、partial、no，还是 unknown？
 
 ## PMF Validation
 
-- 这个 use case 的来源入口是什么：销售线索池，还是市场/客户线索池进入场景归类？
-- 这个 use case 现在处在哪个 PMF 状态：销售线索池、场景归类、痛点诊断、产研评估、PoC/GTM 实验、复盘判定，还是主线/停损？
-- 这个 use case 的评估单位是什么：一个客户需求、一个可复用工作流，还是一个技术模块？如果不是可复用工作流，怎么改写成 use case？
+- 这个 use case 的评估单位是什么：一个客户需求、一个可复用工作流，还是一个技术模块？
 - Target ICP 能否同时说清行业、公司规模、业务成熟度和预算类型？
 - 买方原话是什么？销售或客户能否用同一种语言复述这个痛点？
 - 当前替代方案是什么？人工、GPT、RAG、已有 SaaS、外包，还是内部流程？
@@ -47,51 +56,98 @@ Use this as a menu, not a script. Ask the next question that most reduces ambigu
 - 决策链是什么：谁感知痛点，谁评估，谁审批，谁付费，谁阻塞？
 - 付费信号是什么：预算金额或区间、付费 POC、采购阶段、商业 deadline，还是客户愿意投入数据和人力？
 - 四因子里当前最低分是哪一项：客户愿意买、市场讲得清、技术价值，还是 GTM 可复制？
-- 如果要进入 PoC，是否已经有客户证据、付费信号、可用数据、baseline、验收方式和时间盒/资源上限？
-- 如果要成为主线候选，哪些证据能证明它不是单客户定制，而是跨客户、跨流程或跨渠道可复制？
-- 这个 use case 本周的 owner 是谁？下一步动作能否在一周内判断完成或未完成？
-- 证据链接在哪里？没有可追溯证据时，只能标记为假设，不能批准 PoC 或主线化。
+- 如果要批准 PoC，是否已经有 confirmed design partner、预算 owner、可用数据、baseline、验收方式和时间盒？
 
 ## Opportunity Priority
 
-- 这个机会的商业价值打几分，为什么？它带来收入、赢单、留存、降本、提效、风控，还是战略案例？
+- 这个机会的商业价值打几分，为什么？
 - 商业信号清晰度打几分，为什么？buyer、预算、决策链、付费信号、证据链接和下一步销售动作是否都清楚？
 - 产研投入量打几分，为什么？需要多少产品、设计、AI 工程、工程、QA、DevOps、集成、合规和长期维护？
-- 当前 `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量` 大概是多少？
-- 如果销售说“都要”，哪些部分会显著抬高产研投入量：多系统集成、复杂 UI、多角色权限、自动闭环、跨平台适配、合规审查，还是长期运维？
+- 当前 `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量` 是多少？
+- 如果销售说“都要”，哪些部分会显著抬高产研投入量？
 - 第一版砍掉哪一块最能提高机会优先级指数，同时不损害核心商业验证？
 - 是否可以先做一个更窄的 wedge：一个 ICP、一个角色、一个工作流、一个输出、一个真实数据集、一个验收标准？
-- 这个需求为什么应该排在其他机会前面？如果不能回答，是缺商业价值、缺商业信号，还是产研投入太大？
 
-## Handoff Gate
+## Competitive Research
 
-- 商业可行性已经能形成第一版 JSON。现在是交给产品继续判断产品形态，还是继续把产品形态补清楚？
-- 产品形态已经能形成第一版 JSON。现在是交给技术评审，还是继续把技术规格补清楚？
+- 你们有没有已知竞品或当前替代方案对比？如果没有，我需要自动调研相关产品并给出对比矩阵。
+- 客户现在拿我们和谁比：通用 LLM、已有 SaaS、内部系统、外包服务，还是人工流程？
+- 竞品的目标客户是谁？核心 workflow 是什么？
+- 竞品最强的 3 个能力是什么？
+- 竞品最弱或不满足客户痛点的地方是什么？
+- 相比竞品，我们和它的重叠度是几分，1 表示几乎不同，5 表示几乎同一个工作流？
+- 相比竞品，我们的差异度是几分，1 表示没明显差异，5 表示有难复制的 workflow/data/product loop/delivery model 差异？
+- 这份竞品矩阵是否经过业务用户确认？如果没有，只能标记为 pending，不能进入 product_ready。
+
+## Stage Gate
+
 - 当前 JSON 是给谁看的：业务负责人、产品负责人、技术负责人、QA/DevOps，还是高层决策？
+- 现在只能继续取证，还是已经可以交给产品？
+- 产品形态是否足够清楚，可以让 AI 工程做技术缺口评审？
+- 这是请求技术缺口评审，还是请求工程排期？两者不能混用。
+- 当前是否具备 PoC 设计 ready？是否具备 PoC 执行 ready？
 - 如果现在交接，接收方下一步最需要回答哪个问题？
-- 如果继续完善，下一步最值得补的是产品边界、UI 线框、数据来源、Recipe/Memory、测试标准，还是交付风险？
+- 当前哪些 next actions 应该被 blocked，避免被误解为可以开工？
+
+## Product Shape
+
+- 谁每天会用它？
+- 使用发生在客户沟通前、沟通中、还是沟通后？
+- 现在这件事怎么做？靠 Excel、PDF、销售经验、群里问人，还是已有系统？
+- 第一版成功后，用户手里会多出什么具体产物？
+- 输出是内部建议、客户方案、正式报价、还是销售话术？
+- 第一版一定要做什么？
+- 哪些事情明确不做？
+- 这个需求需要拆成多个 spec 吗？如果不拆，第一版为什么必须一起做？
+
+## Product Technical Leadership
+
+- 这个产品形态的技术领先性或独特性是什么？
+- 相对竞品、通用 LLM、客户现有流程，它领先在哪里？
+- 领先性来自模型能力、数据闭环、Memory、Recipe、Artifact review、评测体系、交付模式，还是其他？
+- 产品 owner 能给出什么证明或论述？
+- spec agent 给这个领先性打几分：1 表示通用能力，5 表示跨客户/部署被证明的难复制优势。
+- 产品 owner 是否确认这个分数？如果不确认，原因是什么？
+
+## Workflow
+
+- 这个 spec 的唯一 canonical workflow 是什么？
+- Agent 需要替代哪一步，辅助哪一步，人必须审哪一步？
+- 人审点是在推荐前、生成方案后、还是发给客户前？
+- 如果资料找不到、客户信息不完整、条件冲突，应该怎么处理？
+- 输出要能追溯到哪些原文证据？
+
+## Friday Object Model
+
+- 这个需求里的 Task 是什么真实工作实例？
+- 最核心的 Artifact 是什么？它是否可打开、可审阅、可修改、可导出？
+- Recipe 沉淀的是方法、rubric、流程和纠偏规则，还是事实材料？
+- 哪些事实、历史、偏好、决策应该进入 Workspace Memory？
+- Feedback/Comment 如何绑定 Artifact？
+- 哪些反馈只留在 Workspace，哪些能成为 Recipe 或 Memory 更新候选？
+- Room 是围绕哪个真实任务实例和 Artifact 展开的？
+- Task -> Artifact -> Feedback -> Recipe/Memory 的闭环在哪里？
 
 ## Domain Pack
 
 - 这个 Domain Pack 是给个人、团队、公司、客户私有使用，还是 owner 做好后选择分享出去？
 - 这个 Pack 是 KA 团队定制生产，还是 SMB 用户在平台自助创建？
-- 这个 Pack 是 L2 单点场景，还是多个 L2 聚合出的 L3 行业主流程？
-- 如果是 L3，它的聚合逻辑是什么：同一客户不同部门、同一行业连续流程、同一角色多个任务，还是同一数据资产的多种动作？
-- 这个 Pack 的行业/场景边界是什么？它为什么不是单个 recipe、单个 prompt、一次性 demo，或为了通用 marketplace 先设计的包？
-- 这个 Domain Pack 要包装哪个可重复领域工作流？
+- 这个 Pack 的行业/场景边界是什么？它为什么不是单个 recipe、单个 prompt、一次性 demo？
 - 这个 Pack 里至少包含哪些 Recipe、Memory、Connector、界面配置、权限和版本信息？
+- Workspace 加载这个 Pack 后，会创建什么客户/团队实例？
+- Workspace 里的本地修改如何进入待审队列？哪些必须经过发布流程才能更新主 Pack？
+- Domain Pack、Recipe、Workspace 如何标版本？如何发布、升级、回滚？
+
+## Knowledge And Memory Policy
+
 - 哪些领域资料、模板、规则、案例、反馈应该成为 Memory 资产？
 - 哪些只是单次客户/候选人/项目上下文，不能进入长期 Memory？
-- 第一版 Recipe 输入是什么，输出是什么，人在哪里 review？
-- Recipe 的第一版由谁生产：业务专家、产品、AI 工程师，还是已有材料自动生成？
-- Recipe 里沉淀的是方法、rubric、流程和纠偏规则，还是事实和客户材料？事实材料应该进 Memory 还是 Evidence？
-- Workspace 加载这个 Pack 后，会创建什么客户/团队实例？Room 是围绕哪个真实任务实例和 Artifact 展开的？
-- Workspace 里的本地修改如何进入待审队列？哪些可以更新 Workspace，哪些必须经过发布流程才能更新主 Pack？
-- 用户修改输出后，哪些修改可以作为学习信号？谁批准后才能更新 Recipe 或 Memory？
-- Domain Pack、Recipe、Workspace 如何标版本？如何发布、升级、回滚？客户是否需要手动确认升级？
-- 这个 Pack 的测试资产是什么：golden tasks、rubrics、失败样例、验收 checklist、回归集？
-- Domain Pack 的 Workspace 里用户需要看到哪些对象、状态、操作和 AI 建议？
-- Domain Pack 如何从一个客户/团队扩展到多个客户/团队？哪些配置必须可变？
+- 每类来源是否允许写入 Memory？
+- 写入目标是 domain_pack_memory、workspace_memory、task_context_only、not_allowed，还是 unknown？
+- 写入是否必须人工确认？
+- 是否需要脱敏？
+- 如果误写或效果变差，如何回滚？
+- 原始证据和 Memory 摘要之间如何追溯？
 
 ## UI And Wireframe
 
@@ -100,80 +156,8 @@ Use this as a menu, not a script. Ask the next question that most reduces ambigu
 - 点击一个对象后，详情页左边/右边分别看什么？
 - 哪些 AI 建议可以直接采纳，哪些必须人工确认？
 - 哪些操作必须放在主界面，哪些可以放在设置或后台？
-- 需要生产哪些 SVG 线框图才能确认意图：列表页、详情页、配置页、roundtable 页、输出编辑页？
-- SVG 线框图文件应该保存在哪里，并如何在 spec 的 `ui_requirements.wireframe_artifacts` 中引用？
-
-## User And Scenario
-
-- 谁每天会用它？
-- 使用发生在客户沟通前、沟通中、还是沟通后？
-- 现在这件事怎么做？靠 Excel、PDF、销售经验、群里问人，还是已有系统？
-- 一次完整工作从拿到客户需求到输出方案，通常要经过哪些步骤？
-
-## Pain Evidence
-
-- 最近一次真实案例是什么？花了多久？哪里卡住？
-- 客户或一线销售原话是什么？
-- 现在方案失败在哪里：找资料慢、产品组合不准、解释不清、合规担心、还是跟进丢失？
-- 有没有预算、商机、客户 deadline、POC 要求，能证明这不是内部想象？
-
-## Target Outcome
-
-- 第一版成功后，用户手里会多出什么具体产物？
-- 输出是内部建议、客户方案、正式报价、还是销售话术？
-- 速度要从多久降到多久？
-- 质量怎么判断：命中客户需求、覆盖产品、解释清楚、合规审查通过、转化率提升，还是客户愿意继续聊？
-
-## Input Materials
-
-- 公司给的产品资料是什么格式：PDF、Excel、PPT、网页、系统 API、条款文本，还是销售手册？
-- 资料多久更新一次？谁是 owner？
-- 客户信息包含什么：年龄、家庭、预算、所在州/地区、已有保险、报销需求、雇主福利、健康情况？
-- 哪些信息不能进系统，或者必须脱敏？
-
-## Workflow
-
-- Agent 需要替代哪一步，辅助哪一步，人必须审哪一步？
-- 人审点是在推荐前、生成方案后、还是发给客户前？
-- 如果资料找不到、客户信息不完整、产品条件冲突，应该怎么处理？
-- 输出要能追溯到哪些原文证据？
-
-## Business Objects
-
-- 这个需求里有哪些长期资产？例如产品库、客户资料库、知识包、测试集。
-- 这个需求里有哪些每次生成的产物？例如方案草稿、对比表、报价请求、客户邮件。
-- 长期资产和单次产物的 owner 是否不同？
-- 哪些内容未来要沉淀成 Domain Pack，哪些只是当前客户的一次性材料？
-
-## Scope Boundary
-
-- 第一版一定要做什么？
-- 哪些事情明确不做：自动定价、合规承诺、替客户做最终购买决定、CRM 写回、客户自助下单？
-- 是否只覆盖某个险种、某个地区、某类客户、某些产品资料？
-- 哪些系统集成放到第二阶段？
-- 这个需求需要拆成多个 spec 吗？如果不拆，第一版为什么必须一起做？
-
-## Acceptance Standards
-
-- 多少个真实客户案例通过，才算可用？
-- 输出方案必须包含哪些部分：推荐组合、适用原因、不适用原因、风险提示、引用证据、下一步话术？
-- 允许的错误是什么，不允许的错误是什么？
-- 业务 owner 如何验收？
-
-## Testing Standards
-
-- 有没有黄金样例：客户画像 + 产品资料 + 标准答案？
-- 失败样例有哪些：信息缺失、客户预算不匹配、产品互斥、地区限制、资料过期？
-- 回归集至少覆盖哪些典型客户？
-- 每次资料更新后要重跑哪些测试？
-
-## Operation Standards
-
-- 谁可以上传资料？谁可以查看客户信息？
-- 日志里能不能出现客户隐私？
-- 需要监控什么：上传成功率、召回命中率、生成失败率、人工修改率、处理时长？
-- 出错后如何回滚到人工流程？
-- 长期资料、临时资料、生成草稿和人工修改记录分别保留多久？
+- 需要生产哪些 SVG 线框图才能确认意图：列表页、详情页、配置页、输出编辑页、review 页？
+- SVG 线框图文件应该保存在哪里，并如何在 `ui_requirements.wireframe_artifacts` 中引用？
 
 ## Capability Boundary
 
@@ -181,17 +165,48 @@ Use this as a menu, not a script. Ask the next question that most reduces ambigu
 - 哪些事情需要 Agent 或 Recipe 做判断、整理和生成？
 - 哪些事情必须由产品界面承载，例如编辑、发布、版本和权限？
 - 哪些事情必须来自外部业务系统，例如实时价格、可售状态、CRM、核保或合规结果？
+- 哪些事情必须由人或合规确认？
+- 哪些事情第一版明确不拥有？
 
-## Commercial And Reuse
+## Validation Plan
 
-- 这个能力能否变成保险经纪 Domain Pack？
-- 销售话术是什么：它到底帮经纪人省什么、卖得更好在哪里？
-- 是否可以复用为金融顾问、HR 福利顾问、企业员工福利方案？
-- 需要沉淀哪些资产：Recipe、Memory schema、Workspace 组件、测试集、销售 demo？
+- 业务如何验收第一版？
+- 产品如何验收第一版？
+- 现在只是 PoC 设计 ready，还是 PoC 执行 ready？
+- 有没有黄金样例：客户画像 + 产品资料 + 标准答案？
+- 失败样例有哪些：信息缺失、客户预算不匹配、产品互斥、地区限制、资料过期？
+- 每个指标的 metric_id、definition、baseline、target、measurement_method、fixture_id、owner、pass_fail_rule 是什么？
+- 每个测试资产的 asset_id、type、path_or_link、status、owner、version、redaction_status、linked_metrics 是什么？
+- 什么错误算 blocking error？
+
+## Implementation Mapping
+
+- 这个能力在现有 Friday 代码里已有、部分已有、缺失、外部系统负责，还是未知？
+- 现有代码或文档路径在哪里？
+- 缺哪个 API、对象模型或产品能力？
+- 哪个外部系统是权威源？
+- 技术评审现在是 `engineering_gap_review`、`technical_design`，还是 `delivery_plan`？
+
+## Technical Design Scoring
+
+- 这个阶段是否已经进入技术方案设计，还是仍然只是技术缺口评审？
+- 技术方案涉及哪些代码路径、接口、模块或架构文档？哪些已经读过？
+- 还有哪些必须读但没读的代码路径？
+- 基于源代码，技术方案和现有架构是否匹配？`architecture_fit` 打几分？
+- 现有代码可以复用多少？`code_reuse` 打几分？
+- 需要接多少外部系统？集成复杂度是否可控？`integration_complexity` 打几分？
+- 数据、Memory scope、引用和写入规则是否清楚？`data_and_memory_fit` 打几分？
+- 权限、隐私、审计、合规是否清楚？`security_and_compliance` 打几分？
+- 是否能用 fixtures、metrics、regression 做自动或半自动验证？`testability` 打几分？
+- 监控、fallback、support、rollback 是否清楚？`operability` 打几分？
+- 最大交付风险是什么？`delivery_risk` 打几分？
+- AI 工程师是否确认这个评分？如果不确认，分歧在哪里？
 
 ## Review Gates
 
 - 谁必须在开发前确认业务范围？
+- 产品必须确认哪些对象、UI、Artifact 和 scope？
+- AI 工程必须确认哪些 Memory、Recipe、Artifact、权限和引用边界？
+- QA 必须确认哪些样例、rubric、指标和阻断错误？
 - 是否需要合规/法务审查？
-- 是否需要 QA 和 DevOps 前置？
-- 是否涉及客户隐私、金融建议、医疗健康信息或跨境数据？
+- 工程启动前还有哪些条件必须满足？
