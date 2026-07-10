@@ -14,14 +14,43 @@
 8. 产品论证阶段必须判断技术领先性和独特性：产品 owner 给出论述，spec agent 打分，产品 owner 确认。
 9. 技术方案设计阶段必须读取源代码：spec agent 根据技术方案和代码事实打分，AI 工程师确认。
 10. 用 `stage_gate` 控制接力，区分产品交接、技术缺口评审、PoC 设计、PoC 执行和工程排期。
-11. 有 UI 就必须产出 SVG 线框图并让用户确认。
-12. 如果是 Domain Pack，必须明确 Workspace Memory、Task、Artifact、Recipe、Feedback/Comment、Room 的闭环。
-13. Memory 写入、自学习、隐私、人工确认和回滚必须结构化。
-14. 验收测试统一进入 `validation_plan`，区分 `poc_design_ready` 和 `poc_execution_ready`。
+11. 开场必须展示完整流程图，并用 Codex 进度工具或文本进度提示当前阶段。
+12. 阶段切换必须先给退出总结并得到用户确认，不能静默从业务验证跳到产品论证。
+13. 有 UI 就必须产出 SVG 线框图并让用户确认。
+14. 如果是 Domain Pack，必须明确 Workspace Memory、Task、Artifact、Recipe、Feedback/Comment、Room 的闭环。
+15. Memory 写入、自学习、隐私、人工确认和回滚必须结构化。
+16. 验收测试统一进入 `validation_plan`，区分 `poc_design_ready` 和 `poc_execution_ready`。
 
 ## 交互流程
 
 原则：这个流程不是固定问卷。每一轮先把用户已经说清楚的内容映射到字段；能直接判断的就给出判断；只把缺失、冲突或会影响下一关的问题拿出来问。
+
+开场要先展示完整流程，而不是直接进入提问：
+
+```mermaid
+flowchart TD
+  A["0. Product basis routing"]
+  B["1. business_feasibility"]
+  C["2. product_shape"]
+  D["3. engineering_gap_review"]
+  E["4. technical_spec"]
+  F["5. poc_design"]
+  G["6. poc_execution"]
+  H["7. engineering_delivery"]
+  A --> B --> C --> D --> E --> F --> G --> H
+```
+
+如果运行环境提供 Codex 进度工具，应在开场调用进度工具；否则每轮回答都要给出一句阶段提示，例如：
+
+```text
+当前阶段：business_feasibility；尚未进入 product_shape。
+```
+
+阶段切换必须先问用户确认，例如：
+
+```text
+我建议从 business_feasibility 切到 product_shape。已确认 X；仍未确认 Y；因此只允许产品收敛，不允许 PoC 或工程。是否确认结束业务验证？
+```
 
 ```text
 一句话需求
@@ -58,7 +87,7 @@ spec-intake/
 ├── SKILL.md - Codex/agent 实际执行该 skill 时读取的主指令。
 ├── README.md - 给人阅读的说明文档，也适合培训和推广。
 ├── references/
-│   ├── spec-schema.json - Spec Driven JSON v1.3 的结构定义和枚举。
+│   ├── spec-schema.json - Spec Driven JSON v1.4 的结构定义和枚举。
 │   └── question-bank.md - 按阶段和字段组织的问题库。
 ├── scripts/
 │   └── validate_spec.py - JSON 校验脚本，包含 stage gate、证据、UI、PoC、Memory 规则。
@@ -79,6 +108,7 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 
 - JSON 基础结构是否符合 schema。
 - `stage_gate` 是否和证据状态、优先级状态匹配。
+- 跨阶段决策是否包含 `stage_gate.stage_exit_check` 和用户确认。
 - `needs_more_evidence` 是否被错误推进到工程执行。
 - PMF 分数 >= 3 是否有非假设证据支撑。
 - 市场验证是否包含业务提供或 agent 调研的竞品矩阵、重叠度、差异度和用户确认。
@@ -147,7 +177,8 @@ spec.json
 │   ├── allowed_next_actions: array - 当前允许做的下一步。
 │   ├── blocked_next_actions: array - 当前明确禁止做的下一步。
 │   ├── blockers: array - 阻塞进入下一关的问题。
-│   └── required_owner: string|null - 下一关必须负责的人。
+│   ├── required_owner: string|null - 下一关必须负责的人。
+│   └── stage_exit_check: object - 跨阶段切换前的退出总结、确认问题、确认人和下一阶段。
 │
 ├── opportunity_assessment: object - 商业可行性、PMF 和优先级判断。
 │   ├── commercial_context: object - 客户类型、L2/L3、买方、客户池、付费原因、POC 路径、价格假设、交付风险、销售动作。

@@ -22,7 +22,52 @@ The goal is not to write code. The goal is to make the requirement clear enough 
 9. Market validation includes competitor research. If the user cannot provide competitor comparison, research relevant products or substitute workflows and show a comparison matrix for confirmation.
 10. Product validation includes technical leadership and uniqueness. The product owner provides the claim; the agent scores it; the product owner confirms.
 11. Technical design includes source-code reading and AI scoring. The agent scores the design from code evidence; the AI engineer confirms.
-12. If the current schema cannot express the situation, propose a schema bump before inventing fields.
+12. At the start of a new intake, show the user the complete process as a Mermaid flowchart and start a progress tracker when the runtime provides one.
+13. Do not move from one stage to the next without an explicit stage-exit summary and user confirmation.
+14. Use the schema stage names exactly. Do not invent a simplified five-stage process.
+15. If the current schema cannot express the situation, propose a schema bump before inventing fields.
+
+## Opening Protocol
+
+On the first substantial response in a new spec-intake session, before asking the first business question:
+
+1. State that the process is stage-gated and that the agent will not silently jump stages.
+2. Show this Mermaid flowchart:
+
+```mermaid
+flowchart TD
+  A["0. Product basis routing\nFriday Agent / Domain Pack / Memory / MorningStar / internal tool / standalone / demo"]
+  B["1. business_feasibility\ncommercial evidence, PMF, priority, competitors"]
+  C["2. product_shape\nworkflow, scope, object model, UI/wireframe"]
+  D["3. engineering_gap_review\ncapability boundary and existing gaps"]
+  E["4. technical_spec\nsource-code review and technical design score"]
+  F["5. poc_design\nmetrics, fixtures, evaluation assets"]
+  G["6. poc_execution\nready to run PoC with data, owners, baseline"]
+  H["7. engineering_delivery\nready for implementation planning"]
+  A --> B --> C --> D --> E --> F --> G --> H
+  B -. "needs more evidence" .-> B
+  C -. "scope unclear" .-> C
+  D -. "gap unresolved" .-> C
+  E -. "design not confirmed" .-> E
+```
+
+3. If the runtime provides a progress or plan tool, call it immediately. In Codex, use `update_plan` with these items:
+   - Product basis routing.
+   - Business feasibility.
+   - Product shape.
+   - Engineering gap review.
+   - Technical spec.
+   - PoC design.
+   - PoC execution.
+   - Engineering delivery.
+4. In each user-facing answer, include a short stage status line:
+
+```text
+当前阶段：business_feasibility
+进度：Product basis 已确认；Business feasibility 进行中；未进入 product_shape。
+```
+
+Do not wait for the user to ask "where are we" before showing progress.
 
 ## Extraction Before Questions
 
@@ -43,11 +88,29 @@ Bad behavior:
 
 Do not ask a question just because it appears in `references/question-bank.md`. The question bank is a menu. Skip any question whose answer is already explicit, inferable with low risk from the user's provided facts, or irrelevant to the current gate.
 
+## Stage Names
+
+Use only these `stage_gate.current_stage` names:
+
+- `business_feasibility`
+- `product_shape`
+- `engineering_gap_review`
+- `technical_spec`
+- `poc_design`
+- `poc_execution`
+- `engineering_delivery`
+- `stop_archive`
+- `unknown`
+
+The product basis question is routing step 0, not a replacement for `business_feasibility`.
+
+Do not compress the flow into "market validation, product shape, PoC design, technical review, engineering delivery" because that hides the distinction between `engineering_gap_review`, `technical_spec`, `poc_design`, and `poc_execution`.
+
 ## Required References
 
 Read only as needed:
 
-- `references/spec-schema.json` - v1.3 JSON structure.
+- `references/spec-schema.json` - v1.4 JSON structure.
 - `references/question-bank.md` - question patterns by gate.
 - `scripts/validate_spec.py` - deterministic validator.
 
@@ -140,6 +203,56 @@ Important distinctions:
 - `ready_for_engineering` means owners, scope, validation, implementation mapping, data policy, and gates are ready for implementation planning.
 
 If `opportunity_assessment.priority_decision.recommendation` is `needs_more_evidence`, do not set the decision to `continue_technical_spec`, `mark_poc_design_ready`, `mark_poc_execution_ready`, or `ready_for_engineering`.
+
+## Stage Exit Confirmation
+
+Before changing `stage_gate.decision` to a next-stage decision, the agent must show a stage-exit summary and ask the user to confirm the transition.
+
+Next-stage decisions are:
+
+- `handoff_to_product`
+- `request_engineering_gap_review`
+- `continue_technical_spec`
+- `mark_poc_design_ready`
+- `mark_poc_execution_ready`
+- `ready_for_engineering`
+
+The stage-exit summary must include:
+
+1. Current stage.
+2. Proposed next stage.
+3. Confirmed facts.
+4. Remaining assumptions or blockers.
+5. Why the next stage is allowed.
+6. What is explicitly not allowed yet.
+7. A direct confirmation question.
+
+Record the answer in `stage_gate.stage_exit_check`.
+
+Use this wording pattern:
+
+> 我建议把当前阶段从 `business_feasibility` 切到 `product_shape`。已确认的是 X；还没确认的是 Y；因此只能交给产品收敛形态，不能进入 PoC 或工程。是否确认结束业务验证并进入产品形态？A. 确认进入；B. 继续业务验证。
+
+If the user does not confirm, keep the current stage and set the decision to `continue_business_validation` or `continue_product_shape`.
+
+Do not say "business validation passed", "P0 成立", or "商业上已经成立" when material blockers remain. Use precise language:
+
+- "商业假设较强，但仍需补证据。"
+- "可以进入产品形态收敛，但不代表可以进入 PoC 或工程。"
+- "建议列为 P0 市场验证候选，而不是 P0 交付项。"
+
+For `business_feasibility`, do not propose `handoff_to_product` until these have been summarized:
+
+- Product basis.
+- Target buyer.
+- Business acceptance owner or reviewer.
+- Current alternative.
+- Minimum paid artifact.
+- Evidence level and which items are assumptions.
+- PMF four-factor low score.
+- Opportunity priority score and scope risk.
+- Competitive research status.
+- Blocked next actions.
 
 ## Product Shape Gate
 

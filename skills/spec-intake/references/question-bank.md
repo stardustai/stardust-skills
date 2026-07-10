@@ -11,6 +11,13 @@ Before asking:
 
 If a user gives a paragraph, meeting note, transcript excerpt, or partially structured request, do not restart from "one-line requirement" mode. Summarize what is already known, list the remaining unknowns briefly, then ask the single most important next question.
 
+## Opening And Progress
+
+- 开场是否已经展示完整流程图：Product basis routing -> business_feasibility -> product_shape -> engineering_gap_review -> technical_spec -> poc_design -> poc_execution -> engineering_delivery？
+- 是否已经说明当前只在 `business_feasibility`，还没有进入 `product_shape`、PoC 或工程？
+- 是否已经调用 Codex 进度工具，或在回答里给出文本进度提示？
+- 用户是否知道每次阶段切换都需要确认？
+
 ## Product Basis
 
 - 这个需求第一版应该基于我们哪个产品形态来做：Friday Agent、Domain Pack、Friday Memory、MorningStar、内部工具、全新独立产品，还是 demo？
@@ -88,6 +95,9 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 当前是否具备 PoC 设计 ready？是否具备 PoC 执行 ready？
 - 如果现在交接，接收方下一步最需要回答哪个问题？
 - 当前哪些 next actions 应该被 blocked，避免被误解为可以开工？
+- 如果准备切换阶段，退出总结是否覆盖：当前阶段、下一阶段、已确认事实、剩余假设或 blocker、为什么允许下一阶段、什么仍然禁止？
+- 用户是否明确确认阶段切换？如果没有，`stage_gate.stage_exit_check.status` 不能写成 `confirmed`。
+- 如果从 `business_feasibility` 切到 `product_shape`，是否已经问过：是否确认结束业务验证并进入产品形态？
 
 ## Product Shape
 

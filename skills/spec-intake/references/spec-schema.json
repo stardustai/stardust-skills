@@ -57,7 +57,8 @@
         "allowed_next_actions",
         "blocked_next_actions",
         "blockers",
-        "required_owner"
+        "required_owner",
+        "stage_exit_check"
       ],
       "properties": {
         "current_stage": {
@@ -105,7 +106,30 @@
         "allowed_next_actions": { "type": "array", "items": { "type": "string" } },
         "blocked_next_actions": { "type": "array", "items": { "type": "string" } },
         "blockers": { "type": "array", "items": { "type": "string" } },
-        "required_owner": { "type": ["string", "null"] }
+        "required_owner": { "type": ["string", "null"] },
+        "stage_exit_check": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "exit_summary",
+            "confirmation_question",
+            "confirmed_by",
+            "confirmed_at",
+            "next_stage"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["not_started", "ready_for_confirmation", "confirmed", "rejected", "not_applicable"]
+            },
+            "exit_summary": { "type": ["string", "null"] },
+            "confirmation_question": { "type": ["string", "null"] },
+            "confirmed_by": { "type": ["string", "null"] },
+            "confirmed_at": { "type": ["string", "null"] },
+            "next_stage": { "type": ["string", "null"] }
+          }
+        }
       }
     },
     "opportunity_assessment": {

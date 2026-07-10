@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.3",
+  "spec_version": "1.4",
   "spec_id": "SPEC-INS-BROKER-PROPOSAL-001",
   "title": "保险经纪人客户报销组合方案生成 Domain Pack",
   "status": "spec_review",
@@ -24,7 +24,15 @@
       "Artifact 编辑和导出能力需要技术缺口评审",
       "Memory 写入审批闭环需要技术确认"
     ],
-    "required_owner": "产品 owner + AI 工程 owner"
+    "required_owner": "产品 owner + AI 工程 owner",
+    "stage_exit_check": {
+      "status": "confirmed",
+      "exit_summary": "Current stage product_shape is complete enough for engineering_gap_review only. Confirmed facts: product basis is Domain Pack; target buyer is insurance brokerage sales or company owner; acceptance reviewer is senior broker/compliance reviewer; current alternative is manual product lookup plus generic LLM drafting; minimum paid artifact is a reviewable insurance reimbursement proposal draft; evidence is single_case/anecdotal and design partner remains unconfirmed; PMF low score is customer_willingness/GTM repeatability; opportunity priority is medium because commercial signal is plausible but not paid; competitive research is confirmed; blocked next actions include engineering delivery, PoC execution, formal quote, underwriting, and CRM writeback.",
+      "confirmation_question": "是否确认结束产品形态收敛，只进入 engineering_gap_review，而不进入 PoC 执行或工程交付？",
+      "confirmed_by": "Derek",
+      "confirmed_at": "2026-07-10",
+      "next_stage": "engineering_gap_review"
+    }
   },
   "opportunity_assessment": {
     "commercial_context": {
@@ -889,6 +897,6 @@
     "当前只允许进入 engineering gap review，不允许工程排期"
   ],
   "change_log": [
-    "2026-07-10: 升级为 spec-intake schema v1.3"
+    "2026-07-10: 升级为 spec-intake schema v1.4"
   ]
 }

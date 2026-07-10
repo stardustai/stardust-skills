@@ -43,6 +43,15 @@ ENGINEERING_DECISIONS = {
     "ready_for_engineering",
 }
 
+NEXT_STAGE_DECISIONS = {
+    "handoff_to_product",
+    "request_engineering_gap_review",
+    "continue_technical_spec",
+    "mark_poc_design_ready",
+    "mark_poc_execution_ready",
+    "ready_for_engineering",
+}
+
 UI_REVIEW_REQUIRED_LABELS = {
     "product_ready",
     "engineering_gap_review_ready",
@@ -338,6 +347,7 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
     priority = opportunity.get("priority_decision", {}) if isinstance(opportunity, dict) else {}
     recommendation = priority.get("recommendation") if isinstance(priority, dict) else None
     decision = stage_gate.get("decision")
+    current_stage = stage_gate.get("current_stage")
 
     if recommendation == "needs_more_evidence" and decision in ENGINEERING_DECISIONS:
         errors.append(
@@ -348,6 +358,39 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
     readiness = stage_gate.get("readiness_label")
     if readiness == "engineering_ready" and decision != "ready_for_engineering":
         errors.append("engineering_ready requires stage_gate.decision=ready_for_engineering")
+
+    exit_check = stage_gate.get("stage_exit_check")
+    if isinstance(exit_check, dict):
+        if decision in NEXT_STAGE_DECISIONS:
+            if exit_check.get("status") != "confirmed":
+                errors.append(f"{decision} requires stage_gate.stage_exit_check.status=confirmed")
+            for key in ["exit_summary", "confirmation_question", "confirmed_by", "next_stage"]:
+                if _is_unknown_or_empty(exit_check.get(key)):
+                    errors.append(f"{decision} requires stage_gate.stage_exit_check.{key}")
+            if current_stage == "business_feasibility" and decision == "handoff_to_product":
+                summary_text = " ".join(
+                    str(exit_check.get(key) or "")
+                    for key in ["exit_summary", "confirmation_question"]
+                )
+                required_terms = [
+                    "target buyer",
+                    "acceptance",
+                    "alternative",
+                    "minimum paid artifact",
+                    "evidence",
+                    "PMF",
+                    "opportunity priority",
+                    "competitive",
+                    "blocked",
+                ]
+                missing_terms = [term for term in required_terms if term.lower() not in summary_text.lower()]
+                if missing_terms:
+                    errors.append(
+                        "handoff_to_product requires business stage exit summary to cover: "
+                        + ", ".join(missing_terms)
+                    )
+    else:
+        errors.append("stage_gate.stage_exit_check must be an object")
 
     if readiness in ("poc_execution_ready", "engineering_ready"):
         execution = _readiness_check(spec, "poc_execution_ready")
