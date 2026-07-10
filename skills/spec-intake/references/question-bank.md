@@ -13,9 +13,9 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 
 ## Opening And Progress
 
-- 开场是否已经展示完整流程图：Product basis routing -> business_feasibility -> product_shape -> engineering_gap_review -> technical_spec -> poc_design -> poc_execution -> engineering_delivery？
+- 开场是否已经展示完整流程图：intake_routing -> business_feasibility -> product_shape -> engineering_gap_review -> technical_spec -> poc_design -> poc_execution -> engineering_delivery？
 - 是否已经说明当前只在 `business_feasibility`，还没有进入 `product_shape`、PoC 或工程？
-- 是否已经调用 Codex 进度工具，或在回答里给出文本进度提示？
+- 在 Codex 环境里是否已经调用 `update_plan`？仅在工具不可用时，文本进度提示才可以作为 fallback。
 - 用户是否知道每次阶段切换都需要确认？
 
 ## Product Basis

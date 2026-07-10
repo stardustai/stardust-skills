@@ -149,6 +149,80 @@ def _is_unknown_or_empty(value: Any) -> bool:
     return False
 
 
+def _value_at_path(root: dict[str, Any], path: tuple[str, ...]) -> Any:
+    current: Any = root
+    for key in path:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+    return current
+
+
+def _business_handoff_missing_fields(spec: dict[str, Any]) -> list[str]:
+    required_paths = [
+        ("product_context", "build_target"),
+        ("opportunity_assessment", "commercial_context", "target_buyer"),
+        ("opportunity_assessment", "pmf_validation", "current_alternative"),
+        ("opportunity_assessment", "minimum_paid_artifact", "name"),
+        ("opportunity_assessment", "minimum_paid_artifact", "buyer_value"),
+        ("opportunity_assessment", "priority_decision", "recommendation"),
+        ("opportunity_assessment", "priority_decision", "opportunity_priority_score"),
+    ]
+
+    missing = [
+        ".".join(path)
+        for path in required_paths
+        if _is_unknown_or_empty(_value_at_path(spec, path))
+    ]
+
+    acceptance_method = _value_at_path(
+        spec,
+        ("opportunity_assessment", "pmf_validation", "poc_entry_criteria", "acceptance_method"),
+    )
+    design_partners = _value_at_path(spec, ("opportunity_assessment", "design_partner_registry"))
+    has_reviewer = any(
+        isinstance(item, dict) and not _is_unknown_or_empty(item.get("reviewer"))
+        for item in design_partners or []
+    )
+    if _is_unknown_or_empty(acceptance_method) and not has_reviewer:
+        missing.append(
+            "opportunity_assessment.pmf_validation.poc_entry_criteria.acceptance_method "
+            "or opportunity_assessment.design_partner_registry[].reviewer"
+        )
+
+    evidence = _value_at_path(spec, ("opportunity_assessment", "evidence_registry"))
+    if not isinstance(evidence, list) or not evidence:
+        missing.append("opportunity_assessment.evidence_registry")
+
+    scores = _value_at_path(spec, ("opportunity_assessment", "pmf_validation", "four_factor_scores"))
+    if not isinstance(scores, dict):
+        missing.append("opportunity_assessment.pmf_validation.four_factor_scores")
+    else:
+        for key in PMF_SCORE_KEYS:
+            score_item = scores.get(key)
+            score = score_item.get("score") if isinstance(score_item, dict) else None
+            if _is_unknown_or_empty(score):
+                missing.append(f"opportunity_assessment.pmf_validation.four_factor_scores.{key}.score")
+
+    competitive = _value_at_path(spec, ("opportunity_assessment", "competitive_research"))
+    if not isinstance(competitive, dict):
+        missing.append("opportunity_assessment.competitive_research")
+    else:
+        if competitive.get("status") in (None, "", "unknown", "not_started"):
+            missing.append("opportunity_assessment.competitive_research.status")
+        if not competitive.get("comparison_matrix"):
+            missing.append("opportunity_assessment.competitive_research.comparison_matrix")
+        score = _value_at_path(competitive, ("differentiation_score", "score"))
+        if _is_unknown_or_empty(score):
+            missing.append("opportunity_assessment.competitive_research.differentiation_score.score")
+
+    blocked_actions = _value_at_path(spec, ("stage_gate", "blocked_next_actions"))
+    if not isinstance(blocked_actions, list) or not blocked_actions:
+        missing.append("stage_gate.blocked_next_actions")
+
+    return missing
+
+
 def _missing_keys(obj: dict[str, Any], keys: list[str], prefix: str) -> list[str]:
     return [f"{prefix}.{key}" for key in keys if key not in obj]
 
@@ -368,26 +442,11 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
                 if _is_unknown_or_empty(exit_check.get(key)):
                     errors.append(f"{decision} requires stage_gate.stage_exit_check.{key}")
             if current_stage == "business_feasibility" and decision == "handoff_to_product":
-                summary_text = " ".join(
-                    str(exit_check.get(key) or "")
-                    for key in ["exit_summary", "confirmation_question"]
-                )
-                required_terms = [
-                    "target buyer",
-                    "acceptance",
-                    "alternative",
-                    "minimum paid artifact",
-                    "evidence",
-                    "PMF",
-                    "opportunity priority",
-                    "competitive",
-                    "blocked",
-                ]
-                missing_terms = [term for term in required_terms if term.lower() not in summary_text.lower()]
-                if missing_terms:
+                missing_fields = _business_handoff_missing_fields(spec)
+                if missing_fields:
                     errors.append(
-                        "handoff_to_product requires business stage exit summary to cover: "
-                        + ", ".join(missing_terms)
+                        "handoff_to_product requires structured business handoff fields: "
+                        + ", ".join(missing_fields)
                     )
     else:
         errors.append("stage_gate.stage_exit_check must be an object")
@@ -463,13 +522,12 @@ def _validate_ui(spec: dict[str, Any], spec_path: Path) -> list[str]:
         return ["ui_requirements must be an object"]
 
     needs_wireframe = ui.get("has_ui") is True and ui.get("wireframe_required") is True
-    if needs_wireframe:
-        errors.extend(_svg_wireframe_errors(ui, spec_path))
-
     stage_gate = spec.get("stage_gate", {})
     readiness = stage_gate.get("readiness_label") if isinstance(stage_gate, dict) else None
-    if needs_wireframe and readiness in UI_REVIEW_REQUIRED_LABELS and ui.get("wireframe_status") != "reviewed":
-        errors.append(f"{readiness} requires ui_requirements.wireframe_status=reviewed for UI specs")
+    if needs_wireframe and readiness in UI_REVIEW_REQUIRED_LABELS:
+        errors.extend(_svg_wireframe_errors(ui, spec_path))
+        if ui.get("wireframe_status") != "reviewed":
+            errors.append(f"{readiness} requires ui_requirements.wireframe_status=reviewed for UI specs")
 
     return errors
 

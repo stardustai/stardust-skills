@@ -4,10 +4,11 @@
     {
       "id": 0,
       "prompt": "我是一个保险经纪人，我要给客户销售报销组合，我手里有一堆公司给的保险产品资料，如何快速给客户定制化方案？请用 spec-intake 引导我。我是业务人员，不懂技术，只知道客户经常问怎么组合最划算。",
-      "expected_output": "The assistant should not immediately dump a final JSON. It should show the full stage-gated flow, start or state progress, classify product basis, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require explicit stage-exit confirmation before handoff, require an SVG wireframe for UI, and eventually produce a v1.4 JSON spec that passes scripts/validate_spec.py.",
+      "expected_output": "The assistant should not immediately dump a final JSON. It should show the full stage-gated flow, call the Codex progress tool when running in Codex, classify product basis, choose guided_interview for this vague request, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require explicit stage-exit confirmation before handoff, require a reviewed SVG wireframe only before product_ready or later UI gates, and eventually produce a v1.4 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
-        "On the first substantial response, shows the full process as Mermaid or equivalent flow: product basis routing, business_feasibility, product_shape, engineering_gap_review, technical_spec, poc_design, poc_execution, engineering_delivery.",
-        "Uses the Codex progress tool when available, or otherwise gives a clear current-stage progress line in the response.",
+        "On the first substantial response, shows the full process as Mermaid or equivalent flow: intake_routing, business_feasibility, product_shape, engineering_gap_review, technical_spec, poc_design, poc_execution, engineering_delivery.",
+        "When running in Codex, calls update_plan for the stage progress tracker; a text-only progress line is not sufficient unless the runtime has no progress tool.",
+        "Chooses guided_interview mode for the vague one-line request rather than requesting a full template up front.",
         "Asks one question at a time before final JSON.",
         "Extracts facts already present in the user's message, states clear conclusions, and skips questions that are already answered.",
         "Asks which company product form the first version should be based on before assuming internal_tool, Domain Pack, Friday Agent, Friday Memory, MorningStar, standalone product, or demo.",
@@ -16,10 +17,11 @@
         "Final JSON uses opportunity_assessment.evidence_registry and distinguishes assumptions from non-assumption evidence.",
         "Final JSON includes opportunity_assessment.minimum_paid_artifact and uses 机会优先级指数 to penalize broad scope, heavy integrations, or unclear commercial signals.",
         "Final JSON includes opportunity_assessment.competitive_research with a comparison matrix, overlap scores, differentiation scores, and user confirmation status.",
+        "PMF scoring explains why each score is low or high and lists evidence or concrete adders that would raise the score.",
         "If opportunity_assessment.priority_decision.recommendation is needs_more_evidence, stage_gate does not mark PoC execution ready or engineering ready.",
         "Final JSON includes product_context.technical_leadership with a claim, proof_or_argument, spec_agent_score, score_rationale, and product_owner_confirmation.",
         "If Domain Pack is chosen, final JSON declares Workspace Memory, Task, Artifact, Recipe, Feedback/Comment, Room, and their Task -> Artifact -> Feedback -> Recipe/Memory loop.",
-        "If UI is required, final JSON references a produced .svg wireframe artifact and does not move to product_ready or later gates before wireframe_status=reviewed.",
+        "If UI is required at business_feasibility or business handoff, final JSON may set wireframe_status=needed without a produced SVG; it does not move to product_ready or later gates before a produced SVG and wireframe_status=reviewed.",
         "Final JSON includes structured memory_write_rules with source_type, write_allowed, requires_human_approval, target_scope, redaction_required, and rollback_method.",
         "Final JSON separates poc_design_ready from poc_execution_ready in validation_plan."
       ]
@@ -59,6 +61,31 @@
         "Does not declare business validation passed or P0 established while business blockers remain; it uses precise language such as market-validation candidate or needs_more_evidence.",
         "Does not move from business_feasibility to product_shape unless it asks whether to end business validation and the user confirms.",
         "Final JSON, if produced, uses stage_gate.blocked_next_actions to prevent premature engineering delivery."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "我们已经有一份成熟材料：产品形态是 Domain Pack；买方是招标代理公司；使用者是标书审核人员；当前替代方案是人工逐条核查加 Excel；最小付费产物是可复用的应标审核工作台；有真实历史材料和客户兴趣，但还没接触最终评审人；竞品包括传统招投标软件和 RFP AI 工具；差异点是 Memory + Recipe 自学习。请用 spec-intake 直接整理，不要一问一答。",
+      "expected_output": "The assistant should choose structured_brief mode, extract all provided fields, avoid re-asking answered questions, show only material gaps, ask at most the single highest-risk missing question if needed, and prepare a business-stage spec without forcing a produced SVG wireframe.",
+      "assertions": [
+        "Chooses structured_brief mode because the user provided many mature fields.",
+        "Extracts product basis, target buyer, daily user, current alternative, minimum paid artifact, evidence, competitor category, and Memory + Recipe differentiation without re-asking them.",
+        "Lists material gaps such as final reviewer, budget owner, acceptance criteria, and competitor confirmation.",
+        "Asks only the single highest-risk missing question if it must continue the interview.",
+        "Business feasibility output includes a decision-style summary covering whether it is worth pushing, customer acceptance risk, market breadth, and blocked next actions.",
+        "Business-stage JSON can set ui_requirements.wireframe_status=needed and leave wireframe_artifacts empty without failing the handoff."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "结束，产出 spec 等产物",
+      "expected_output": "The assistant should treat this as finish_now, stop exploratory questioning, produce the best current-stage artifacts, and avoid inventing a confirmed next-stage transition if the user has not confirmed it.",
+      "assertions": [
+        "Detects finish_now from the user's stop/output command.",
+        "Stops asking new exploratory questions and produces a human-readable summary, spec.json, missing_fields, review recommendation, and current stage_gate.",
+        "Does not fabricate handoff_to_product unless the prior conversation already contains explicit stage-exit confirmation.",
+        "Records unconfirmed transition items in missing_fields or blocked_next_actions.",
+        "If UI is known but not product-shaped, records wireframe_status=needed rather than forcing SVG generation before business output."
       ]
     }
   ]

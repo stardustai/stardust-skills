@@ -16,7 +16,7 @@
 10. 用 `stage_gate` 控制接力，区分产品交接、技术缺口评审、PoC 设计、PoC 执行和工程排期。
 11. 开场必须展示完整流程图，并用 Codex 进度工具或文本进度提示当前阶段。
 12. 阶段切换必须先给退出总结并得到用户确认，不能静默从业务验证跳到产品论证。
-13. 有 UI 就必须产出 SVG 线框图并让用户确认。
+13. 有 UI 的需求在 `product_ready` 或更后门禁前必须产出 SVG 线框图并让用户确认；业务验证/交接阶段可先标记为 `needed`。
 14. 如果是 Domain Pack，必须明确 Workspace Memory、Task、Artifact、Recipe、Feedback/Comment、Room 的闭环。
 15. Memory 写入、自学习、隐私、人工确认和回滚必须结构化。
 16. 验收测试统一进入 `validation_plan`，区分 `poc_design_ready` 和 `poc_execution_ready`。
@@ -25,20 +25,38 @@
 
 原则：这个流程不是固定问卷。每一轮先把用户已经说清楚的内容映射到字段；能直接判断的就给出判断；只把缺失、冲突或会影响下一关的问题拿出来问。
 
-开场要先展示完整流程，而不是直接进入提问：
+开场要先展示完整流程，而不是直接进入提问。Mermaid 节点保持短文本，不在节点标签里写 `\n` 换行或长说明，也不要画回退虚线，避免客户端把图挤乱：
 
 ```mermaid
 flowchart TD
-  A["0. Product basis routing"]
-  B["1. business_feasibility"]
-  C["2. product_shape"]
-  D["3. engineering_gap_review"]
-  E["4. technical_spec"]
-  F["5. poc_design"]
-  G["6. poc_execution"]
-  H["7. engineering_delivery"]
+  A["0. 入口分流"]
+  B["1. 商业可行性"]
+  C["2. 产品形态"]
+  D["3. 技术缺口评审"]
+  E["4. 技术方案"]
+  F["5. PoC 设计"]
+  G["6. PoC 执行"]
+  H["7. 工程交付"]
   A --> B --> C --> D --> E --> F --> G --> H
 ```
+
+简单说明：
+
+- 入口分流：论证需求类型，先判断这是 Domain Pack、Friday Agent、Friday Memory、内部工具、独立产品还是 demo。
+- 商业可行性：论证客户、买方、痛点、付费理由、竞品和证据，不急着设计产品。
+- 产品形态：论证第一版工作流、范围、Artifact、UI 和对象模型。
+- 技术缺口评审：论证现有能力和缺口，不代表可以排期。
+- 技术方案：论证源码、架构方案、技术评分和交付风险，并由 AI 工程师确认。
+- PoC 设计：论证样本、指标、验收方式和时间盒。
+- PoC 执行：论证数据、owner、baseline 都齐了，才开始跑验证。
+- 工程交付：论证 spec、验证、责任人、排期和验收都确认后，才进入实现计划。
+
+回退规则用文字说明，不画进图里：
+
+- 证据不足：停留在 `business_feasibility`。
+- 范围不清：停留在 `product_shape`。
+- 技术缺口未解决：回到 `product_shape`。
+- 技术方案未确认：停留在 `technical_spec`。
 
 如果运行环境提供 Codex 进度工具，应在开场调用进度工具；否则每轮回答都要给出一句阶段提示，例如：
 
@@ -76,7 +94,7 @@ flowchart TD
 ## 主要产物
 
 - `spec.json`：结构化 Spec Driven JSON。
-- `wireframe.svg`：如果需求包含 UI，必须生成 SVG 线框图。
+- `wireframe.svg`：如果需求包含 UI，产品形态确认前必须生成 SVG 线框图；业务验证阶段可先记录为待补产物。
 - `interview-notes.md`：可选，记录问答过程和关键决策。
 - `missing_fields`：JSON 内部字段，用于说明为什么还不能进入下一阶段。
 

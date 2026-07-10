@@ -1,6 +1,6 @@
 ---
 name: spec-intake
-description: "Use this when the user gives a one-line business requirement, vague customer request, POC idea, internal tool idea, automation request, Domain Pack idea, or product feature and needs to turn it into the company's Spec Driven JSON format. This skill interactively interviews business users one question at a time, checks commercial evidence and scope before product detail, requires SVG wireframes for UI specs, reads relevant code/docs when technical boundaries matter, and produces a stage-gated spec for sales, product, AI engineering, QA, and DevOps collaboration."
+description: "Use this when the user gives a one-line business requirement, vague customer request, POC idea, internal tool idea, automation request, Domain Pack idea, or product feature and needs to turn it into the company's Spec Driven JSON format. This skill supports guided interview and structured brief modes, checks commercial evidence and scope before product detail, requires reviewed SVG wireframes before product-ready or later UI gates, reads relevant code/docs when technical boundaries matter, and produces a stage-gated spec for sales, product, AI engineering, QA, and DevOps collaboration."
 ---
 
 # Spec Intake
@@ -22,37 +22,74 @@ The goal is not to write code. The goal is to make the requirement clear enough 
 9. Market validation includes competitor research. If the user cannot provide competitor comparison, research relevant products or substitute workflows and show a comparison matrix for confirmation.
 10. Product validation includes technical leadership and uniqueness. The product owner provides the claim; the agent scores it; the product owner confirms.
 11. Technical design includes source-code reading and AI scoring. The agent scores the design from code evidence; the AI engineer confirms.
-12. At the start of a new intake, show the user the complete process as a Mermaid flowchart and start a progress tracker when the runtime provides one.
+12. At the start of a new intake, show the user the complete process as a Mermaid flowchart and start a progress tracker. In Codex, this means calling `update_plan`.
 13. Do not move from one stage to the next without an explicit stage-exit summary and user confirmation.
 14. Use the schema stage names exactly. Do not invent a simplified five-stage process.
 15. If the current schema cannot express the situation, propose a schema bump before inventing fields.
+
+## Intake Modes
+
+Support two intake modes and one explicit stop path:
+
+- `guided_interview`: default for one-line, vague, or early customer requests. Ask one high-leverage question at a time.
+- `structured_brief`: use when the user already gives a mature brief, wants to fill a template, or provides many fields at once. Extract all usable facts first, show only material gaps, then ask the single highest-risk missing question.
+- `finish_now`: use when the user says "结束", "产出 spec", "输出产物", "到这里", "stop", "archive", or equivalent. Stop asking exploratory questions and produce the best current-stage artifacts.
+
+Do not force `guided_interview` when the user has already supplied a structured brief. In `structured_brief`, ask for or extract these fields:
+
+- Product basis.
+- Target buyer and daily user.
+- Pain, current alternative, and buyer language.
+- Minimum paid artifact.
+- Evidence and design partner status.
+- Competitors or substitute workflows.
+- Differentiation or technical leadership claim.
+- Constraints: compliance, data access, integrations, and delivery limits.
+- Desired stage and output.
+
+If required fields are still missing, return a concise missing-field list and ask only the next question that changes the gate.
 
 ## Opening Protocol
 
 On the first substantial response in a new spec-intake session, before asking the first business question:
 
 1. State that the process is stage-gated and that the agent will not silently jump stages.
-2. Show this Mermaid flowchart:
+2. Show this Mermaid flowchart. Keep the syntax simple: do not put escaped line breaks such as `\n` inside node labels, and do not draw backward or dotted loop arrows because they make the chart hard to read in narrow clients.
 
 ```mermaid
 flowchart TD
-  A["0. Product basis routing\nFriday Agent / Domain Pack / Memory / MorningStar / internal tool / standalone / demo"]
-  B["1. business_feasibility\ncommercial evidence, PMF, priority, competitors"]
-  C["2. product_shape\nworkflow, scope, object model, UI/wireframe"]
-  D["3. engineering_gap_review\ncapability boundary and existing gaps"]
-  E["4. technical_spec\nsource-code review and technical design score"]
-  F["5. poc_design\nmetrics, fixtures, evaluation assets"]
-  G["6. poc_execution\nready to run PoC with data, owners, baseline"]
-  H["7. engineering_delivery\nready for implementation planning"]
+  A["0. 入口分流"]
+  B["1. 商业可行性"]
+  C["2. 产品形态"]
+  D["3. 技术缺口评审"]
+  E["4. 技术方案"]
+  F["5. PoC 设计"]
+  G["6. PoC 执行"]
+  H["7. 工程交付"]
+
   A --> B --> C --> D --> E --> F --> G --> H
-  B -. "needs more evidence" .-> B
-  C -. "scope unclear" .-> C
-  D -. "gap unresolved" .-> C
-  E -. "design not confirmed" .-> E
 ```
 
-3. If the runtime provides a progress or plan tool, call it immediately. In Codex, use `update_plan` with these items:
-   - Product basis routing.
+Then explain the chart in Chinese:
+
+- 入口分流：论证需求类型，先判断这是 Domain Pack、Friday Agent、Friday Memory、内部工具、独立产品还是 demo。
+- 商业可行性：论证客户、买方、痛点、付费理由、竞品和证据，不急着设计产品。
+- 产品形态：论证第一版工作流、范围、Artifact、UI 和对象模型。
+- 技术缺口评审：论证现有能力和缺口，不代表可以排期。
+- 技术方案：论证源码、架构方案、技术评分和交付风险，并由 AI 工程师确认。
+- PoC 设计：论证样本、指标、验收方式和时间盒。
+- PoC 执行：论证数据、owner、baseline 都齐了，才开始跑验证。
+- 工程交付：论证 spec、验证、责任人、排期和验收都确认后，才进入实现计划。
+
+Then state rollback rules as text, not as chart arrows:
+
+- Evidence missing: stay in `business_feasibility`.
+- Scope unclear: stay in `product_shape`.
+- Engineering gap unresolved: go back to `product_shape`.
+- Technical design not confirmed: stay in `technical_spec`.
+
+3. Call the runtime progress tool immediately. In Codex, `update_plan` is mandatory; do not replace it with a text-only progress line. Use these items:
+   - Intake routing.
    - Business feasibility.
    - Product shape.
    - Engineering gap review.
@@ -60,14 +97,20 @@ flowchart TD
    - PoC design.
    - PoC execution.
    - Engineering delivery.
-4. In each user-facing answer, include a short stage status line:
+4. In each user-facing answer, also include a short stage status line:
 
 ```text
 当前阶段：business_feasibility
-进度：Product basis 已确认；Business feasibility 进行中；未进入 product_shape。
+进度：Intake routing 已确认；Business feasibility 进行中；未进入 product_shape。
 ```
 
-Do not wait for the user to ask "where are we" before showing progress.
+Do not wait for the user to ask "where are we" before showing progress. If `update_plan` is unavailable because the runtime truly does not provide it, say that explicitly and then use text progress as the fallback.
+
+After the opening protocol, choose the intake mode. If the user has not chosen a mode, infer it from the input:
+
+- Sparse or one-line request: use `guided_interview`.
+- Multi-field request, existing PRD, meeting notes, or completed brief: use `structured_brief`.
+- Explicit stop/output command: use `finish_now`.
 
 ## Extraction Before Questions
 
@@ -102,7 +145,7 @@ Use only these `stage_gate.current_stage` names:
 - `stop_archive`
 - `unknown`
 
-The product basis question is routing step 0, not a replacement for `business_feasibility`.
+`intake_routing` is only the entry step for identifying product form and request type. It is not product validation and not a replacement for `business_feasibility`.
 
 Do not compress the flow into "market validation, product shape, PoC design, technical review, engineering delivery" because that hides the distinction between `engineering_gap_review`, `technical_spec`, `poc_design`, and `poc_execution`.
 
@@ -142,6 +185,20 @@ Ask for:
 10. Scope-reduction recommendation when scope expansion risk is high.
 11. Competitive research: user-provided competitor comparison, or agent-researched comparison matrix when the user has none.
 
+When showing PMF scores, include:
+
+- The score.
+- Why the score is low or high.
+- What evidence would raise the score.
+- Concrete adders or next actions to improve the score.
+
+The business feasibility summary must make a decision-style statement, with uncertainty, about:
+
+- Whether this looks worth pushing.
+- Expected customer acceptance risk.
+- Market potential or market breadth.
+- Why the next stage is allowed or blocked.
+
 Use evidence levels:
 
 - `hypothesis`: internal assumption.
@@ -162,7 +219,9 @@ Good question:
 
 If the user provides competitors, record them in `opportunity_assessment.competitive_research` with `status=user_provided`.
 
-If the user does not provide competitors, research relevant products or substitute workflows. Use current web/product research when available, and cite sources in the comparison matrix. Compare at least:
+If the user says they already did competitor research, accept that work as input first; do not restart the research flow unless the evidence is missing, stale, or inconsistent with the target buyer.
+
+If the user does not provide competitors, research relevant products or substitute workflows. Use current web/product research when available, cite sources in the comparison matrix, and state source type and confidence. Prefer official product pages or docs for product capabilities. Add public media, social, review, or customer-story evidence when it is current, relevant, and helpful for market validation. Compare at least:
 
 - Target customer.
 - Core workflow.
@@ -234,6 +293,12 @@ Use this wording pattern:
 > 我建议把当前阶段从 `business_feasibility` 切到 `product_shape`。已确认的是 X；还没确认的是 Y；因此只能交给产品收敛形态，不能进入 PoC 或工程。是否确认结束业务验证并进入产品形态？A. 确认进入；B. 继续业务验证。
 
 If the user does not confirm, keep the current stage and set the decision to `continue_business_validation` or `continue_product_shape`.
+
+If the user invokes `finish_now`, do not fabricate a confirmed next-stage transition. Set `stage_gate` from the facts already confirmed:
+
+- Use `handoff_to_product` only if the user explicitly confirms ending business validation or the prior conversation already contains that confirmation.
+- Otherwise use the appropriate continue decision, such as `continue_business_validation` or `continue_product_shape`.
+- Put unconfirmed transition items in `missing_fields` or `blocked_next_actions`.
 
 Do not say "business validation passed", "P0 成立", or "商业上已经成立" when material blockers remain. Use precise language:
 
@@ -341,10 +406,11 @@ If `write_allowed=true`, require human approval and rollback method. Customer pr
 
 If the feature has a UI, dashboard, workspace, editor, approval screen, or visual workflow:
 
-1. Produce a low-fidelity `.svg` wireframe.
-2. Add the file path to `ui_requirements.wireframe_artifacts`.
-3. Set `wireframe_status` to `drafted` until the user confirms it.
-4. Do not mark `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready` until `wireframe_status=reviewed`.
+1. During `business_feasibility`, it is enough to mark `wireframe_required=true`, set `wireframe_status=needed`, and list the wireframe as a product-shape blocker.
+2. Before `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready`, produce a low-fidelity `.svg` wireframe.
+3. Add the file path to `ui_requirements.wireframe_artifacts`.
+4. Set `wireframe_status` to `drafted` until the user confirms it.
+5. Do not mark `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready` until `wireframe_status=reviewed`.
 
 Markdown, Mermaid, or ASCII diagrams can explain the UI, but they do not satisfy the SVG requirement.
 
@@ -436,6 +502,8 @@ When enough information is available, output:
 4. Review recommendation.
 5. Current `stage_gate`.
 
+For a business handoff, output the human-readable summary, `spec.json`, missing fields, review recommendation, and current `stage_gate`. A produced SVG wireframe is required only if the spec is already being marked `product_ready` or later. If the UI is known but not shaped, set `ui_requirements.wireframe_status=needed` and list it as the next-stage product blocker.
+
 Use `null`, empty arrays, or `"unknown"` for missing facts. Do not invent facts. Important unknowns must appear in `missing_fields`.
 
 Required top-level sections:
@@ -482,7 +550,7 @@ Before returning or saving the final spec, check:
 8. `product_context.technical_leadership` has a claim, proof or argument, agent score, and product owner confirmation before product-ready or later gates.
 9. Domain Pack specs declare the Friday object loop.
 10. Memory write rules have approval, target scope, redaction, and rollback.
-11. UI specs include a produced SVG and reviewed status before product-ready or later gates.
+11. UI specs include a produced SVG and reviewed status before product-ready or later gates; business handoff specs may instead record `wireframe_status=needed`.
 12. `validation_plan` separates PoC design readiness from execution readiness.
 13. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
 14. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
