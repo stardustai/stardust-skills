@@ -175,7 +175,7 @@ If a KR has no clear deadline, mark `deadline=未明确` and do not apply the ti
 
 ### 2. Evidence Sources
 
-Use independent evidence. KR self-progress and KR progress notes are leads, not proof.
+Use independent evidence where accessible. KR self-progress and KR progress notes are leads, not proof, with one important exception: if the required evidence lives in an internal system the reviewer cannot independently access, such as CRM, 小青, a business cockpit, or another backend report, and the KR progress text gives a clear numeric result or calculation, accept that number as the working fact for scoring. Record the verification gap, source-system gap, or audit evidence needed, but do not discount the score solely because the reviewer cannot independently verify the backend number.
 
 Allowed evidence sources:
 
@@ -188,6 +188,29 @@ Allowed evidence sources:
   - `dws report`, `dws todo`, `dws chat`, `dws calendar`, or other relevant products when the KR evidence lives there.
 
 Do not use unsupported inference as evidence. If a claim cannot be verified, mark it as `证据不足`.
+
+### 2.5 Subagent Scoring Mode
+
+Use this mode when the main agent delegates initial OKR scoring to subagents.
+
+Rules:
+
+- Subagents are read-only reviewers. They must not edit the workbook, skill files, raw exports, or evidence files. The main agent is the only writer for the final Excel artifact.
+- Subagents must read this `dingtang-okr-review` skill before scoring and explicitly state that they applied the current scoring rules.
+- In early calibration, score one bounded subgroup at a time. The main agent must audit each subgroup before expanding to the next subgroup.
+- Subagents must return candidate scoring only, with one row per KR:
+  `姓名 | 部门 | KR | 权重 | 系统KR进度摘要 | 独立检索证据内容 | 证据评价 | 候选评分 | 置信度 | 需主审判断的问题`.
+- `证据评价` must be point-by-point when the KR has numbered sub-items. Do not collapse multiple requirements into one generic comment.
+- Scores `>80` require strong independent evidence or a concrete inaccessible-system metric in the system KR progress. If the evidence is mostly narrative, documents, meetings, demos, or process traces, keep the score conservative and explain the missing effect evidence.
+- Product KR scores `>60` require actual effect evidence, such as launch, acceptance, reuse, customer/user validation, usage data, trial or PoC conversion, PMF/GTM signal, R&D/test acceptance, or measurable quality/efficiency improvement.
+- Internal demos, mock data, local-only prototypes, shadow mode, personal tools, or meeting progress do not equal user/customer validation, PMF, production adoption, or team-wide reuse. If these are the strongest evidence for a KR that promised PMF, customer buy-in, production use, self-service, team use, or success cases, keep the score low-to-mid unless stronger effect evidence is found.
+- If the original KR target was replaced by another direction or a smaller scope, do not treat the replacement as equivalent unless the KR progress or an owner decision explicitly confirms the changed target and comparable value. Score the delivered residual value and clearly state the original-result gap.
+- If a KR requires multiple concrete outputs, such as three full proposals, two real recipes, a published dataset count, or a complete standard package, score against the missing outputs directly. Do not give a high score because the partially completed outputs are high-quality.
+- Zero-weight culture, leadership, or value KRs should be reviewed separately when useful, but they do not enter the candidate weighted total unless the workbook or user explicitly says they should.
+- For documentable-output claims, the subagent must say whether the artifact was found and read. If the artifact was not found or could not be read, treat it as missing for scoring. If it was found but effect is unproven, discount for missing landing value.
+- For inaccessible backend metrics, if the KR progress gives a concrete number, numerator/denominator, or calculation, subagents should score from that number and record the audit gap instead of discounting only for lack of access.
+- Do not use grade-like shorthand labels. Describe the business gap directly, for example: "原承诺是产品内嵌闭环，实际只落到临时表单".
+- Subagents should flag uncertain or high-impact judgments instead of over-resolving them. The main agent decides final scores, wording, and workbook writeback.
 
 ### 3. Scoring Rules
 
@@ -202,18 +225,35 @@ Recommended scale:
 - `20`: minimal evidence of progress.
 - `0`: no evidence, contradicted evidence, or not attempted.
 
-The base score must be based on independent evidence, not on self-reported progress.
+The base score should be based on independently verified evidence when that evidence is accessible. If the relevant source system is not accessible to the reviewer but the system KR progress gives a concrete metric, numerator/denominator, or calculation result, score from that stated result and note the audit gap. Only discount for missing evidence when the required number/result is not stated, is vague, contradicts other evidence, or does not match the KR's required metric.
 
-Outcome/substitution gate:
+Effect/value scoring rule:
 
-- Before assigning any partial score, identify the KR's original promised outcome (`A`) from the KR wording: the required product behavior, launch state, embedded workflow, business/customer effect, adoption metric, efficiency result, or measurable target.
-- Score `0` when the evidence shows only activity, intent, meetings, drafts, forms, temporary workarounds, or internal materials but no verified landing effect for `A`. Do not award process points just because someone "did work".
-- Score `0` when the KR originally promised `A` but the person later delivered a different substitute `B`, even if `B` is useful. A manual form, spreadsheet, side process, demo, or one-off workaround cannot replace a promised productized/embedded/online capability unless the KR explicitly allowed that substitution.
-- If a KR promised a metric or effect, such as NPS, usage frequency, adoption rate, self-service success rate, ROI improvement, cycle-time reduction, or quality improvement, the metric/effect must exist and be tied to the intended workflow. If the metric was not launched, not measured, or measured through an unrelated substitute, score `0`.
-- If the KR itself is explicitly an activity deliverable, such as "complete two workshops" or "publish one document", the completed activity can score, but only when the expected deliverable actually happened and evidence confirms it. Do not infer business value beyond the KR.
-- Evidence of progress comments, self-progress changes, or "已完成设计/已准备/已推进" is a lead, not proof of outcome. Keep the score at `0` until the expected outcome is shipped, adopted, accepted, measured, or otherwise independently validated.
+- First identify the KR's original expected effect from the wording: product behavior, launch state, customer/business value, adoption, efficiency, quality, revenue, risk reduction, or measurable metric. Score primarily by how much real effect and value were achieved, not by how many actions were taken.
+- Check both the user's provided progress evidence and independently searchable evidence from local files, `memory_recall`, and relevant `dws` sources. Self-progress is a lead, not enough proof by itself.
+- Read the full system KR progress text carefully before scoring. Do not give a score from the KR title alone or from a one-sentence summary. The review must say whether the system progress proves the promised result, only describes actions, shows execution downgrade from the original commitment, or leaves a gap.
+- For product KRs, product evidence is primarily effect evidence, not document existence. Product architecture docs, PRDs, roadmaps, positioning materials, PMM briefs, demos, or meeting traces can prove that thinking and preparation happened, but they do not by themselves prove product success. If a product KR lacks evidence of launch, user/customer validation, sales/presales reuse, R&D/test acceptance, real workflow adoption, usage data, trial/PoC conversion, PMF/GTM signal, or measurable quality/efficiency improvement, keep the score in the `40-60` range even when document traces exist. Scores above `60` require a clear effect argument tied to the KR's promised result.
+- For PMF, customer buy-in, technical PoC success, self-service, or team-use KRs, internal demo readiness is weak evidence. Mock demos, local demos, investor-demo preparation, shadow-mode tools, or meeting agreement usually justify only limited partial credit unless there is evidence of real user/customer use, accepted trial/PoC, team adoption, or measurable business effect.
+- For Use Case KRs, distinguish "a scenario was discussed or demoed" from "a complete use case proposal was delivered and adopted". If the KR requires complete proposals, buyer chain, real workflow/data, and product adoption, missing adoption or incomplete proposal count should materially cap the score.
+- For product mechanism KRs, such as VOC/P0 priority rules, product positioning, cross-department product口径, training mechanisms, sharing mechanisms, or product-side operating systems, do not score high from the mechanism being announced or used once. If the KR includes an effect metric, such as low-quality demand ratio下降、拦截率、复用率、优先级命中率、覆盖率、使用频次, the metric result is the main score anchor. When the mechanism exists but the promised effect metric is missing, normally cap the score around `55` unless another hard effect proof exists.
+- For product launch or上线 claims, "已上线" in self-progress is not enough when the KR promised product value. Look for a release link/version, acceptance record, usage log, customer/internal user adoption, sales/presales reuse, or issue-closure evidence. If the only proof is a demo, meeting statement, local build, financing package, or "waiting for R&D/platform version", score it as preparation or partial delivery rather than launched product.
+- For product organization capability KRs, such as "two people can independently design and promote new products", named examples and meeting participation are only leads. Scores above `60` require project-level evidence: named owner, PRD/design artifacts, decision ownership, limited manager intervention, launch or acceptance result, and downstream use. Without those, treat it as capability-building progress, not proven independent ownership.
+- For activity-style product KRs, such as weekly sharing, product training, or knowledge-base operation, first decide whether the promised output is only the activity or includes value/effect. If the KR says "valuable", "拦截率", "统一使用", or "推动决策", require materials plus attendance/coverage and downstream reuse or decision impact; otherwise keep scores conservative.
+- For engineering and technical KRs, score against the original technical result before asking for external business effect. Architecture design, component extraction, SDK encapsulation, technical debt count, demo-level implementation, test cases, deployment scripts, AI Jam sessions, and internal engineering tools can be valid KR outcomes when the KR wording promises those technical outputs. Good evidence includes readable architecture/design docs, code paths, merged PRs, package/API docs, test reports, demo links or recordings, release notes, issue/debt lists, meeting acceptance, or internal user records. Do not require customer validation, sales reuse, or PMF evidence unless the KR explicitly promises customer/product/business adoption.
+- For engineering KRs that promise internal adoption, self-service, productivity uplift, stability, ROI, cycle-time reduction, or team capacity improvement, technical completion alone is insufficient. Require usage logs, acceptance records, before/after metrics, incident/bug data, cycle-time data, Story Points, self-service success rate, or another metric tied to the promised effect.
+- For demo-level engineering KRs, grade against the promised demo standard. If the KR says "60分demo" or an internal demo milestone, a working internal demo, integration evidence, and a limited bug/risk list can justify a mid-to-high partial score. Missing customer adoption should not be a major deduction unless the KR promised external use; missing demo link, recording, acceptance, or core-flow stability should still discount.
+- For technical debt count KRs, if the KR is explicitly count-based, such as "处理数量大于5项", score the count when the issue/debt list or clear progress text proves it. Treat quality metrics such as alert reduction, defect rate, or reuse rate as improvement suggestions unless the KR itself requires those metrics.
+- Do not convert explicit partial progress into `0` solely because the final target was missed or resources changed. If the system progress, artifacts, or meeting evidence show relevant partial work, give low partial credit according to value delivered. Reserve `0` for no attempt, no relevant output, contradicted evidence, or when the available work creates no value for the KR.
+- For inaccessible backend metrics, such as CRM win rate, 小青 recruitment conversion, cockpit ROI, usage counters, or similar operational systems, do not require a second independent source if the KR progress includes a clear number. Example: if the KR asks for CRM-confirmed PoC win rate above 50% and the progress says "win:participated = 9:11", score the metric as achieved; the gap is "need CRM/Shawn screenshot for audit", not a score deduction. If the KR needs a number and the progress does not state it, then apply a discount.
+- Documentable-output claims have a higher verification bar across all KR types. If a KR says it produced a document, plan, policy, SOP, process, report, dashboard, analysis, proposal, pitch, demo, PRD, roadmap, user journey, evaluation case, standard offer, training material, hiring rubric, financial control, SLA, automation, system feature, or other inspectable artifact, the reviewer must search for and read the corresponding document or artifact. Treat the output as nonexistent for scoring if the artifact cannot be found or read. If the artifact exists, still check meeting minutes, usage records, acceptance records, business records, or operating metrics for downstream value, such as adoption, reuse, customer/investor/internal stakeholder use, launch, training completion, risk reduction, efficiency gain, revenue impact, or owner acceptance; otherwise discount for "artifact exists but landing value unproven".
+- If the KR contains multiple numbered sub-items, such as `1、... 2、... 3、...`, evaluate point by point. The review must explicitly comment on each numbered point before giving the overall score. Do not collapse a multi-point KR into one generic sentence.
+- If the delivered result is a downgraded execution of the original commitment, score with a discount instead of forcing `0`. The discount should reflect value loss: for example, a productized embedded workflow downgraded to a manual form may receive low partial credit if it produced usable feedback, but should be much lower than the original target. Do not write grade-like labels in the review text; describe the business gap directly.
+- If the team delivered a different substitute that does not solve the original problem or create comparable value, keep the score very low. Use `0` only for no attempt, no evidence, contradicted evidence, or work that creates no relevant value.
+- For metric KRs such as NPS, usage frequency, adoption rate, self-service success rate, ROI improvement, cycle-time reduction, or quality improvement, score by actual measurement and impact. If the metric was not launched but a downgraded proxy exists, explicitly describe the downgrade and apply a discount.
+- Activity KRs, such as workshops or published documents, can score when the activity itself was the promised output. Do not infer extra business value unless there is evidence of adoption or effect.
+- When the evidence-based score differs materially from the person's self-progress, explain the gap and state what evidence would close it. Typical gap items are missing user adoption, missing customer validation, missing system data, missed deadline, downgraded execution, weak business value, or missing independent proof.
 
-Example: if a KR promised "embed NPS and usage feedback into the product, collect NPS, and use it for product iteration", but the product NPS was never launched and a temporary form was used instead, the KR scores `0`; the form is `B`, not the promised `A`.
+Example: if a KR promised "embed NPS and usage feedback into the product, collect NPS, and use it for product iteration", but the product NPS was not launched and only a temporary form or group feedback was used, do not give full credit. Score based on whether the downgraded proxy produced useful feedback and iteration decisions; if it did not create measurable product or business value, the score should be very low, and the review should say how to supplement the gap.
 
 ### 4. Time Discount
 
@@ -245,17 +285,21 @@ For each KR, evaluate:
 
 Create a review artifact as Markdown and/or Excel. Use one row per KR.
 
-Required columns:
+Required simplified columns for management-facing Excel:
 
-| Person | O | KR | KR Weight | Self Progress | KR Progress Notes | Evidence Used | Evidence Gaps | Deadline | Actual Completion Time | Base Score | Time Discount | Final Score | CEO Comment | Suggested Follow-up |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| KR | 权重 | 系统KR进度 | 独立检索证据内容 | 证据评价 | 评分 | 提升建议 |
+| --- | --- | --- | --- | --- | --- | --- |
+
+`证据评价` should include the score rationale, gaps, deadline or DDL issues, execution downgrade from the original commitment, and why the score differs from self-progress when the gap is material. Use plain business language such as "原承诺是产品内嵌闭环，实际只落到临时表单" instead of grade-like labels.
+If the KR has numbered sub-items, `证据评价` must use the same numbering and comment on each sub-item, for example `1）... 2）... 3）... 总体：...`.
 
 Rules:
 
-- `Evidence Used` must cite concrete local file paths, memory result summaries, or `dws` source identifiers/URLs when available.
-- `Evidence Gaps` must say what is missing, not just "insufficient".
-- `CEO Comment` should be direct and evidence-bound.
-- `Suggested Follow-up` should name the specific proof, delivery, owner, or next decision needed.
+- Management-facing review tables should use Chinese headers. Avoid English headers and avoid excessive columns.
+- `独立检索证据内容` should summarize the evidence content, not paste file paths or raw source URLs. Keep source provenance in raw capture files or internal audit notes if needed, but do not clutter the management sheet.
+- Do not add a separate evidence-list sheet or evidence index unless the user explicitly asks for audit inventory.
+- `证据评价` must say what is missing, not just "insufficient".
+- `提升建议` should name the specific proof, delivery, owner, or next decision needed.
 - If evidence is weak, say so and keep the score conservative.
 
 ## Chrome Collection Notes
