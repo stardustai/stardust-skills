@@ -202,6 +202,8 @@ Rules:
   `姓名 | 部门 | KR | 权重 | 系统KR进度摘要 | 独立检索证据内容 | 证据评价 | 候选评分 | 置信度 | 需主审判断的问题`.
 - `证据评价` must be point-by-point when the KR has numbered sub-items. Do not collapse multiple requirements into one generic comment.
 - Scores `>80` require strong independent evidence or a concrete inaccessible-system metric in the system KR progress. If the evidence is mostly narrative, documents, meetings, demos, or process traces, keep the score conservative and explain the missing effect evidence.
+- Business / GTM / presales / solution KR scores should not be inflated by documents, demos, meeting discussion, or proposal drafts alone. For KRs that promise sales conversion, marketing leads, customer validation, solution reuse, opportunity advancement, PoC progress, or solution standardization, high scores require customer acceptance, sales/presales reuse, valid opportunities, PoC advancement, contract/payment, lead conversion, content-generated inquiry, or actual standard-solution use. If the strongest evidence is only materials, meetings, or internal demos, normally keep the score in the `40-60` range.
+- Classify "solution" KRs by the promised result: customer方案、打单、PoC、复用率 belong to business/GTM; 标准 offer、产品包、产品架构 belong to product; 可部署能力、工具链、代码组件、自动化交付 belong to engineering.
 - Product KR scores `>60` require actual effect evidence, such as launch, acceptance, reuse, customer/user validation, usage data, trial or PoC conversion, PMF/GTM signal, R&D/test acceptance, or measurable quality/efficiency improvement.
 - Internal demos, mock data, local-only prototypes, shadow mode, personal tools, or meeting progress do not equal user/customer validation, PMF, production adoption, or team-wide reuse. If these are the strongest evidence for a KR that promised PMF, customer buy-in, production use, self-service, team use, or success cases, keep the score low-to-mid unless stronger effect evidence is found.
 - If the original KR target was replaced by another direction or a smaller scope, do not treat the replacement as equivalent unless the KR progress or an owner decision explicitly confirms the changed target and comparable value. Score the delivered residual value and clearly state the original-result gap.
@@ -232,6 +234,7 @@ Effect/value scoring rule:
 - First identify the KR's original expected effect from the wording: product behavior, launch state, customer/business value, adoption, efficiency, quality, revenue, risk reduction, or measurable metric. Score primarily by how much real effect and value were achieved, not by how many actions were taken.
 - Check both the user's provided progress evidence and independently searchable evidence from local files, `memory_recall`, and relevant `dws` sources. Self-progress is a lead, not enough proof by itself.
 - Read the full system KR progress text carefully before scoring. Do not give a score from the KR title alone or from a one-sentence summary. The review must say whether the system progress proves the promised result, only describes actions, shows execution downgrade from the original commitment, or leaves a gap.
+- For business / GTM / solution KRs, such as sales conversion, marketing acquisition, customer validation, solution reuse, opportunity advancement, PoC progress, or solution standardization, documents, demos, meeting discussion, and proposal drafts only prove that actions happened; they do not prove business results. High scores require evidence such as customer acceptance, sales/presales reuse, valid opportunities, PoC advancement, contract/payment, lead conversion, content-generated inquiry, or actual standard-solution use. If only materials, meetings, or internal demos are found, normally keep the score in the `40-60` range. Classify solution KRs by the promised result: customer方案、打单、PoC、复用率 belong to business/GTM; 标准 offer、产品包、产品架构 belong to product; 可部署能力、工具链、代码组件、自动化交付 belong to engineering.
 - For product KRs, product evidence is primarily effect evidence, not document existence. Product architecture docs, PRDs, roadmaps, positioning materials, PMM briefs, demos, or meeting traces can prove that thinking and preparation happened, but they do not by themselves prove product success. If a product KR lacks evidence of launch, user/customer validation, sales/presales reuse, R&D/test acceptance, real workflow adoption, usage data, trial/PoC conversion, PMF/GTM signal, or measurable quality/efficiency improvement, keep the score in the `40-60` range even when document traces exist. Scores above `60` require a clear effect argument tied to the KR's promised result.
 - For PMF, customer buy-in, technical PoC success, self-service, or team-use KRs, internal demo readiness is weak evidence. Mock demos, local demos, investor-demo preparation, shadow-mode tools, or meeting agreement usually justify only limited partial credit unless there is evidence of real user/customer use, accepted trial/PoC, team adoption, or measurable business effect.
 - For Use Case KRs, distinguish "a scenario was discussed or demoed" from "a complete use case proposal was delivered and adopted". If the KR requires complete proposals, buyer chain, real workflow/data, and product adoption, missing adoption or incomplete proposal count should materially cap the score.
@@ -255,19 +258,56 @@ Effect/value scoring rule:
 
 Example: if a KR promised "embed NPS and usage feedback into the product, collect NPS, and use it for product iteration", but the product NPS was not launched and only a temporary form or group feedback was used, do not give full credit. Score based on whether the downgraded proxy produced useful feedback and iteration decisions; if it did not create measurable product or business value, the score should be very low, and the review should say how to supplement the gap.
 
+### 3.1 Rubric Examples
+
+Use these examples as calibration anchors when the score is ambiguous. The examples do not replace evidence; they show how to translate evidence into a score.
+
+- Score scale example: if a KR says "Q2 deliver 3 customer-accepted PoCs", then 3 accepted PoCs with acceptance records can be `100`; 2 accepted plus 1 in final acceptance can be around `80`; 1 accepted plus 2 demos can be around `60`; only internal demos can be around `40`; only meeting notes can be around `20`; no relevant evidence or contradicted evidence is `0`.
+- Evidence-source example: if a sales KR requires CRM-confirmed PoC win rate above 50% and system progress says "win:participated = 9:11", accept the stated number as the working fact and record "need CRM screenshot/export for audit"; if progress only says "win rate improved" with no number, discount because the required metric is missing.
+- Business / sales example: if a KR says "discover 20 effective customer demands and convert 5 into qualified opportunities", meeting notes and demand lists without CRM opportunities normally stay in `40-60`; customer-confirmed demands plus 5 CRM-qualified opportunities can reach `80-100`.
+- Business / presales example: if a KR says "support 6 key opportunities and advance 3 PoCs", proposal decks and internal solution reviews only prove action; customer PoC confirmation, trial scope, buyer feedback, and next-step owner evidence can support a high score.
+- Solution example: if a KR says "build 3 reusable solution packages and achieve 50% reuse by sales/presales", three PPTs alone usually stay in `40-60`; reuse logs, copied proposal versions, sales/presales adoption records, and customer feedback can support `80+`.
+- Solution classification example: "智慧政务标准方案被3个客户复用" is business/GTM; "智慧政务标准 offer、产品架构和价格包完成并被产品评审通过" is product; "智慧政务交付脚手架、部署脚本、接口组件可复用" is engineering.
+- Marketing example: if a KR says "publish 8 industry articles and generate 30 valid leads", publishing 8 articles with no inquiry or lead data is usually `40-60`; article links plus lead forms, inquiries, sales handoff, and opportunity conversion can support `80+`.
+- Product example: if a KR says "launch standard offer and enable sales/presales reuse", PRD, roadmap, product architecture, and demo prove preparation; release/version, sales kit usage, presales reuse, customer validation, or usage data is needed for `>60`.
+- PMF/customer-validation example: investor demo, mock demo, or internal agreement is weak evidence for PMF; real user adoption, accepted customer trial, PoC conversion, renewal intent, or repeated usage can support a high score.
+- Use-case example: if a KR says "deliver 3 complete use-case proposals with buyer chain, workflow, data, and adoption path", discussing 3 scenarios is not enough; each proposal must include the buyer chain, real workflow/data, adoption path, and evidence that sales/presales/customer used it.
+- Product-mechanism example: if a KR says "establish VOC/P0 rule and reduce low-quality demand ratio by 30%", announcing the rule or using it once normally caps around `55`; a demand intake list showing baseline, rejected/accepted counts, and low-quality ratio下降 can support a higher score.
+- Product-launch example: "已上线" in self-progress is not enough if no link/version/usage/acceptance is available; release notes, production link, user logs, issue closure, and adoption records can support high scores.
+- Product-organization example: if a KR says "two PMs can independently design and promote new products", meeting participation is only a lead; named PM owner, PRD/design artifacts, decision records, launch/acceptance result, and downstream use are needed for `>60`.
+- Activity-style product example: if a KR only promised "run weekly product sharing", attendance and materials may be enough; if it promised "valuable sharing that drives unified product language", require reuse in sales/presales scripts, training completion, decision records, or other downstream evidence.
+- Engineering-output example: if a KR says "complete SDK encapsulation and 5 integration examples", code paths, merged PRs, package docs, test reports, and demo evidence can support high scores even without customer validation, because the promised result is technical output.
+- Engineering-effect example: if a KR says "AI tool improves delivery efficiency by 30%", code completion alone is not enough; require usage logs, before/after cycle time, accepted tasks, self-service success rate, or delivery throughput data.
+- Engineering-demo example: if a KR explicitly says "60分demo", a stable internal demo, core-flow recording, integration notes, and known bug list can justify mid-to-high partial credit; missing demo link, acceptance, or core-flow stability should discount.
+- Technical-debt count example: if a KR says "处理技术债大于5项", an issue list or PR list proving 6 closed debt items can score the count; alert reduction or defect-rate improvement is only an improvement suggestion unless the KR required it.
+- Partial-progress example: if a KR promised 10 standard cases and evidence proves 4 usable cases adopted by the team, do not score `0`; give partial credit by count, quality, and adoption value.
+- Documentable-output example: if a KR claims "产出产品全景图、技术架构图、产品矩阵说明、投资人讲法和demo", each artifact must be found and read. If only the demo is found, score only the demo portion; if all artifacts exist but no meeting, sales, investor, or product-use evidence exists, discount for missing landing value.
+- Multi-point KR example: for "1）EDBench生产目标；2）StarBench 3000条；3）Benchmark差异化分析报告和成单案例", evaluate 1, 2, and 3 separately in `证据评价`, then give the overall score. Do not write only "LLM数据方向有进展".
+- Downgraded-execution example: if the KR promised product-embedded NPS but execution became a temporary manual form, score the feedback value if it informed decisions, but discount heavily because the embedded product loop was not delivered.
+- Substitute-output example: if the KR promised "客户自助使用" but the delivered result was "internal operator manually runs it for customers", this is not equivalent unless the KR owner explicitly changed the target and the value is comparable; keep the score low-to-mid depending on customer value.
+- Metric KR example: if a KR says "NPS上线并收集100份反馈", a form with 20 internal responses is a downgraded proxy, not full completion; product-embedded NPS, response count, analysis, and product iteration decisions are needed for high score.
+- Activity KR example: if a KR says "run 4 workshops", 4 workshop records can score the activity; if it says "run 4 workshops and drive 3 customer opportunities", workshop records alone are insufficient without opportunity evidence.
+- Self-progress gap example: if self-progress says `100%` because a proposal was written, but the KR promised customer acceptance or contract progress, the review should state "proposal exists, but customer acceptance/contract evidence is missing" and score by the missing result.
+
 ### 4. Time Discount
 
 Compare actual completion time with the KR required time.
 
-- If the KR was completed after the required time, apply a 50% discount to the evidence-based base score.
-- Formula: `final_score = base_score * 0.5`.
-- If only part of the KR was completed late, apply the discount to the late portion when the evidence allows separation; otherwise apply it to the whole KR and explain why.
-- If the KR is still incomplete after the deadline, score the actual completed evidence first, then apply the same 50% late discount to the completed portion if it arrived late.
+- First assign the evidence-based base score from result quality, then apply a timing discount. Late completion does not automatically erase the result, but it reflects weaker execution reliability and may reduce business value.
+- If the KR was completed within about 2 weeks after the required time, apply only a light discount, normally no more than 10 points.
+- If the KR was completed about 1 month late, apply a material discount; the final score is normally capped around `70-80`.
+- If the KR was completed about 2 months late, even if the result was eventually completed, the final score is normally capped around `60`.
+- If the KR was completed more than about 2 months late, or missed the relevant business window, the final score is normally capped around `40-50`.
+- If lateness caused a customer, revenue, launch, or management-decision window to be lost, discount further according to the actual business loss.
+- If only part of the KR was completed late, apply the timing discount to the late portion when the evidence allows separation; otherwise apply the appropriate overall cap and explain why.
+- If the KR is still incomplete after the deadline, score the actual completed evidence first, then apply the appropriate late cap to any completed late portion.
 - If no required time can be established, do not apply a time discount; mark `time_discount=未适用`.
 
 Examples:
 
-- Base score `80`, completed after deadline -> final score `40`.
+- Base score `90`, completed about 2 weeks late -> final score normally `80-90`, depending on business impact.
+- Base score `90`, completed about 1 month late -> final score normally capped around `70-80`.
+- Base score `90`, completed about 2 months late -> final score normally capped around `60`.
 - Base score `60`, no clear deadline -> final score `60`.
 - Base score `0`, no evidence -> final score `0`.
 
