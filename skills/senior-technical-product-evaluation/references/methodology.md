@@ -189,6 +189,28 @@ If the available and intended decision input is the resume alone, the primary sc
 
 For resume-only cohort ranking, add rank and percentile while preserving the absolute score. Use these default bands: `>=75 strong interview recommendation`, `70-74.9 interview recommendation`, `65-69.9 weak recommendation/priority verification`, `60-64.9 targeted verification`, `<60 reject`.
 
+### 9.0.1 Technical-team environment
+
+When team environment is requested, research it independently and add it as a 15% final dimension. Use these category bands:
+
+| Team category | Default band | Required evidence |
+|---|---:|---|
+| Product-led technical startup with disclosed Series A-C financing | 85-100 | Financing round/date/investors plus identifiable product and technical team |
+| Excellent B2B product team at a top-tier technology company | 75-89 | Named B2B product, product ownership, engineering or market evidence |
+| Product-led B2C technology company | 65-79 | Real consumer product, scale/operations, identifiable technical work |
+| Large-enterprise technology subsidiary or product technology team | 50-69 | Product boundary and technical team exist, but environment is more organizationally constrained |
+| No clear product; project/outsourcing-led B2B; state/central enterprise; public institution | 20-49 | Default low-priority environment unless strong contrary product-team evidence exists |
+
+Adjust within the band using technical founder/leader quality, R&D/product evidence, open-source or engineering output, customer/product traction, and whether the candidate sat in the core product team. Record exact sources and dates. Do not let financing alone prove technical excellence.
+
+For a standalone B2B product company that has a real standardized product but lacks both disclosed Series A-C financing and top-tier technology-company status, use the `50-69` band conservatively rather than inventing a sixth high-priority category. This preserves the requested ordering: clear product evidence keeps it above project/outsourcing environments, while missing financing and company-quality evidence keeps it below the first two tiers.
+
+The resume-only final formula with team environment is:
+
+```text
+Resume final = Product technology * 25% + Personal technical depth * 35% + Product-line fit * 25% + Technical-team environment * 15%
+```
+
 ### 9.1 Multi-product portfolio aggregation
 
 Default input identity rule: one row equals one candidate. Adjacency, similar employers, plausible career progression, or related technical topics are not identity evidence. Merge rows only when a candidate ID, name, explicit resume boundary, or equally direct source linkage confirms that they belong to the same person. Otherwise produce a separate fact card, responsibility inference, scoring breakdown, and final score for every row.

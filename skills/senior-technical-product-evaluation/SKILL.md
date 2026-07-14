@@ -56,12 +56,13 @@ Use at least two materially different sources, including one primary source, for
 7. Separate product facts from candidate attribution. Public evidence that a company had a capability does not prove the candidate designed or built it.
 8. Score product technical complexity and leadership independently of the candidate. Put most weight on technical complexity, technical leadership, innovation, and technical taste; give problem importance and generic product differentiation little weight.
 9. Score candidate technical depth only on the inferred responsibility boundary. Examine claim authenticity, implementation complexity, hard problems, technical decisions, failures and iteration, and development duration.
-10. Score product-line fit for each relevant target product using exactly: hard-problem similarity 25%, technical-architecture similarity 25%, data/evaluation-loop similarity 20%, customer/deployment similarity 15%, and responsibility/stage similarity 15%. This product-line fit is the only fit score used in the final composite. Do not also calculate a second generic target-role-fit score, and do not average unrelated product lines merely to produce one number.
-11. Apply evidence caps and senior-level gates.
-12. Show every required subdimension, weight, weighted contribution, and evidence basis; do not expose only a top-level score.
-13. Recalculate every weighted score independently and verify the displayed arithmetic.
-14. Confirm that the final report retains any contrary evidence that could change product identity, system boundaries, candidate ownership, or time alignment.
-15. Produce screening questions that target the largest unresolved claims.
+10. Research and score the candidate's technical-team environment. Verify financing stage, investors, business type, product identity, technical leadership, R&D/product evidence, and whether the company is product-led or project/outsourcing-led. Do not infer team quality from a company name alone.
+11. Score product-line fit for each relevant target product using exactly: hard-problem similarity 25%, technical-architecture similarity 25%, data/evaluation-loop similarity 20%, customer/deployment similarity 15%, and responsibility/stage similarity 15%. This product-line fit is the only fit score used in the final composite. Do not also calculate a second generic fit score, and do not average unrelated product lines merely to produce one number.
+12. Apply evidence caps and senior-level gates when not in resume-only mode.
+13. Show every required subdimension, weight, weighted contribution, and evidence basis; do not expose only a top-level score.
+14. Recalculate every weighted score independently and verify the displayed arithmetic.
+15. Confirm that the final report retains any contrary evidence that could change product identity, system boundaries, candidate ownership, team environment, or time alignment.
+16. Produce screening questions that target the largest unresolved claims.
 
 When a candidate highlights a highly repetitive technical topic such as a generic Agent harness, RAG wrapper, workflow builder, or chatbot, do not award technical-currency points for vocabulary alone. If neither public evidence nor the candidate's own description identifies an original problem, mechanism, comparison baseline, failure, or result, treat the project as evidence of weak technical selection and technical taste, not merely missing evidence.
 
@@ -95,6 +96,7 @@ When the recruiting workflow explicitly states that only the resume will ever be
 - Evaluate personal ownership only from resume wording, specificity, plausible scope, technical mechanisms, metrics, decisions, failures, iteration, and duration. Missing evidence lowers the relevant depth subdimensions directly; do not penalize the same absence again through a separate confirmation cap.
 - Keep uncertainty as non-numeric flags such as `产品实体未解析`, `任期缺失`, `个人边界模糊`, `指标不可复算`, or `疑似公司能力归因`, rather than compressing the final score.
 - Use the fixed final formula `产品技术 30% + 个人技术深入度 40% + 产品线匹配度 30%` and show the stronger of Friday and MorningStar as the primary resume score while retaining both product-line scores.
+- When technical-team environment is part of the requested screen, use `产品技术 25% + 个人技术深入度 35% + 产品线匹配度 25% + 技术团队环境 15%`. Show the team score, category, sources, and adjustment reasons. Do not additionally use the old `30/40/30` result as the decision score.
 - For cohort screening, show rank and percentile in addition to the absolute score. Do not stretch or normalize the absolute score merely to create visual separation.
 - Default decision bands: `>=75 强推荐进入面试`, `70-74.9 推荐进入面试`, `65-69.9 弱推荐/优先验证`, `60-64.9 针对性验证`, `<60 淘汰`. A material red flag may lower the decision, but the reason must be explicit.
 
@@ -105,6 +107,18 @@ Do not recommend a candidate as proven senior-level product/technology leadershi
 Use the exact structure in the methodology reference. Produce one consolidated report, not separate summary, evidence, scoring, and product-description files. Keep original input, internet-enhanced facts, responsibility inference, public evidence, and conclusions visibly separate inside that file. Every score needs a reason and an evidence grade. For each top-level dimension, include a subdimension breakdown table with `子项 / 权重 / 原始分 / 加权贡献 / 打分依据`; then explain separately why the evidence grade raises or lowers the current confirmed score. A top-level score without this breakdown is incomplete.
 
 For Stardust/PreSeen reports, include a Friday/MorningStar product-line fit matrix showing raw similarity, evidence-capped confirmed similarity, matching mechanisms, and critical gaps. State which product line is the stronger match. This matrix is diagnostic input to target-role fit, not a fourth score to add again to the composite.
+
+Include a technical-team environment fact card when requested. Use this preference order, verified through internet research:
+
+1. Product-led technical team with disclosed Series A-C financing.
+2. Excellent B2B product team inside a top-tier technology company.
+3. Product-led B2C technology company.
+4. Technology subsidiary or product technology team inside a large enterprise.
+5. No clear product, project/outsourcing-led B2B company, state-owned or central enterprise, or public institution.
+
+Financing news alone is insufficient: verify the round, date, investors, product, and technical-team signals. State-owned status does not erase a concrete leading product team, but absent contrary product/technical evidence it belongs in the lowest band.
+
+If a standalone B2B company has a clear product but neither disclosed Series A-C financing nor evidence that it is a top-tier technology company, do not create an extra high-scoring category for it. Evaluate it conservatively alongside the fourth band and cap the team score at 69. A real standardized product, core-team position, sustained R&D, and strong engineering output can move it toward the top of that band; project revenue, implementation-heavy delivery, unstable operations, or unclear ownership move it toward the lowest band.
 
 The report must be auditable by a human reviewer. Include enough original product and candidate text to evaluate whether the interpretation is faithful, plus a research ledger with `source / fact / supports / does not support`. If the reviewer cannot trace a score back to original text and a named evidence item, the report is incomplete. Add a short feedback table for disputed assumptions and judgment calls.
 

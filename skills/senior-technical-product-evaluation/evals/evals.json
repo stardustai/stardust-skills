@@ -48,6 +48,21 @@
         "Checks whether product evidence and metrics align with the candidate's employment dates.",
         "Produces differentiated signal and confirmed scores plus targeted questions about technical choices, business outcomes, failures, and hands-on depth."
       ]
+    },
+    {
+      "id": 4,
+      "name": "b2b-product-team-with-unverified-financing",
+      "prompt": "Use resume-only screening mode to evaluate a senior infrastructure candidate from a standalone restaurant SaaS company. The company has a real standardized POS, ordering, payment, membership, inventory, and supply-chain product; public sources show engineering investment and production operation, but no reliable Series A, B, or C round mapping and it is not a top-tier technology company. The candidate claims to lead infrastructure and operations and to develop some core platforms. Include technical-team environment in the final score and explain the company-team category. Save the Chinese report as report.md.",
+      "expected_output": "A Chinese report that recognizes the real B2B product and core infrastructure signal but conservatively maps the team environment to the 50-69 band, rather than inventing an extra 75+ category. It must retain separate product, personal-depth, Friday/MorningStar fit, and team-environment scores with reproducible arithmetic.",
+      "files": [],
+      "assertions": [
+        "Uses internet sources to verify the standardized product, engineering evidence, financing status, and operational risks.",
+        "Does not classify the company as a Series A-C technical team when round, date, and investors cannot be reliably mapped.",
+        "Does not classify the company as a top-tier technology-company B2B team merely because it has a real SaaS product.",
+        "Assigns the technical-team environment to the 50-69 band and explains the within-band score.",
+        "Keeps team environment at 15 percent of the final score and does not let company context replace candidate technical depth.",
+        "Calculates separate Friday and MorningStar final scores and shows reproducible arithmetic."
+      ]
     }
   ]
 }
