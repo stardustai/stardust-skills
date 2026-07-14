@@ -1,0 +1,53 @@
+{
+  "skill_name": "senior-technical-product-evaluation",
+  "evals": [
+    {
+      "id": 1,
+      "name": "netease-enterprise-mail",
+      "prompt": "Evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization, not only mature-system operations. Resume evidence: At NetEase, the candidate was enterprise-mail technical lead, led a backend team, owned a core-system migration from a legacy architecture, self-developed MTA, queue scheduling, retries, concurrency control, abnormal recovery, database/storage changes, overseas delivery links, and stability governance. The resume also says the candidate later led enterprise-mail AI assistant, administrator assistance, and after-sales knowledge analysis using RAG, full-text indexing, tool calling, permission checks, and structured output. Research the relevant products on the internet, distinguish public facts from candidate claims, and score product leadership, candidate technical depth, and target-role fit. Save the final report as report.md.",
+      "expected_output": "A single Chinese report with original text, internet-enhanced product facts, inferred candidate responsibility, technical-complexity/leadership score, candidate-depth score, separate Friday/MorningStar fit scores, and reproducible raw and confirmed final scores. It should recognize mature distributed-system depth without treating current AI features or product scale as proof of candidate ownership.",
+      "files": [],
+      "assertions": [
+        "Uses direct internet sources and distinguishes public product facts from resume claims.",
+        "Infers the candidate's likely responsibility boundary and explicitly excludes company capabilities that cannot be attributed personally.",
+        "Scores all six product-technology dimensions and all six candidate-depth dimensions with weights, evidence, and reproducible arithmetic.",
+        "Calculates separate Friday and MorningStar fit with the exact 25/25/20/15/15 product-line weights, uses those scores directly in final scores, and does not create a second generic fit score.",
+        "Flags that current product pages may post-date the candidate's tenure unless dates are verified.",
+        "Does not equate system scale, NetEase brand, or team leadership with candidate technical depth.",
+        "Produces targeted follow-up questions about architecture decisions, metrics, failures, and AI ownership."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "open-agent-harness-ambiguous",
+      "prompt": "Evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization. Resume evidence: Personal/open-source project named 'Open Agent Harness', claimed to solve long-task context drift, noisy tool calls, multi-agent handoff and review through Agent Protocol, Runtime, Memory, State Sharing, Permission, Audit, Handoff, and Review. Candidate claims to have led protocol design and runtime validation, but provides no repository URL, author identity, dates, users, benchmark, release, or adoption data. Research the internet, avoid attributing similarly named projects without identity proof, and score product leadership, candidate technical depth, and target-role fit. Save the final report as report.md.",
+      "expected_output": "A disciplined single Chinese report that refuses to use unrelated OpenHarness projects as evidence, treats generic Agent vocabulary without original mechanisms or results as weak technical-selection and technical-taste evidence, and still produces reproducible raw and confirmed final scores for Friday and MorningStar.",
+      "files": [],
+      "assertions": [
+        "Performs entity-resolution checks and does not treat a similarly named public repository as the candidate's project.",
+        "Separates conceptual relevance from verified technical leadership and contribution depth.",
+        "Penalizes technical leadership, innovation, and technical taste when no distinct mechanism, baseline, failure, or result is provided.",
+        "Infers the likely responsibility as concept design or prototype only unless stronger evidence exists.",
+        "Calculates separate Friday and MorningStar fit with the exact 25/25/20/15/15 weights and reproducible raw and evidence-capped final scores, without a second generic fit score.",
+        "Requests repository, commits, architecture decisions, benchmark, users, failures, and candidate identity evidence.",
+        "Separates the resume-screen decision from the senior-hiring gate when critical contribution evidence is resume-only."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "bairong-aigc-platform",
+      "prompt": "Evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization. Resume evidence: At BaiRong Cloud, candidate 'led the AIGC technology roadmap, enterprise AIGC platform, algorithms, scenario delivery, team building and business model' across finance, telecom, large enterprises, government, retail, education and healthcare. Claimed technology includes LLM, multimodal, pretraining, SFT, RLHF, inference, RAG, vector databases, content safety, GPU scheduling and agents. Research BaiRong's official filings/product materials and independent evidence where available. Score product leadership, candidate technical depth, and target-role fit without treating breadth of keywords or company claims as proof of personal depth. Save the final report as report.md.",
+      "expected_output": "A single Chinese report that decomposes BaiRong's company-wide model, infrastructure, Agent platform, applications, and business stack; infers the candidate's plausible route-setting or organizational responsibility; and produces evidence-backed technical, depth, product-line-fit, raw-final, and confirmed-final scores.",
+      "files": [],
+      "assertions": [
+        "Uses official filing or investor/product sources and at least one materially different corroborating source when available.",
+        "Decomposes BaiRong's product stack and separates company/product evidence from the candidate's inferred personal responsibility.",
+        "Treats broad AI keyword coverage as a packaging risk rather than automatic deep expertise.",
+        "Scores technical complexity, leadership, innovation, technical taste, responsibility authenticity, hard problems, decisions, failures, and duration explicitly.",
+        "Calculates separate Friday and MorningStar fit with the exact 25/25/20/15/15 weights and reproducible raw and evidence-capped final scores, without a second generic fit score.",
+        "Checks whether product evidence and metrics align with the candidate's employment dates.",
+        "Produces differentiated signal and confirmed scores plus targeted questions about technical choices, business outcomes, failures, and hands-on depth."
+      ]
+    }
+  ]
+}

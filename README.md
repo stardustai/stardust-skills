@@ -4,7 +4,7 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、PRD 测试用例生成、需求规格访谈、候选人面试、小青面试系统和等保代码安全审计。具体原子操作仍交给对应工具完成：钉钉能力优先走 `dws`，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
+当前仓库覆盖钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、PRD 测试用例生成、需求规格访谈、候选人面试、高级技术候选人产品经历评估、小青面试系统和等保代码安全审计。具体原子操作仍交给对应工具完成：钉钉能力优先走 `dws`，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
 
 ## 包含的 Skills
 
@@ -18,6 +18,7 @@
 | `dingtalk-oa-approval` | 审阅钉钉 OA 审批，要求读完整审批详情、流水、附件、链接文档和依据材料后再给审批意见。 |
 | `fxiaoke-crm-mcp` | 使用 `crm_connector` MCP 查询纷享销客 CRM 合同、商机、客户、交付、回款和跟进，继承用户 CRM OAuth 权限，并按明确口径输出指标。 |
 | `qa-generated-test-case` | 根据 PRD 生成标准 7 列 QA 测试用例，支持外部历史材料索引的 top N 检索、CSV/XLSX 导出和格式校验。 |
+| `senior-technical-product-evaluation` | 评估 CTO、技术总监、架构师、资深 AI/工程负责人等高级技术候选人的产品经历，要求互联网调研、产品事实卡、候选人责任边界推断、技术深度评分和目标岗位匹配判断。 |
 | `spec-intake` | 把一句话业务需求访谈成 Spec Driven JSON，要求逐步澄清业务证据、交付边界、验收标准、测试标准、运维标准和评审门禁。 |
 | `stardust-interview` | 星尘候选人面试工作流：读取小青候选人材料和岗位画像，按需结合 DWS AI 听记，按 Derek 的证据链标准准备面试建议、结构化面评，并在确认后 dry run + 提交小青面评。 |
 
@@ -121,6 +122,7 @@
 | `dingtalk-oa-approval` | 优先使用 `dws oa` 授权；只有在 DWS 详情缺字段且用户已授权时，才会用本机开放平台配置补读。 |
 | `fxiaoke-crm-mcp` | 需要可用的 `crm_connector` MCP OAuth 授权。Agent 不保存 CRM token，不读取 CRM app secret；权限和审计继承纷享销客当前登录用户。 |
 | `qa-generated-test-case` | 默认不需要业务系统凭证。若需要历史 PRD 上下文，应从用户授权的 memory/document store、私有数据目录或单独数据包检索 top N 片段，不把历史材料提交到仓库。 |
+| `senior-technical-product-evaluation` | 默认不需要业务系统凭证。它需要互联网调研公开资料；简历、内部汇总或候选人陈述只作为线索，不能单独证明产品领先性或候选人贡献。 |
 | `spec-intake` | 默认不需要业务系统凭证。若需求涉及现有系统、repo、API、MCP、Memory、Friday 或客户系统，应读取用户授权范围内的本地代码/文档来确认边界；不要提交访谈产物或客户资料。 |
 | `stardust-interview` | 需要可用的 `xiaoqing_interview` MCP OAuth 授权；读取 AI 听记时还需要可用的 `dws minutes` 授权。 |
 
@@ -148,6 +150,7 @@
 │   ├── dingtalk-oa-approval/
 │   ├── fxiaoke-crm-mcp/
 │   ├── qa-generated-test-case/
+│   ├── senior-technical-product-evaluation/
 │   ├── spec-intake/
 │   └── stardust-interview/
 └── README.md
