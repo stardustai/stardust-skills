@@ -4,7 +4,7 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、PRD 测试用例生成、需求规格访谈、候选人面试、高级技术候选人产品经历评估、小青面试系统和等保代码安全审计。具体原子操作仍交给对应工具完成：钉钉能力优先走 `dws`，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
+当前仓库覆盖钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、PRD 测试用例生成、需求规格访谈、候选人面试、高级技术候选人产品经历评估、小青面试系统和等保代码安全审计。具体原子操作仍交给对应工具完成：钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
 
 ## 包含的 Skills
 
@@ -16,7 +16,7 @@
 | `dingtalk-knowledge-organize` | 对钉钉知识库做盘点、分类、移动、重命名、去重和 CSV 审批式整理。底层操作优先走 `dws doc` / `dws wiki`。 |
 | `dingtalk-minutes-access-request` | 只处理钉钉 AI 听记权限申请、权限复查和阻塞诊断。听记正文、摘要、转写读取应走 `dws minutes`。 |
 | `dingtalk-oa-approval` | 审阅钉钉 OA 审批，要求读完整审批详情、流水、附件、链接文档和依据材料后再给审批意见。 |
-| `fxiaoke-crm-mcp` | 使用 `crm_connector` MCP 查询纷享销客 CRM 合同、商机、客户、交付、回款和跟进，继承用户 CRM OAuth 权限，并按明确口径输出指标。 |
+| `fxiaoke-crm-cli` | 使用官方 `sharecrm` CLI 查询纷享销客 CRM 合同、商机、客户、联系人、交付、回款和跟进，按明确口径输出指标，并在 CRM 写操作前要求最终确认。 |
 | `qa-generated-test-case` | 根据 PRD 生成标准 7 列 QA 测试用例，支持外部历史材料索引的 top N 检索、CSV/XLSX 导出和格式校验。 |
 | `senior-technical-product-evaluation` | 评估 CTO、技术总监、架构师、资深 AI/工程负责人等高级技术候选人的产品经历，要求互联网调研、产品事实卡、候选人责任边界推断、技术深度评分和目标岗位匹配判断。 |
 | `spec-intake` | 把一句话业务需求访谈成 Spec Driven JSON，要求逐步澄清业务证据、交付边界、验收标准、测试标准、运维标准和评审门禁。 |
@@ -29,7 +29,7 @@
 - 你希望把星尘内部反复使用的业务流程版本化，而不是每次临时写提示词。
 - 你希望 Agent 能继承统一的审阅规则、证据标准、提交协议和输出格式。
 - 你希望对内部系统做源码级安全审计，并沉淀可复查的风险证据和整改验收标准。
-- 你已经有可用的业务工具授权，例如 `dws`、`xiaoqing_interview` MCP、浏览器登录态或本地开放平台配置。
+- 你已经有可用的业务工具授权，例如 `dws`、官方 `sharecrm` CLI 登录会话、`xiaoqing_interview` MCP、浏览器登录态或本地开放平台配置。
 
 ## 安装
 
@@ -44,6 +44,15 @@
 ```text
 ~/.agents/skills
 ```
+
+使用 `fxiaoke-crm-cli` 前，需要另行安装官方 `sharecrm` CLI 和用于本地结构化聚合的 `jq`，并由每位使用者在本机完成登录：
+
+```bash
+sharecrm auth login
+sharecrm auth status
+```
+
+CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得提交到本仓库。
 
 安装时会排除本地状态文件，例如：
 
@@ -108,6 +117,14 @@
 把这个一句话需求访谈成工程可以评审的 Spec Driven JSON
 ```
 
+```text
+统计今年已签约合同金额、平均成单周期、商机转换率、交付量和回款额，列出每项指标的口径
+```
+
+```text
+查询这个客户及其联系人、当前商机和最近跟进；不要修改 CRM
+```
+
 ## 权限和凭证
 
 不同 skill 的权限来源不一样。仓库只保存流程和规则，不保存 token、cookie、浏览器状态或私有导出数据。
@@ -120,7 +137,7 @@
 | `dingtalk-minutes-access-request` | 当前不需要开放平台 key。它使用浏览器登录态申请或复查 AI 听记访问权限；正文读取走 `dws minutes`。 |
 | `dingtalk-knowledge-organize` | 通常需要可用的 `dws` 授权，部分旧脚本也支持读取本机 `~/.dingtalk-skills/config`。不要把配置提交到仓库。 |
 | `dingtalk-oa-approval` | 优先使用 `dws oa` 授权；只有在 DWS 详情缺字段且用户已授权时，才会用本机开放平台配置补读。 |
-| `fxiaoke-crm-mcp` | 需要可用的 `crm_connector` MCP OAuth 授权。Agent 不保存 CRM token，不读取 CRM app secret；权限和审计继承纷享销客当前登录用户。 |
+| `fxiaoke-crm-cli` | 需要官方 `sharecrm` CLI 及当前使用者在本机建立的有效登录会话。CLI 会话不进入仓库，Agent 不索要、不读取、不共享 token、cookie 或其他凭证；查询、写入权限和审计继承当前登录的 CRM 用户。 |
 | `qa-generated-test-case` | 默认不需要业务系统凭证。若需要历史 PRD 上下文，应从用户授权的 memory/document store、私有数据目录或单独数据包检索 top N 片段，不把历史材料提交到仓库。 |
 | `senior-technical-product-evaluation` | 默认不需要业务系统凭证。它需要互联网调研公开资料；简历、内部汇总或候选人陈述只作为线索，不能单独证明产品领先性或候选人贡献。 |
 | `spec-intake` | 默认不需要业务系统凭证。若需求涉及现有系统、repo、API、MCP、Memory、Friday 或客户系统，应读取用户授权范围内的本地代码/文档来确认边界；不要提交访谈产物或客户资料。 |
@@ -148,7 +165,7 @@
 │   ├── dingtalk-knowledge-organize/
 │   ├── dingtalk-minutes-access-request/
 │   ├── dingtalk-oa-approval/
-│   ├── fxiaoke-crm-mcp/
+│   ├── fxiaoke-crm-cli/
 │   ├── qa-generated-test-case/
 │   ├── senior-technical-product-evaluation/
 │   ├── spec-intake/
