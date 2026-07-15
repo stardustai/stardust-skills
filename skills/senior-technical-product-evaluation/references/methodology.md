@@ -183,13 +183,43 @@ Output a separate raw and confirmed fit score for each product line. If the hiri
 
 ## 9. Composites and gates
 
-### 9.0 Resume-only screening
+### 9.0 Score D: Recent-role functional fit
+
+Score what the candidate actually did in the most recent three years, not the prestige, product category, or title of the employer. Use the current role plus the immediately preceding substantive role when needed to cover roughly 24-36 months. If the candidate had a career break, use the latest substantive role and disclose the time gap.
+
+This score is intentionally separate from product-line fit:
+
+- Product-line fit measures whether product mechanisms, customers, architecture, and constraints transfer.
+- Recent-role functional fit measures whether the candidate's recent day-to-day responsibility and output match the target job.
+- Personal technical depth measures how deeply and credibly the candidate performed the work, not whether that work is the right function.
+
+| Subdimension | Weight | What strong evidence looks like |
+|---|---:|---|
+| Core-function similarity | 30 | Recent work is the same responsibility center as the target: core product R&D, AI product engineering, infrastructure, algorithms, or another explicitly required function |
+| Output and result similarity | 25 | Recent deliverables and success metrics match the target role's expected product, technical, and business outcomes |
+| Ownership position | 20 | Candidate sat inside and owned the core team or mechanism, rather than supporting it through SRE, DevOps, QA, delivery, governance, or coordination |
+| Current technical-paradigm exposure | 15 | Recent hands-on decisions and artifacts use the target role's current paradigm, not only older transferable foundations or tool adoption |
+| Recency and continuity | 10 | Relevant function was sustained and remains current, rather than a short project or experience more than three years old |
+
+Functional categories are not a universal prestige ordering. Score them relative to the target role. SRE can score highly for an SRE leadership role and poorly for a core AI product R&D role. Likewise, product engineering should not score highly for a specialist reliability role without relevant evidence.
+
+For L4/L5 roles that explicitly own core product R&D or AI product technology, apply these caps and gates:
+
+- Recent work mainly in SRE, DevOps, quality effectiveness, delivery, PMO, technical support, or infrastructure operations, with no verified core-product ownership: cap recent-role functional fit at 59.
+- Adjacent platform/infrastructure ownership with current hands-on architecture and direct responsibility for a target-critical platform mechanism: normally 60-69 unless core-product responsibility is also demonstrated.
+- Relevant product R&D management without current hands-on technical decisions or inspectable output: normally cap at 74.
+- A relevant company or AI-branded product does not raise this score when the candidate's own function was support, governance, tool selection, or operational assurance.
+- Confirmed recent-role functional fit below 60 blocks a recommendation at the target L4/L5 core-R&D level. The candidate may still be considered for a functionally aligned infrastructure, SRE, DevOps, or engineering-effectiveness role.
+
+Always output the recent roles used, each role's actual function, distance from the target responsibility center, score, and evidence. Titles such as CTO, technical director, head of engineering, or AI lead are claims, not functional evidence.
+
+### 9.1 Resume-only screening
 
 If the available and intended decision input is the resume alone, the primary score is the resume signal composite. Do not apply E0-E4 numerical ceilings to create a confirmed composite: there is no later evidence in the current stage that could make such a score comparable across candidates. Public research provides product context and contemporaneous benchmarks only. Candidate-specific uncertainty must be expressed through the personal-depth subdimensions and explicit risk flags, without a second penalty.
 
 For resume-only cohort ranking, add rank and percentile while preserving the absolute score. Use these default bands: `>=75 strong interview recommendation`, `70-74.9 interview recommendation`, `65-69.9 weak recommendation/priority verification`, `60-64.9 targeted verification`, `<60 reject`.
 
-### 9.0.1 Technical-team environment
+### 9.1.1 Technical-team environment
 
 When team environment is requested, research it independently and add it as a 15% final dimension. Use these category bands:
 
@@ -205,13 +235,14 @@ Adjust within the band using technical founder/leader quality, R&D/product evide
 
 For a standalone B2B product company that has a real standardized product but lacks both disclosed Series A-C financing and top-tier technology-company status, use the `50-69` band conservatively rather than inventing a sixth high-priority category. This preserves the requested ordering: clear product evidence keeps it above project/outsourcing environments, while missing financing and company-quality evidence keeps it below the first two tiers.
 
-The resume-only final formula with team environment is:
+The resume-only final formulas are:
 
 ```text
-Resume final = Product technology * 25% + Personal technical depth * 35% + Product-line fit * 25% + Technical-team environment * 15%
+Without team environment = Product technology * 25% + Personal technical depth * 30% + Product-line fit * 25% + Recent-role functional fit * 20%
+With team environment = Product technology * 20% + Personal technical depth * 25% + Product-line fit * 20% + Recent-role functional fit * 20% + Technical-team environment * 15%
 ```
 
-### 9.1 Multi-product portfolio aggregation
+### 9.2 Multi-product portfolio aggregation
 
 Default input identity rule: one row equals one candidate. Adjacency, similar employers, plausible career progression, or related technical topics are not identity evidence. Merge rows only when a candidate ID, name, explicit resume boundary, or equally direct source linkage confirms that they belong to the same person. Otherwise produce a separate fact card, responsibility inference, scoring breakdown, and final score for every row.
 
@@ -223,11 +254,11 @@ When one candidate is confirmed to have many product rows, preserve a coverage t
 
 Do not average every historical project merely because it appears in the input. Explain why each representative was selected and which rows were grouped into it. Candidate technical depth and product-line fit can use the full portfolio, but must cite concrete inferred-owned components rather than company names or titles.
 
-For a general senior technical product role:
+For a general senior technical product role without a separate team-environment score:
 
 ```text
-Signal composite = raw Product technical complexity and leadership * 30% + raw Technical depth * 40% + raw Product-line fit * 30%
-Confirmed composite = confirmed Product technical complexity and leadership * 30% + confirmed Technical depth * 40% + confirmed Product-line fit * 30%
+Signal composite = raw Product technical complexity and leadership * 25% + raw Technical depth * 30% + raw Product-line fit * 25% + raw Recent-role functional fit * 20%
+Confirmed composite = confirmed Product technical complexity and leadership * 25% + confirmed Technical depth * 30% + confirmed Product-line fit * 25% + confirmed Recent-role functional fit * 20%
 ```
 
 Change weights only when the target role explicitly requires it, and disclose the change.
@@ -236,7 +267,7 @@ Before finalizing, recompute each weighted term and the total separately. The pr
 
 If one dimension is E0/Unknown, keep any separately justified raw claim score for resume screening, but use 0 for that dimension's contribution to the evidence-capped confirmed composite. Label the zero as an unresolved-evidence penalty, not as proof that the candidate's actual ability is zero.
 
-Product-line fit has direct 30% impact on the final score. Calculate it from the candidate's inferred responsibility boundary rather than the full former-company product. When the target product is unresolved, calculate separate final composites for each material product line and label the highest one as the best-fit product-line score; do not average product lines. Always display both the raw resume-signal composite and the evidence-capped confirmed composite.
+Product-line fit has 25% impact without a team-environment dimension and 20% with it; recent-role functional fit has 20% impact in both formulas. Calculate both from the candidate's inferred responsibility boundary rather than the full former-company product. When the target product is unresolved, calculate separate final composites for each material product line and label the highest one as the best-fit product-line score; do not average product lines. Always display both the raw resume-signal composite and the evidence-capped confirmed composite.
 
 Apply two different gates after calculating the scores.
 
@@ -251,6 +282,7 @@ Apply two different gates after calculating the scores.
 
 - Confirmed technical depth below 60: not yet qualified as proven senior technical ownership.
 - Confirmed target-role fit below 60: do not recommend for this role, even if generally strong.
+- Confirmed recent-role functional fit below 60: do not recommend at an L4/L5 core-R&D level unless the target role is explicitly aligned with that recent function.
 - Critical contribution evidence E0/E1: do not conclude senior-level ownership without interview or work-sample verification.
 - Product technical leadership above 75 with technical depth below 60: label "leading technology context, passenger risk".
 - Technical depth above 75 with product technical leadership below 60: label "strong engineering, technical-selection evidence weak".
@@ -315,24 +347,28 @@ Use these decision labels:
 | 候选人技术深入度 | | | | |
 | Friday 产品线匹配度 | | | | |
 | MorningStar 产品线匹配度 | | | | |
+| 最近岗位职能匹配度 | | | | |
 
 ### 产品线匹配矩阵
 | 产品线 | 原始相似度 | 证据等级 | 当前确认相似度 | 匹配机制 | 关键缺口 |
 | Friday | | | | | |
 | MorningStar | | | | | |
 
+### 最近岗位职能匹配
+| 最近岗位与时间 | 实际职能 | 与目标岗位的责任中心距离 | 原始分 | 证据等级 | 当前确认分 | 依据与缺口 |
+
 明确说明：更匹配哪条产品线；目标岗位匹配度采用哪条产品线作为主要依据；是否存在岗位归属不明的问题。
 
 ### 子项打分明细
 
-分别为产品技术复杂度与领先性、候选人技术深入度，以及每条目标产品线匹配度输出一张表：
+分别为产品技术复杂度与领先性、候选人技术深入度、每条目标产品线匹配度，以及最近岗位职能匹配度输出一张表：
 
 | 子项 | 权重 | 原始分 | 加权贡献 | 打分依据与缺失证据 |
 |---|---:|---:|---:|---|
 
 每张表必须满足：
 
-- 产品技术复杂度与领先性、候选人技术深入度各展示六个规定子项；每条产品线匹配度使用且仅使用 `25/25/20/15/15` 五个规定子项，不能再输出旧版 `30/20/20/15/15` 通用岗位匹配表。
+- 产品技术复杂度与领先性、候选人技术深入度各展示六个规定子项；每条产品线匹配度使用且仅使用 `25/25/20/15/15` 五个规定子项；最近岗位职能匹配度使用且仅使用 `30/25/20/15/10` 五个规定子项。
 - 加权贡献之和必须与该维度的原始分一致；如有四舍五入，明确标注。
 - 打分依据应指向前文公开证据、候选人主张或明确的缺失证据，不能只写形容词。
 - 原始分反映“如果主张属实”的信号强度；当前确认分另行结合证据等级、时间对齐和个人归因计算，不要把两者混在子项表中。
