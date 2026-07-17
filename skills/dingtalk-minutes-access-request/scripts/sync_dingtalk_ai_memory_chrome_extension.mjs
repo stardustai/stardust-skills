@@ -6,6 +6,7 @@ const BROWSER_CLIENT_PATH =
   "/Users/derek/.codex/plugins/cache/openai-bundled/chrome/26.602.40724/scripts/browser-client.mjs";
 const HISTORY_URL = "https://oa.dingtalk.com/meeting_oa#/flash_minutes/history_list";
 const DEFAULT_BASE_DIR = "/Users/derek/Documents/memory/AI听记";
+const DEFAULT_TARGET_ORG_NAME = "北京星尘纪元智能科技有限公司";
 const DEFAULT_MIN_AGE_MINUTES = 15;
 const DEFAULT_PERMISSION_REQUEST_MESSAGE =
   "AI自动抓取，用于会议纪要整理，如和工作内容无关或者涉及个人隐私，请拒绝";
@@ -80,6 +81,52 @@ const ENSURE_AI_SUMMARY_TAB_JS = () => {
   if (!target) return { clicked: false };
   target.click();
   return { clicked: true, text: normalize(target.innerText || target.textContent) };
+};
+
+export const GET_DINGTALK_HISTORY_GATE_STATE_JS = ({ targetOrgName = "" } = {}) => {
+  const normalize = (value) => ((value || '').replace(/\s+/g, ' ')).trim();
+  const isVisible = (el) => {
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+    return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+  };
+  const visibleTexts = Array.from(document.querySelectorAll('button,a,div,span,p'))
+    .filter(isVisible)
+    .map((el) => normalize(el.innerText || el.textContent))
+    .filter(Boolean);
+  const visibleText = normalize(visibleTexts.join(" "));
+  const body = normalize((document.body?.innerText || "").replace(/\u00a0/g, " "));
+  const title = document.title || "";
+  const url = location.href;
+  const targetOrg = normalize(targetOrgName);
+  const targetOrgVisible = !!targetOrg && visibleTexts.includes(targetOrg);
+  const staleRefreshVisible = visibleTexts.includes("立即刷新") || visibleTexts.includes("Refresh Now");
+  const hasHistoryRows = !!document.querySelector('tr[data-row-key]');
+  const hasNoContent = body.includes("No content") || body.includes("暂无数据") || body.includes("暂无内容");
+  const onHistoryPage = location.hostname === "oa.dingtalk.com" && location.hash.includes("/flash_minutes/history_list");
+  const onDingTalkHome = location.hostname === "oa.dingtalk.com" && /\/index\.htm/.test(location.pathname);
+  const hasSecretPrompt =
+    /密码|短信验证码|验证码|扫码登录|二维码|QR code|captcha|安全验证|手机号登录|账号登录|password|verification code/i.test(visibleText) ||
+    /扫码|scan|QR code|captcha/i.test(title);
+  const looksLoggedOut =
+    (location.hostname === "login.dingtalk.com" && !targetOrgVisible) ||
+    hasSecretPrompt ||
+    (/登录|登入|login|sign in/i.test(visibleText) && !targetOrgVisible && !staleRefreshVisible);
+  return {
+    url,
+    title,
+    body_head: body.slice(0, 500),
+    visible_text_head: visibleText.slice(0, 500),
+    on_history_page: onHistoryPage,
+    on_dingtalk_home: onDingTalkHome,
+    has_history_rows: hasHistoryRows,
+    has_no_content: hasNoContent,
+    stale_refresh_visible: staleRefreshVisible,
+    target_org_name: targetOrg,
+    target_org_visible: targetOrgVisible,
+    has_secret_prompt: hasSecretPrompt,
+    looks_logged_out: looksLoggedOut,
+  };
 };
 
 export const GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS = ({ index = 0, requestMessage = "" } = {}) => {
@@ -447,6 +494,63 @@ async function evaluatePage(tab, pageFunction, arg, options) {
   return tab.playwright.evaluate(pageFunction, arg, options);
 }
 
+async function clickVisibleExactText(tab, text, timeoutMs = 3000) {
+  const locator = tab.playwright.getByText(text, { exact: true });
+  const count = await locator.count().catch(() => 0);
+  for (let index = 0; index < count; index += 1) {
+    const item = locator.nth(index);
+    if (!(await item.isVisible({ timeoutMs: 500 }).catch(() => false))) continue;
+    await item.click({ timeoutMs });
+    return true;
+  }
+  return false;
+}
+
+export async function resolveDingTalkHistoryGate(tab, { targetOrgName = DEFAULT_TARGET_ORG_NAME } = {}) {
+  const state = await evaluatePage(
+    tab,
+    GET_DINGTALK_HISTORY_GATE_STATE_JS,
+    { targetOrgName },
+    { timeoutMs: 5000 },
+  );
+
+  if (state.stale_refresh_visible) {
+    const clicked =
+      (await clickVisibleExactText(tab, "立即刷新").catch(() => false)) ||
+      (await clickVisibleExactText(tab, "Refresh Now").catch(() => false));
+    if (clicked) {
+      emitProgress("Clicked DingTalk stale-state refresh");
+      await tab.playwright.waitForTimeout(1500);
+      return { acted: true, action: "refresh", state };
+    }
+  }
+
+  if (state.target_org_visible && targetOrgName) {
+    const clicked = await clickVisibleExactText(tab, targetOrgName).catch(() => false);
+    if (clicked) {
+      emitProgress(`Selected DingTalk organization: ${targetOrgName}`);
+      await tab.playwright.waitForTimeout(1500);
+      const currentUrl = typeof tab.url === "function" ? await tab.url() : "";
+      if (!currentUrl.includes("/meeting_oa#/flash_minutes/history_list")) {
+        await tab.goto(HISTORY_URL);
+        await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 10000 }).catch(() => {});
+      }
+      return { acted: true, action: "select_org", state };
+    }
+  }
+
+  if (state.has_secret_prompt) return { acted: false, action: "secret_prompt", state };
+
+  if (state.on_dingtalk_home) {
+    emitProgress("Returning from DingTalk home to AI history");
+    await tab.goto(HISTORY_URL);
+    await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs: 10000 }).catch(() => {});
+    return { acted: true, action: "return_history", state };
+  }
+
+  return { acted: false, action: "none", state };
+}
+
 async function waitForFoundState(tab, stateJs, timeoutMs, pollMs = 200) {
   const deadline = Date.now() + timeoutMs;
   let lastState = { found: false };
@@ -527,27 +631,11 @@ async function extractAiSummary(tab, timeoutMs = 8000) {
   return [text, { char_count: text.length, class_name: state.className || "" }];
 }
 
-async function waitForHistoryReady(tab, timeoutMs = 15000) {
+async function waitForHistoryReady(tab, timeoutMs = 15000, { targetOrgName = DEFAULT_TARGET_ORG_NAME } = {}) {
   await tab.goto(HISTORY_URL);
   await tab.playwright.waitForLoadState({ state: "domcontentloaded", timeoutMs }).catch(() => {});
-  const loginState = await evaluatePage(tab,
-    () => {
-      const body = (document.body.innerText || '').replace(/\u00a0/g, ' ').trim();
-      const title = document.title || '';
-      const url = location.href;
-      const looksLoggedOut =
-        location.hostname === 'login.dingtalk.com' ||
-        /登录|登入|login|sign in|扫码|scan/i.test(title) ||
-        /扫码登录|账号登录|手机号登录|短信验证码|Scan|QR code/i.test(body);
-      return { url, title, body_head: body.slice(0, 500), looks_logged_out: looksLoggedOut };
-    },
-    undefined,
-    { timeoutMs: 5000 },
-  );
-  if (loginState.looks_logged_out) {
-    throw new Error(`Login required before history is accessible: ${JSON.stringify(loginState)}`);
-  }
   const deadline = Date.now() + timeoutMs;
+  let lastGateState = null;
   while (Date.now() < deadline) {
     const ready = await evaluatePage(tab,
     () => {
@@ -560,9 +648,15 @@ async function waitForHistoryReady(tab, timeoutMs = 15000) {
       { timeoutMs: 5000 },
     );
     if (ready) return;
+    const gate = await resolveDingTalkHistoryGate(tab, { targetOrgName });
+    lastGateState = gate.state;
+    if (gate.acted) continue;
+    if (gate.state?.looks_logged_out) {
+      throw new Error(`Login required before history is accessible: ${JSON.stringify(gate.state)}`);
+    }
     await tab.playwright.waitForTimeout(500);
   }
-  throw new Error("History page did not become ready before timeout.");
+  throw new Error(`History page did not become ready before timeout: ${JSON.stringify(lastGateState || {})}`);
 }
 
 async function getHistoryPage(tab) {
@@ -922,6 +1016,7 @@ export async function runChromeDingTalkSync(options = {}) {
   const browser = options.browser || (await runtimeAgent.browsers.get("extension"));
 
   const baseDir = options.baseDir || DEFAULT_BASE_DIR;
+  const targetOrgName = options.targetOrgName || DEFAULT_TARGET_ORG_NAME;
   const cutoffDate = parseLocalTimestamp(options.stopBeforeDate || "");
   const maxItems = Number(options.maxItems || 0);
   const maxPages = Number(options.maxPages || 0);
@@ -960,7 +1055,7 @@ export async function runChromeDingTalkSync(options = {}) {
 
   try {
     emitProgress(`Opening DingTalk AI history through real Chrome`);
-    await waitForHistoryReady(historyTab, Number(options.historyReadyTimeoutMs || 60000));
+    await waitForHistoryReady(historyTab, Number(options.historyReadyTimeoutMs || 60000), { targetOrgName });
     emitProgress(`History ready; scratch tab opened`);
 
     while (true) {
