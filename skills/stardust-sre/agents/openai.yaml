@@ -1,0 +1,4 @@
+interface:
+  display_name: "生产级 DevOps SRE"
+  short_description: "生成并审查具备工单、域名及首次发布门禁的生产级云原生部署"
+  default_prompt: "使用 $production-devops-sre 审查当前项目，并生成包含工单、域名分配和首次 CI/CD 门禁的生产级部署配置。"
