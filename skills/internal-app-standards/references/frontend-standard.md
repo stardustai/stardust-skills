@@ -5,6 +5,7 @@
 - Required stack
 - App structure
 - Ant Design usage
+- Routing and page design
 - Layout and visual quality
 - State and data fetching
 - Forms, tables, and permissions
@@ -17,6 +18,7 @@
 - React Router for routing.
 - TanStack Query or the existing repository standard for server state.
 - Generated or shared typed API client when available.
+- Centralized permission helpers for UI affordances, backed by backend RBAC.
 
 ## App Structure
 
@@ -49,6 +51,14 @@ src/
 - Use `Table` with clear columns, pagination, sorting/filtering, empty state, and loading state.
 - Use `Drawer` for side editing/detail workflows and `Modal` for short confirmations.
 
+## Routing And Page Design
+
+- Define route structure before building components. Routes should map to business workflows, not generic demo pages.
+- Keep list filters, pagination, sort, tabs, and selected records in URL state when sharing or returning to the page matters.
+- Use drawers for quick detail/edit flows that preserve list context. Use dedicated pages for complex multi-step workflows.
+- Keep permission-denied routes and action-level disabled states explicit.
+- Avoid putting workflow decisions only in route guards; backend APIs must enforce permissions and state transitions.
+
 ## Layout And Visual Quality
 
 - Build the first screen as the actual internal tool, not a marketing landing page.
@@ -65,10 +75,13 @@ src/
 - Put API calls in feature-level `api.ts` or a shared API client, not directly in components.
 - Handle request cancellation/retry behavior intentionally.
 - Show actionable error messages and preserve user input when saves fail.
+- Invalidate or update affected queries after mutations. Do not rely on manual refresh for critical workflows.
+- Avoid storing server data in global client state unless there is a clear cross-page interaction reason.
 
 ## Forms, Tables, And Permissions
 
 - Forms must distinguish create, edit, read-only, and permission-denied states.
 - Destructive actions require confirmation and visible result feedback.
 - Table row actions should be icon or compact text actions with tooltips when needed.
+- Forms should handle initial load, validation errors, optimistic/pessimistic save behavior, duplicate submit prevention, and save failure recovery.
 - Do not hide authorization only in the frontend. Frontend checks are UX only; backend RBAC is mandatory.

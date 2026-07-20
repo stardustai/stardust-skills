@@ -4,9 +4,11 @@
 
 - Backend framework
 - Backend structure
+- API and domain design
 - Database design
 - Migrations
 - Transactions and data access
+- Jobs and integrations
 - Security and observability
 
 ## Backend Framework
@@ -52,6 +54,15 @@ apps/api/src/
 
 Controllers should parse/validate input and delegate. Services own business rules. Repositories own persistence. Cross-module calls should go through explicit service APIs.
 
+## API And Domain Design
+
+- Keep REST resources stable and noun-based. Use explicit action endpoints for business transitions that are not plain CRUD.
+- Apply authentication and coarse authorization in guards; apply domain-state authorization in services.
+- Keep request DTOs, response DTOs, and persistence models separate.
+- Use stable machine-readable error codes and attach request IDs to errors.
+- Require idempotency protection for retries, imports, exports, notifications, and external-side-effect mutations.
+- Keep domain state transitions explicit and checked. Do not update workflow status with uncontrolled partial updates.
+
 ## Database Design
 
 Use PostgreSQL as the system of record.
@@ -85,6 +96,15 @@ Default conventions:
 - Do not return database models directly to the frontend; map to response DTOs.
 - Use pagination for list APIs.
 - Use optimistic locking or explicit status transitions for approval/workflow records.
+- Keep external API calls outside transactions. Persist enough state to retry safely after transaction commit.
+
+## Jobs And Integrations
+
+- Add a background job system only when work is long-running, retryable, scheduled, or fanout-heavy.
+- Make every job idempotent. Store status, retry count, failure reason, input reference, and completion time.
+- Wrap external systems behind integration clients with timeouts, retry policy, rate-limit handling, and error mapping.
+- Use an outbox, durable job table, or company event standard when a database change must reliably trigger an external side effect.
+- Provide operator-visible remediation for failed imports, exports, syncs, and notifications.
 
 ## Security And Observability
 

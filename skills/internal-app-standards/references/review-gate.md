@@ -12,6 +12,8 @@
 For code review, inspect the diff and enough surrounding code to understand behavior. Review against these categories:
 
 - Stack consistency.
+- Technology selection and exception records.
+- Engineering design completeness for new systems or large features.
 - Engineering structure and module boundaries.
 - Frontend UX quality and Ant Design usage.
 - Backend validation, authorization, error handling, and observability.
@@ -31,6 +33,8 @@ For code review, inspect the diff and enough surrounding code to understand beha
 Production-bound systems should pass or have documented exceptions for:
 
 - Repo follows standard structure or has an agreed migration path.
+- Stack deviations have explicit reason, owner, operational impact, and rollback or migration path.
+- New systems or large changes have an engineering design covering modules, APIs, data, auth/RBAC, deployment, tests, and risks.
 - Frontend uses React + Ant Design with non-demo layout and complete states.
 - Backend uses TypeScript modules with clear controller/service/repository separation.
 - API validates inputs and enforces backend authorization.

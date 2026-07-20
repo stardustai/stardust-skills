@@ -60,6 +60,17 @@ def dependencies(packages: Iterable[tuple[Path, dict]]) -> set[str]:
     return deps
 
 
+def root_package_json(root: Path) -> dict:
+    path = root / "package.json"
+    if not path.exists():
+        return {}
+    try:
+        value = json.loads(read_text(path))
+    except json.JSONDecodeError:
+        return {}
+    return value if isinstance(value, dict) else {}
+
+
 def any_file(root: Path, patterns: Iterable[str]) -> list[Path]:
     found: list[Path] = []
     for pattern in patterns:
@@ -72,9 +83,31 @@ def add_path_check(checks: list[Check], root: Path, relative: str, category: str
     checks.append(Check(status, category, label, relative))
 
 
+def add_dependency_check(
+    checks: list[Check],
+    deps: set[str],
+    candidates: set[str],
+    category: str,
+    label: str,
+    missing_status: str = "FAIL",
+) -> None:
+    found = sorted(deps.intersection(candidates))
+    checks.append(
+        Check(
+            "PASS" if found else missing_status,
+            category,
+            f"{label}: {', '.join(found)}" if found else label,
+        )
+    )
+
+
 def check_repo(root: Path) -> list[Check]:
     checks: list[Check] = []
     packages = package_jsons(root)
+    root_package = root_package_json(root)
+    root_scripts = root_package.get("scripts", {})
+    if not isinstance(root_scripts, dict):
+        root_scripts = {}
     deps = dependencies(packages)
 
     for relative, label in [
@@ -88,10 +121,39 @@ def check_repo(root: Path) -> list[Check]:
     ]:
         add_path_check(checks, root, relative, "structure", label)
 
-    checks.append(Check("PASS" if "react" in deps else "FAIL", "frontend", "React dependency found"))
-    checks.append(Check("PASS" if "antd" in deps else "FAIL", "frontend", "Ant Design dependency found"))
-    checks.append(Check("PASS" if "typescript" in deps else "FAIL", "engineering", "TypeScript dependency found"))
-    checks.append(Check("PASS" if "@nestjs/core" in deps else "FAIL", "backend", "NestJS dependency found"))
+    add_dependency_check(checks, deps, {"typescript"}, "engineering", "TypeScript dependency found")
+    add_dependency_check(checks, deps, {"react"}, "frontend", "React dependency found")
+    add_dependency_check(checks, deps, {"vite", "@vitejs/plugin-react"}, "frontend", "Vite dependency found", "WARN")
+    add_dependency_check(checks, deps, {"antd"}, "frontend", "Ant Design dependency found")
+    add_dependency_check(checks, deps, {"react-router-dom"}, "frontend", "React Router dependency found", "WARN")
+    add_dependency_check(
+        checks,
+        deps,
+        {"@tanstack/react-query", "react-query"},
+        "frontend",
+        "server-state query dependency found",
+        "WARN",
+    )
+    add_dependency_check(checks, deps, {"@nestjs/core"}, "backend", "NestJS dependency found")
+    add_dependency_check(checks, deps, {"@nestjs/config"}, "backend", "NestJS configuration module found", "WARN")
+    add_dependency_check(checks, deps, {"@nestjs/swagger"}, "backend", "OpenAPI generation dependency found", "WARN")
+
+    add_dependency_check(
+        checks,
+        deps,
+        {"prisma", "@prisma/client"},
+        "database",
+        "Prisma dependency found for default data access",
+        "WARN",
+    )
+    add_dependency_check(
+        checks,
+        deps,
+        {"zod", "class-validator"},
+        "engineering",
+        "boundary validation dependency found",
+        "WARN",
+    )
 
     pg_deps = {"pg", "prisma", "@prisma/client", "drizzle-orm", "kysely"}
     checks.append(
@@ -101,6 +163,34 @@ def check_repo(root: Path) -> list[Check]:
             "PostgreSQL data-access/migration dependency found",
         )
     )
+
+    non_standard_frontend = {"vue", "@angular/core", "next", "svelte"}
+    found_frontend = sorted(deps.intersection(non_standard_frontend))
+    if found_frontend:
+        checks.append(
+            Check(
+                "WARN",
+                "technology",
+                f"non-standard frontend framework dependency requires explicit decision record: {', '.join(found_frontend)}",
+            )
+        )
+
+    non_standard_storage = {"mongodb", "mongoose", "mysql2", "mysql", "firebase"}
+    found_storage = sorted(deps.intersection(non_standard_storage))
+    if found_storage:
+        checks.append(
+            Check(
+                "WARN",
+                "technology",
+                f"non-standard datastore dependency requires explicit decision record: {', '.join(found_storage)}",
+            )
+        )
+
+    if "express" in deps and "@nestjs/core" not in deps:
+        checks.append(Check("WARN", "technology", "Express-only backend requires explicit exception and module plan"))
+
+    tsconfig_text = "\n".join(read_text(path) for path in any_file(root, ["tsconfig*.json", "apps/*/tsconfig*.json"]))
+    checks.append(Check("PASS" if '"strict": true' in tsconfig_text else "WARN", "engineering", "TypeScript strict mode enabled"))
 
     migration_files = any_file(root, ["db/migrations/**/*", "apps/api/prisma/migrations/**/*"])
     checks.append(
@@ -137,6 +227,16 @@ def check_repo(root: Path) -> list[Check]:
                 "scripts",
                 f"{script} present",
                 rel(path, root),
+            )
+        )
+
+    for script in ("lint", "typecheck", "test", "build"):
+        checks.append(
+            Check(
+                "PASS" if script in root_scripts else "WARN",
+                "scripts",
+                f"root package script `{script}` present",
+                "package.json",
             )
         )
 

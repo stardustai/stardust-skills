@@ -7,6 +7,7 @@
 - Runtime configuration
 - Database migration job
 - Deploy scripts
+- CI/CD gates
 - Release and rollback
 
 ## Docker
@@ -79,6 +80,18 @@ scripts/rollback.sh   # rollback to the previous known-good version
 ```
 
 Scripts should be thin wrappers around deterministic commands. They must accept environment and image tag inputs rather than editing files in place.
+
+## CI/CD Gates
+
+Before a deployment artifact is considered releasable, CI/CD should run:
+
+- Dependency install with the committed lockfile.
+- Lint and typecheck.
+- Unit tests and critical integration tests.
+- Migration generation/apply check against a disposable PostgreSQL database when schema changed.
+- Docker image build for every runtime.
+- Kubernetes manifest render or dry-run for the target environment.
+- Secret scanning and local-state exclusion checks.
 
 ## Release And Rollback
 

@@ -3,6 +3,7 @@
 ## Contents
 
 - Standard repository structure
+- Technology and architecture decisions
 - Module boundaries
 - API and contract rules
 - Configuration and secrets
@@ -45,6 +46,14 @@ Use this structure for new systems. For existing systems, migrate toward it incr
 └── tsconfig.base.json
 ```
 
+## Technology And Architecture Decisions
+
+- Record the selected stack before generating a new system. Use `technology-selection.md` when the user asks for stack choice, architecture, scaffolding, or production readiness.
+- Start new systems as a modular monolith with one web app, one API service, one PostgreSQL database, and explicit feature modules.
+- Keep stack exceptions visible in docs or the final answer. State why the standard was not used and what operational cost the exception creates.
+- Do not introduce extra services, queues, caches, search systems, workflow engines, or micro-frontends without a named workflow and owner.
+- Keep generated projects runnable by the standard scripts. Avoid framework-specific commands that only work on the creator's machine.
+
 ## Module Boundaries
 
 - Keep frontend, backend, database, and deployment concerns separated.
@@ -63,6 +72,7 @@ Use this structure for new systems. For existing systems, migrate toward it incr
 - Return typed error shapes with machine-readable codes.
 - Generate or document OpenAPI for APIs consumed outside the owning team.
 - Avoid sharing database entities directly with the frontend.
+- Require idempotency keys for retry-prone writes or writes that trigger external side effects.
 
 ## Configuration And Secrets
 
