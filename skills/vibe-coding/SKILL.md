@@ -76,9 +76,18 @@ Run these stages in order. A stage may be revisited when new evidence invalidate
 
 Read `references/agent-rules-compliance-standard.md` and `references/repository-template-standard.md`.
 
-### 3. Initialize and choose the debt strategy
+### 3. Initialize, choose the repository organization, and choose the debt strategy
 
-New projects must establish the standard project contract before feature work. Existing projects must first add or repair the mandatory README, `PROJECT.yaml`, Spec, architecture, plan, business goal/metrics, runtime constraints, test plan, traceability, Eval plan, runbook, rule audit, and technical-debt register.
+New projects must establish the standard project contract before feature work. Existing projects must first discover and assess the actual README, `PROJECT.yaml`, Spec, architecture, plan, business goal/metrics, runtime constraints, test plan, traceability, Eval plan, runbook, rule audit, and technical-debt register. The contract requires complete content and navigability, not one mandatory detailed-document directory tree.
+
+When an existing repository does not use the recommended layout, present exactly two organization choices before moving or creating documents:
+
+- **A. Convert to the standard structure:** move or consolidate the applicable documents into the recommended paths, update all links and tooling, and verify no references break.
+- **B. Adapt in place:** preserve the repository's coherent existing structure, map each required document responsibility—including QA normalized Spec, test design, and test cases—to normalized project-relative paths in `PROJECT.yaml`, and add the exact responsibility-to-path map to the root README. Fill missing content in the most appropriate existing location; do not create duplicate sources of truth merely to imitate the template.
+
+The organization choice does not waive any content, evidence, ownership, test, Eval, runtime, or recovery requirement. Record the choice. For a new repository with no established structure to preserve, use the standard structure unless the user identifies an approved organization convention.
+
+Do not infer completeness from filename, file length, or confident prose. After documents are mapped and gaps are filled, dispatch a genuinely independent review execution and retain its orchestration trace. Its review artifact binds every mapped file's SHA-256 and each required semantic topic to a unique full-line locator plus a nontrivial section hash. Missing topics, stale hashes, reused/nonexistent locators, incomplete sections, or a trace showing self-review block initialization. The JSON identity fields are audit declarations; the actual Agent/tool trace proves independence.
 
 Technical debt means a verified gap between the current repository and an approved requirement that increases change risk, failure likelihood, verification cost, operational risk, or future maintenance cost. It includes violations of applicable agent rules, broken or absent architecture boundaries, missing deterministic tests/Evals, undocumented runtime behavior, unsafe dependencies, missing observability, and unowned or unrecoverable delivery paths. A stylistic preference without an approved requirement or measurable risk is not debt.
 
@@ -87,7 +96,7 @@ When debt affects the current work, present exactly two decision paths:
 - **A. Full remediation:** fix all identified debt, verify the repaired baseline, update documents, and then implement the feature.
 - **B. Minimum safe remediation:** repair the minimum architecture and verification boundary required for a safe baseline; explicitly exclude all remaining debt and all code paths it affects from the current feature. Do not patch new behavior onto the defective path.
 
-No third path allows continuing on a known-bad architecture. Record the user's choice and evidence. Read `references/project-initialization-standard.md` and `references/technical-debt-standard.md`.
+No third path allows continuing on a known-bad architecture. Record the user's choice and evidence. Read `references/project-initialization-standard.md`, `references/documentation-content-standard.md`, and `references/technical-debt-standard.md`.
 
 ### 4. Design and plan
 
@@ -177,7 +186,7 @@ Read `references/risk-adaptive-controls.md` for dimension-specific escalation.
 
 ## Required project artifacts
 
-The root contains `README.md` and JSON-compatible `PROJECT.yaml`. Detailed artifacts live under the Superpowers convention:
+The root contains `README.md` and JSON-compatible `PROJECT.yaml`. The current Spec, Design, and Plan continue to use the Superpowers convention:
 
 ```text
 docs/superpowers/specs/YYYY-MM-DD-<topic>-spec.json
@@ -185,7 +194,7 @@ docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md
 docs/superpowers/plans/YYYY-MM-DD-<topic>.md
 ```
 
-At minimum maintain:
+Other documents may use the standard paths or a coherent existing repository layout. `PROJECT.yaml.documentation` maps every responsibility to its real path, and adapted repositories repeat that navigation in README. At minimum maintain:
 
 - approved Spec and business success scenarios;
 - business goal and measurable business metrics;
@@ -193,12 +202,14 @@ At minimum maintain:
 - runtime constraints and observable signals;
 - implementation plan;
 - test plan, scenario/requirement traceability, and Eval plan;
+- QA normalized Spec, test design, and test cases;
 - agent-rules audit and technical-debt register;
+- independent documentation content review bound to mapped-file hashes and topic locators;
 - task feedback contracts and fresh evidence manifests;
 - runbook and rollback;
 - PR/delivery record when applicable.
 
-Use `assets/templates/`. Validate the repository contract with `scripts/validate_project.py`, every task feedback contract and its measured signals with `scripts/validate_feedback.py`, and business scenario coverage/evidence with `scripts/validate_traceability.py`. Pass the actual project root and environment; declarations or nonexistent evidence paths do not satisfy these gates.
+Use `assets/templates/` as content contracts and recommended organization, not as a mandatory tree for existing repositories. Validate the repository contract with `scripts/validate_project.py`, every task feedback contract and its measured signals with `scripts/validate_feedback.py`, and business scenario coverage/evidence with `scripts/validate_traceability.py`. Pass the actual project root and environment; declarations, missing README mappings, or nonexistent evidence paths do not satisfy these gates.
 
 ## Completion gate
 
@@ -232,7 +243,7 @@ Read `references/incident-and-rescue-standard.md`.
 Load only the documents needed for the current stage:
 
 - Intake: `spec-input-contract.md`, `risk-adaptive-controls.md`.
-- Initialization: `repository-template-standard.md`, `project-initialization-standard.md`, `technical-debt-standard.md`, `agent-rules-compliance-standard.md`.
+- Initialization: `repository-template-standard.md`, `project-initialization-standard.md`, `documentation-content-standard.md`, `technical-debt-standard.md`, `agent-rules-compliance-standard.md`.
 - Design/change: `architecture-and-ui-standard.md`, `interaction-and-change-control-standard.md`.
 - Build/verify: `loop-engineering-standard.md`, `testing-standard.md`, `eval-standard.md`, `subagent-and-review-standard.md`.
 - Git: `git-delivery-standard.md`, `pull-request-standard.md`, `completion-status-standard.md`.

@@ -1,14 +1,17 @@
-# Repository Template Standard
+# Repository Contract and Organization Standard
 
 状态：滚动设计稿。
 
 ## 1. 目的
 
-公司当前不强制统一语言、框架或应用脚手架，但所有正式项目必须采用统一的仓库
-合同。仓库合同使总控 Skill、员工、测试 Agent 和技术接管者能够从固定入口理解、
-运行、验证和恢复项目。
+公司当前不强制统一语言、框架、应用脚手架或详细文档目录。所有正式项目必须满足
+统一的内容与运行合同，使总控 Skill、员工、测试 Agent 和技术接管者能够理解、运行、
+验证和恢复项目。模板是推荐组织方式，不是要求成熟仓库搬家的理由。
 
-## 2. 标准目录
+根 `README.md` 是固定的人类入口，根 `PROJECT.yaml` 是固定的机器入口；其余文档可以
+采用标准结构，也可以保留清晰的既有结构。
+
+## 2. 标准目录选项
 
 ```text
 project/
@@ -40,8 +43,26 @@ project/
 └── tests/
 ```
 
-项目可以遵循语言或框架惯例调整 `src/` 和 `tests/` 的内部结构，但不得改变 Spec、
-Design、Plan、项目状态和工程合同的固定入口。
+新项目默认采用此结构。已有项目可遵循语言、框架和团队惯例组织源码、测试、Eval、
+运行与详细文档；不得降低 Spec、Design、Plan、项目状态和工程合同的内容要求。
+
+## 2.1 已有项目的两个组织选项
+
+当既有结构与标准目录不同，总控 Skill 必须先盘点真实内容，再让用户二选一：
+
+### A. 改成标准结构
+
+移动或合并文档，更新全部链接、脚本和工具引用，并通过完整验证证明迁移没有破坏项目。
+
+### B. 就地适配结构
+
+保留清晰的既有结构，在 `PROJECT.yaml.documentation` 中把每项文档职责映射到真实路径，
+并在 README 中说明组织方式、列出当前 Spec/Design/Plan 和所有文档路径。缺失内容应在
+最合适的既有位置补齐，不得为了匹配模板创建第二份架构、测试计划、Runbook 或其他
+事实源。
+
+目录选择与技术债选择是两项独立决策。就地适配不降低内容、测试、Eval、证据、Owner、
+运行和恢复要求；迁移目录也不等于修复技术债。
 
 ## 3. README.md
 
@@ -55,9 +76,12 @@ README 是员工和技术接管者的第一入口，至少包含：
 - 配置与 Secret 获取方式，不包含真实 Secret；
 - 项目 Owner、维护者和求助方式；
 - 架构、测试、Eval、Runtime、Runbook 和技术债文档链接；
+- 采用就地适配时，完整的文档职责到真实路径映射及组织说明；
 - 已知限制和恢复入口。
 
 README 不重复定义 Spec 中的业务事实，只提供摘要和导航。
+两种组织模式都使用可机器核验的 ``- `responsibility`: `path` `` 行列出当前工件、全部
+映射文档和内容审查；就地适配模式还要解释保留既有组织的原因。
 
 ## 4. PROJECT.yaml
 
@@ -66,6 +90,7 @@ PROJECT.yaml 是总控 Skill 的机器可读入口，至少记录：
 - 项目标识、名称和状态；
 - Remote Repository URL、默认分支和当前功能分支；
 - 当前生效的 Spec、Design 和 Plan；
+- 文档组织模式、必需文档与条件文档的真实路径；
 - `delivery_risk_profile` 和最终风险等级；
 - Business、Product、Engineering、QA 和 Decision Owner；
 - 安装、启动、构建、完整测试、Eval、Smoke 和健康检查命令；
@@ -93,6 +118,7 @@ PROJECT.yaml 的完整 Schema 单独设计，未确认字段不得由总控 Skil
 - `runtime-constraints.md`
 - `test-plan.md`
 - `traceability.md`
+- `eval-plan.md`
 - `runbook.md`
 - `technical-debt-register.md`
 - `agent-rules-audit.md`
@@ -100,10 +126,10 @@ PROJECT.yaml 的完整 Schema 单独设计，未确认字段不得由总控 Skil
 算法、模型、Agent、搜索、排序、分类、生成或自动决策项目还必须有：
 
 - `algorithm-design.md`
-- `eval-plan.md`
 - `evals/`
 
-业务功能还必须有：
+所有正式项目都从业务成功场景进入工程阶段，因此还必须有以下 QA 职责；标准路径如下，
+就地适配时映射真实路径：
 
 - `docs/qa/01-normalized-spec.md`
 - `docs/qa/02-test-design.md`
@@ -111,6 +137,13 @@ PROJECT.yaml 的完整 Schema 单独设计，未确认字段不得由总控 Skil
 
 不适用的条件文档不得生成空壳；应在 PROJECT.yaml 和 README 中明确
 `not_applicable` 及理由。
+
+文件存在或超过某个字数不代表内容齐全。初始化必须生成独立文档内容审查，逐项绑定
+真实路径、文件 SHA-256、必需主题、唯一完整行定位和定位章节 SHA-256；主题缺失、Hash
+过期、定位复用/不存在、章节空泛或未覆盖全部映射文档时不得通过。AI 先补齐真实文档，
+再由独立 Review Agent 重新审查。所有路径必须是规范化的项目相对路径，禁止绝对路径和
+`..` 越界。JSON 中的身份字段只是审计声明；独立性由总控实际派发的 Review Agent 运行
+轨迹证明，并在最终 Review 中核对。
 
 ## 7. Remote 和 Git 基线
 

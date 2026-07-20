@@ -9,13 +9,15 @@
 - QA-approved scenario coverage and a confirmed delivery risk profile.
 - A local repository plus an approved remote repository URL.
 
-When the project is new, the Skill creates the standard contract. When it is existing, it initializes missing mandatory documents and offers only two safe technical-debt paths: full remediation or minimum safe remediation that excludes defective paths from the current feature.
+When the project is new, the Skill creates the standard contract. For an existing repository with a different coherent layout, it offers two organization choices: convert to the standard structure, or adapt in place by mapping actual document paths in `PROJECT.yaml` and README. Missing content is completed under the chosen organization. It separately offers only two safe technical-debt paths: full remediation or minimum safe remediation that excludes defective paths from the current feature.
 
 ## Output
 
 - Root `README.md` and JSON-compatible `PROJECT.yaml`.
 - Specs and plans under `docs/superpowers/`.
-- Architecture, optional algorithm design, business goals/metrics, runtime constraints, tests, Evals, traceability, feedback contracts, evidence, runbook, and rollback records.
+- A standard or adapted document organization, explicitly mapped in `PROJECT.yaml`; adapted layouts are also explained in README.
+- Architecture, optional algorithm design, business goals/metrics, runtime constraints, QA normalized Spec/test design/test cases, tests, Evals, traceability, feedback contracts, evidence, runbook, and rollback records.
+- An independent documentation-content review that binds every mapped responsibility and required topic to an exact locator and current file SHA-256.
 - Small green commits, a pushed branch or PR, and optional deployment evidence.
 
 ## Responsibility model

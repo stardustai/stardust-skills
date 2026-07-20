@@ -4,7 +4,7 @@
   "title": "Vibe Coding PROJECT.yaml",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "project_id", "name", "status", "repository", "artifacts", "risk", "owners", "commands", "command_timeouts_seconds", "verification", "features", "technical_debt", "pre_commit", "delivery", "deployment"],
+  "required": ["schema_version", "project_id", "name", "status", "repository", "artifacts", "documentation", "risk", "owners", "commands", "command_timeouts_seconds", "verification", "features", "technical_debt", "pre_commit", "delivery", "deployment"],
   "properties": {
     "$schema": {"type": "string", "minLength": 1},
     "schema_version": {"const": "1.0"},
@@ -35,6 +35,68 @@
         "design": {"type": "string", "minLength": 1},
         "plan": {"type": "string", "minLength": 1}
       }
+    },
+    "documentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organization", "paths", "conditional_paths", "content_review"],
+      "properties": {
+        "organization": {"enum": ["standard", "adapt_existing"]},
+        "content_review": {"type": "string", "minLength": 1},
+        "paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["business_goal", "system_architecture", "runtime_constraints", "test_plan", "traceability", "eval_plan", "runbook", "technical_debt_register", "agent_rules_audit", "qa_normalized_spec", "qa_test_design", "qa_test_cases"],
+          "properties": {
+            "business_goal": {"type": "string", "minLength": 1},
+            "system_architecture": {"type": "string", "minLength": 1},
+            "runtime_constraints": {"type": "string", "minLength": 1},
+            "test_plan": {"type": "string", "minLength": 1},
+            "traceability": {"type": "string", "minLength": 1},
+            "eval_plan": {"type": "string", "minLength": 1},
+            "runbook": {"type": "string", "minLength": 1},
+            "technical_debt_register": {"type": "string", "minLength": 1},
+            "agent_rules_audit": {"type": "string", "minLength": 1},
+            "qa_normalized_spec": {"type": "string", "minLength": 1},
+            "qa_test_design": {"type": "string", "minLength": 1},
+            "qa_test_cases": {"type": "string", "minLength": 1}
+          }
+        },
+        "conditional_paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["algorithm_design", "ui_spec"],
+          "properties": {
+            "algorithm_design": {"type": ["string", "null"], "minLength": 1},
+            "ui_spec": {"type": ["string", "null"], "minLength": 1}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"organization": {"const": "standard"}}},
+          "then": {
+            "properties": {
+              "paths": {
+                "properties": {
+                  "business_goal": {"const": "docs/business-goal.md"},
+                  "system_architecture": {"const": "docs/system-architecture.md"},
+                  "runtime_constraints": {"const": "docs/runtime-constraints.md"},
+                  "test_plan": {"const": "docs/test-plan.md"},
+                  "traceability": {"const": "docs/traceability.md"},
+                  "eval_plan": {"const": "docs/eval-plan.md"},
+                  "runbook": {"const": "docs/runbook.md"},
+                  "technical_debt_register": {"const": "docs/technical-debt-register.md"},
+                  "agent_rules_audit": {"const": "docs/agent-rules-audit.md"},
+                  "qa_normalized_spec": {"const": "docs/qa/01-normalized-spec.md"},
+                  "qa_test_design": {"const": "docs/qa/02-test-design.md"},
+                  "qa_test_cases": {"const": "docs/qa/03-testcases.md"}
+                }
+              }
+            }
+          }
+        }
+      ]
     },
     "risk": {
       "type": "object", "additionalProperties": false, "required": ["tier", "source"],

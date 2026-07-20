@@ -7,7 +7,7 @@
 
 | 文档 | 职责 | 状态 |
 | --- | --- | --- |
-| [`repository-template-standard.md`](repository-template-standard.md) | 仓库目录、README、PROJECT.yaml、Remote 和 Pre-commit 基线 | 滚动设计稿 |
+| [`repository-template-standard.md`](repository-template-standard.md) | 仓库内容合同、标准/就地适配组织、README、PROJECT.yaml、Remote 和 Pre-commit 基线 | 滚动设计稿 |
 | [`project-initialization-standard.md`](project-initialization-standard.md) | 已有项目进入功能开发前的初始化与架构修复 | 滚动设计稿 |
 | [`technical-debt-standard.md`](technical-debt-standard.md) | 技术债定义、证据、修复范围和关闭条件 | 滚动设计稿 |
 | [`pull-request-standard.md`](pull-request-standard.md) | PR 触发条件、内容、自动 Review、测试和 Merge 边界 | 滚动设计稿 |

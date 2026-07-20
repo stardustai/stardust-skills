@@ -19,6 +19,28 @@
     "design": "docs/superpowers/specs/__DATE__-__TOPIC__-design.md",
     "plan": "docs/superpowers/plans/__DATE__-__TOPIC__.md"
   },
+  "documentation": {
+    "organization": "__standard_OR_adapt_existing__",
+    "content_review": "__DOCUMENTATION_REVIEW_PATH__",
+    "paths": {
+      "business_goal": "__BUSINESS_GOAL_PATH__",
+      "system_architecture": "__SYSTEM_ARCHITECTURE_PATH__",
+      "runtime_constraints": "__RUNTIME_CONSTRAINTS_PATH__",
+      "test_plan": "__TEST_PLAN_PATH__",
+      "traceability": "__TRACEABILITY_PATH__",
+      "eval_plan": "__EVAL_PLAN_PATH__",
+      "runbook": "__RUNBOOK_PATH__",
+      "technical_debt_register": "__TECHNICAL_DEBT_REGISTER_PATH__",
+      "agent_rules_audit": "__AGENT_RULES_AUDIT_PATH__",
+      "qa_normalized_spec": "__QA_NORMALIZED_SPEC_PATH__",
+      "qa_test_design": "__QA_TEST_DESIGN_PATH__",
+      "qa_test_cases": "__QA_TEST_CASES_PATH__"
+    },
+    "conditional_paths": {
+      "algorithm_design": null,
+      "ui_spec": null
+    }
+  },
   "risk": {
     "tier": "__RISK_TIER__",
     "source": "docs/superpowers/specs/__DATE__-__TOPIC__-spec.json#/delivery_risk_profile"
@@ -55,21 +77,21 @@
       "required_evidence_fields": ["scenario_results", "observable_signals"]
     },
     "applicability": {
-      "format_static_type": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "unit": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "integration": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "business_e2e": {"status": "required", "reason": "Business success must be observed end to end.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "permissions": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "ui_accessibility": {"status": "required", "reason": "Required when the product has a business UI.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "performance_cost": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "recovery_rollback": {"status": "required", "reason": "Recovery behavior must be proven.", "evidence": "docs/test-plan.md", "approved_by": "__QA_OWNER__"},
-      "eval": {"status": "required", "reason": "Every project needs an acceptance Eval, deterministic or model-based.", "evidence": "docs/eval-plan.md", "approved_by": "__QA_OWNER__"}
+      "format_static_type": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "unit": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "integration": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "business_e2e": {"status": "required", "reason": "Business success must be observed end to end.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "permissions": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "ui_accessibility": {"status": "required", "reason": "Required when the product has a business UI.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "performance_cost": {"status": "required", "reason": "Required by the approved test plan.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "recovery_rollback": {"status": "required", "reason": "Recovery behavior must be proven.", "evidence": "__TEST_PLAN_PATH__", "approved_by": "__QA_OWNER__"},
+      "eval": {"status": "required", "reason": "Every project needs an acceptance Eval, deterministic or model-based.", "evidence": "__EVAL_PLAN_PATH__", "approved_by": "__QA_OWNER__"}
     }
   },
   "features": {"algorithmic": false, "business_ui": false},
   "technical_debt": {
     "strategy": "minimum_safe", "approved_by": "__DECISION_OWNER__",
-    "decision_record": "docs/technical-debt-register.md",
+    "decision_record": "__TECHNICAL_DEBT_REGISTER_PATH__",
     "excluded_debt_ids": ["__EXCLUDED_TD_ID__"], "excluded_paths": ["__EXCLUDED_PATH__"]
   },
   "pre_commit": {"hook_path": ".githooks/pre-commit", "full_suite": true},

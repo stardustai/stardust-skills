@@ -11,7 +11,7 @@ from pathlib import Path
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = SKILL_ROOT / "scripts" / "validate_project.py"
 sys.path.insert(0, str(SKILL_ROOT / "scripts"))
-from validate_project import validate_url
+from validate_project import DOCUMENT_TOPICS, reviewed_section, validate_url
 SPEC_SKILL = SKILL_ROOT.parent / "spec-intake"
 EXAMPLE_SPEC = SPEC_SKILL / "examples" / "insurance-broker-proposal.spec.json"
 EXAMPLE_WIREFRAME = SPEC_SKILL / "examples" / "insurance-broker-workspace-wireframe.svg"
@@ -82,6 +82,21 @@ def sha256(path: Path) -> str:
 
 
 class ProjectFixture:
+    DOCUMENT_PATHS = {
+        "business_goal": "docs/business-goal.md",
+        "system_architecture": "docs/system-architecture.md",
+        "runtime_constraints": "docs/runtime-constraints.md",
+        "test_plan": "docs/test-plan.md",
+        "traceability": "docs/traceability.md",
+        "eval_plan": "docs/eval-plan.md",
+        "runbook": "docs/runbook.md",
+        "technical_debt_register": "docs/technical-debt-register.md",
+        "agent_rules_audit": "docs/agent-rules-audit.md",
+        "qa_normalized_spec": "docs/qa/01-normalized-spec.md",
+        "qa_test_design": "docs/qa/02-test-design.md",
+        "qa_test_cases": "docs/qa/03-testcases.md",
+    }
+
     def __enter__(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.base = Path(self.tmp.name)
@@ -99,19 +114,38 @@ class ProjectFixture:
         spec_path.write_text(json.dumps(engineering_spec(), ensure_ascii=False), encoding="utf-8")
         shutil.copy2(EXAMPLE_WIREFRAME, spec_path.parent / EXAMPLE_WIREFRAME.name)
         for rel in [
-            "README.md", "docs/superpowers/specs/current-design.md",
+            "docs/superpowers/specs/current-design.md",
             "docs/superpowers/plans/current.md", "docs/business-goal.md",
             "docs/system-architecture.md", "docs/runtime-constraints.md",
             "docs/test-plan.md", "docs/traceability.md", "docs/eval-plan.md",
             "docs/runbook.md", "docs/technical-debt-register.md", "docs/agent-rules-audit.md",
+            "docs/qa/01-normalized-spec.md", "docs/qa/02-test-design.md", "docs/qa/03-testcases.md",
             "docs/ui-spec.md",
         ]:
             path = self.root / rel
             path.parent.mkdir(parents=True, exist_ok=True)
+            responsibility = next(
+                (key for key, value in self.DOCUMENT_PATHS.items() if value == rel),
+                "ui_spec" if rel == "docs/ui-spec.md" else None,
+            )
+            coverage = ""
+            if responsibility:
+                coverage = "\n".join(
+                    f"## {topic}\n\nCoverage: {topic}. The approved contract contains concrete reviewed details.\n"
+                    for topic in DOCUMENT_TOPICS[responsibility]
+                )
             path.write_text(
-                f"# Approved {rel}\n\nStatus: approved\nOwner: test-owner\nEvidence: validated project contract.\n",
+                f"# Approved {rel}\n\nStatus: approved\nOwner: test-owner\n\n{coverage}",
                 encoding="utf-8",
             )
+        documentation = {
+            "organization": "standard",
+            "paths": dict(self.DOCUMENT_PATHS),
+            "conditional_paths": {"algorithm_design": None, "ui_spec": "docs/ui-spec.md"},
+            "content_review": "docs/documentation-review.json",
+        }
+        self.write_documentation_review(documentation)
+        self.write_readme(documentation)
         run_git(self.root, "add", ".")
         run_git(self.root, "commit", "-qm", "baseline")
         self.baseline = run_git(self.root, "rev-parse", "HEAD")
@@ -136,6 +170,12 @@ class ProjectFixture:
             "artifacts": {
                 "spec": "docs/superpowers/specs/current-spec.json", "spec_sha256": sha256(self.root / "docs/superpowers/specs/current-spec.json"),
                 "design": "docs/superpowers/specs/current-design.md", "plan": "docs/superpowers/plans/current.md",
+            },
+            "documentation": {
+                "organization": "standard",
+                "paths": dict(self.DOCUMENT_PATHS),
+                "conditional_paths": {"algorithm_design": None, "ui_spec": "docs/ui-spec.md"},
+                "content_review": "docs/documentation-review.json",
             },
             "risk": {"tier": risk_tier, "source": "docs/superpowers/specs/current-spec.json#/delivery_risk_profile"},
             "owners": {"business": "示例业务 owner", "product": "product@example.com", "engineering": "engineering@example.com", "qa": "qa@example.com", "decision": "PMF owner"},
@@ -169,6 +209,61 @@ class ProjectFixture:
     def write_project(self, data: dict) -> None:
         (self.root / "PROJECT.yaml").write_text(json.dumps(data, indent=2), encoding="utf-8")
 
+    def write_documentation_review(self, documentation: dict) -> None:
+        mapped = dict(documentation["paths"])
+        mapped.update({key: value for key, value in documentation["conditional_paths"].items() if value})
+        documents = []
+        for responsibility, relative in mapped.items():
+            path = self.root / relative
+            content = path.read_text(encoding="utf-8")
+            coverage = []
+            for topic in DOCUMENT_TOPICS[responsibility]:
+                locator = f"## {topic}"
+                section = reviewed_section(content, locator)
+                if section is None:
+                    raise AssertionError(f"fixture locator is not unique: {relative} {locator}")
+                coverage.append({
+                    "topic": topic,
+                    "locator": locator,
+                    "section_sha256": hashlib.sha256(section.encode("utf-8")).hexdigest(),
+                })
+            documents.append({
+                "responsibility": responsibility,
+                "path": relative,
+                "sha256": sha256(path),
+                "coverage": coverage,
+            })
+        review = {
+            "schema_version": "1.0",
+            "author_agent_id": "initialization-agent",
+            "author_execution_context_id": "33333333-3333-4333-8333-333333333333",
+            "reviewer_id": "independent-documentation-review-agent",
+            "execution_context_id": "44444444-4444-4444-8444-444444444444",
+            "reviewed_at": "2026-07-20T12:00:00+00:00",
+            "status": "pass",
+            "documents": documents,
+        }
+        path = self.root / documentation["content_review"]
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(review, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    def write_readme(self, documentation: dict) -> None:
+        entries = {
+            "organization": documentation["organization"],
+            "spec": "docs/superpowers/specs/current-spec.json",
+            "design": "docs/superpowers/specs/current-design.md",
+            "plan": "docs/superpowers/plans/current.md",
+            **documentation["paths"],
+            **{key: value for key, value in documentation["conditional_paths"].items() if value},
+            "content_review": documentation["content_review"],
+        }
+        (self.root / "README.md").write_text(
+            "# Example project\n\n## Documentation organization\n\n"
+            + "\n".join(f"- `{key}`: `{value}`" for key, value in entries.items())
+            + "\n",
+            encoding="utf-8",
+        )
+
     def commit_project(self) -> None:
         run_git(self.root, "add", "PROJECT.yaml")
         run_git(self.root, "commit", "-qm", "update project contract")
@@ -185,6 +280,187 @@ class ValidateProjectTests(unittest.TestCase):
     def test_accepts_valid_engineering_ready_project_and_git_state(self):
         with ProjectFixture() as fx:
             self.assertEqual(fx.run().returncode, 0, fx.run().stderr)
+
+    def test_accepts_existing_document_structure_when_mapped_in_readme(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            adapted_paths = {
+                key: f"handbook/{Path(path).name}"
+                for key, path in fx.DOCUMENT_PATHS.items()
+            }
+            adapted_ui = "product/ui/states.md"
+            for key, source in fx.DOCUMENT_PATHS.items():
+                target = adapted_paths[key]
+                target_path = fx.root / target
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                (fx.root / source).rename(target_path)
+            ui_target = fx.root / adapted_ui
+            ui_target.parent.mkdir(parents=True, exist_ok=True)
+            (fx.root / "docs/ui-spec.md").rename(ui_target)
+            project["documentation"] = {
+                "organization": "adapt_existing",
+                "paths": adapted_paths,
+                "conditional_paths": {"algorithm_design": None, "ui_spec": adapted_ui},
+                "content_review": "docs/documentation-review.json",
+            }
+            project["technical_debt"]["decision_record"] = adapted_paths["technical_debt_register"]
+            for policy in project["verification"]["applicability"].values():
+                policy["evidence"] = adapted_paths["test_plan"]
+            project["verification"]["applicability"]["eval"]["evidence"] = adapted_paths["eval_plan"]
+            fx.write_documentation_review(project["documentation"])
+            fx.write_readme(project["documentation"])
+            fx.write_project(project)
+            run_git(fx.root, "add", ".")
+            run_git(fx.root, "commit", "-qm", "adapt existing documentation structure")
+
+            result = fx.run()
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_rejects_adapted_structure_missing_readme_mapping(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            project["documentation"]["organization"] = "adapt_existing"
+            (fx.root / "README.md").write_text(
+                "# Existing project\n\nDocumentation is stored somewhere in this repository.\n",
+                encoding="utf-8",
+            )
+            project["repository"].update(
+                working_tree="known_dirty", known_dirty_paths=["PROJECT.yaml", "README.md"]
+            )
+            fx.write_project(project)
+
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("README documentation map", result.stderr)
+
+    def test_rejects_long_document_without_required_semantic_coverage(self):
+        with ProjectFixture() as fx:
+            architecture = fx.root / "docs/system-architecture.md"
+            architecture.write_text(
+                "# Existing notes\n\nThis document is long enough to pass a superficial length check, "
+                "but it contains no reviewed system boundaries, components, data flow, authorization, "
+                "observability, or recovery contract.\n",
+                encoding="utf-8",
+            )
+            project = fx.contract()
+            project["repository"].update(
+                working_tree="known_dirty",
+                known_dirty_paths=[
+                    "PROJECT.yaml", "docs/documentation-review.json", "docs/system-architecture.md"
+                ],
+            )
+            review_path = fx.root / project["documentation"]["content_review"]
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            for document in review["documents"]:
+                if document["responsibility"] == "system_architecture":
+                    document["sha256"] = sha256(architecture)
+            review_path.write_text(json.dumps(review, indent=2), encoding="utf-8")
+            fx.write_project(project)
+
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("documentation content review", result.stderr)
+
+    def test_rejects_reused_generic_documentation_locator(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            review_path = fx.root / project["documentation"]["content_review"]
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            for document in review["documents"]:
+                for coverage in document["coverage"]:
+                    coverage["locator"] = "Status: approved"
+            review_path.write_text(json.dumps(review, indent=2), encoding="utf-8")
+            project["repository"].update(
+                working_tree="known_dirty",
+                known_dirty_paths=["PROJECT.yaml", "docs/documentation-review.json"],
+            )
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("unique full-line locator", result.stderr)
+
+    def test_rejects_declared_self_review_identity_variants(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            review_path = fx.root / project["documentation"]["content_review"]
+            review = json.loads(review_path.read_text(encoding="utf-8"))
+            review["reviewer_id"] = " INITIALIZATION-AGENT "
+            review_path.write_text(json.dumps(review, indent=2), encoding="utf-8")
+            project["repository"].update(
+                working_tree="known_dirty",
+                known_dirty_paths=["PROJECT.yaml", "docs/documentation-review.json"],
+            )
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("reviewer must differ", result.stderr)
+
+    def test_requires_qa_documentation_contract(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            del project["documentation"]["paths"]["qa_test_cases"]
+            project["repository"].update(working_tree="known_dirty", known_dirty_paths=["PROJECT.yaml"])
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("qa_test_cases", result.stderr)
+
+    def test_rejects_readme_path_prefix_or_backup_suffix_as_a_mapping(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            project["documentation"]["organization"] = "adapt_existing"
+            mapped = list(project["documentation"]["paths"].values())
+            mapped.extend(value for value in project["documentation"]["conditional_paths"].values() if value)
+            mapped.extend(project["artifacts"][key] for key in ("spec", "design", "plan"))
+            mapped.append(project["documentation"]["content_review"])
+            (fx.root / "README.md").write_text(
+                "# Misleading map\n\n" + "\n".join(f"- `{path}.bak`" for path in mapped) + "\n",
+                encoding="utf-8",
+            )
+            project["repository"].update(
+                working_tree="known_dirty", known_dirty_paths=["PROJECT.yaml", "README.md"]
+            )
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("README documentation map", result.stderr)
+
+    def test_rejects_absolute_document_path_even_inside_checkout(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            project["documentation"]["organization"] = "adapt_existing"
+            project["documentation"]["paths"]["business_goal"] = str(
+                (fx.root / "docs/business-goal.md").resolve()
+            )
+            project["repository"].update(working_tree="known_dirty", known_dirty_paths=["PROJECT.yaml"])
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("project-relative", result.stderr)
+
+    def test_standard_structure_rejects_nonstandard_conditional_and_artifact_paths(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            project["documentation"]["conditional_paths"]["ui_spec"] = "product/custom-ui.md"
+            project["artifacts"]["plan"] = "docs/test-plan.md"
+            target = fx.root / "product/custom-ui.md"
+            target.parent.mkdir(parents=True)
+            (fx.root / "docs/ui-spec.md").rename(target)
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("standard structure", result.stderr)
+            self.assertIn("Superpowers", result.stderr)
+
+    def test_rejects_technical_debt_exclusion_outside_project(self):
+        with ProjectFixture() as fx:
+            project = fx.contract()
+            project["technical_debt"]["excluded_paths"] = ["../../outside"]
+            project["repository"].update(working_tree="known_dirty", known_dirty_paths=["PROJECT.yaml"])
+            fx.write_project(project)
+            result = fx.run()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("technical_debt.excluded_paths", result.stderr)
 
     def test_invokes_authoritative_spec_validator(self):
         with ProjectFixture() as fx:

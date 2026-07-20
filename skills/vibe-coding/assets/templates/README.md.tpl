@@ -9,7 +9,7 @@
 __ONE_SENTENCE_BUSINESS_GOAL__
 
 业务目标、成功指标和业务主导的端到端成功流程见
-[`docs/business-goal.md`](docs/business-goal.md)。本 README 只作为员工、Reviewer 和接管者的入口，
+[`__BUSINESS_GOAL_PATH__`](__BUSINESS_GOAL_PATH__)。本 README 只作为员工、Reviewer 和接管者的入口，
 不重新定义 Spec。
 
 ## 当前范围
@@ -54,7 +54,7 @@ __STOP_COMMAND_DISPLAY__
 ```
 
 具体版本、配置、Secret、端口、依赖和环境差异见
-[`docs/runtime-constraints.md`](docs/runtime-constraints.md)。不得把 Secret 写入本文件。
+[`__RUNTIME_CONSTRAINTS_PATH__`](__RUNTIME_CONSTRAINTS_PATH__)。不得把 Secret 写入本文件。
 
 ## 验证
 
@@ -66,8 +66,8 @@ __SMOKE_COMMAND_DISPLAY__
 ```
 
 “测试通过”必须来自本轮执行结果；AI 自述、旧日志或页面能打开都不是完成证据。业务场景、
-QA 用例、自动化命令和证据路径的映射见 [`docs/traceability.md`](docs/traceability.md) 与
-`docs/traceability.json`。
+QA 用例、自动化命令和证据路径的映射见
+[`__TRACEABILITY_PATH__`](__TRACEABILITY_PATH__) 及其机器可读合同。
 
 ## Git 与交付
 
@@ -83,19 +83,31 @@ QA 用例、自动化命令和证据路径的映射见 [`docs/traceability.md`](
 
 ## 文档导航
 
-- 当前 Spec：`__SPEC_PATH__`
-- 当前设计：`__DESIGN_PATH__`
-- 当前实施计划：`__PLAN_PATH__`
-- [业务目标与指标](docs/business-goal.md)
-- [系统架构](docs/system-architecture.md)
-- [算法设计（如适用）](docs/algorithm-design.md)
-- [运行约束](docs/runtime-constraints.md)
-- [测试计划](docs/test-plan.md)
-- [需求追踪](docs/traceability.md)
-- [Eval 计划](docs/eval-plan.md)
-- [运行手册](docs/runbook.md)
-- [技术债登记](docs/technical-debt-register.md)
-- [Agent 规则审计](docs/agent-rules-audit.md)
+以下机器可核验的 `responsibility -> path` 行同时作为人类导航；不得只写路径前缀、别名或
+`.bak` 文件。
+
+- `organization`: `__standard_OR_adapt_existing__`
+- `spec`: `__SPEC_PATH__`
+- `design`: `__DESIGN_PATH__`
+- `plan`: `__PLAN_PATH__`
+- `business_goal`: `__BUSINESS_GOAL_PATH__`
+- `system_architecture`: `__SYSTEM_ARCHITECTURE_PATH__`
+- `algorithm_design`: `__ALGORITHM_DESIGN_PATH__`
+- `ui_spec`: `__UI_SPEC_PATH__`
+- `runtime_constraints`: `__RUNTIME_CONSTRAINTS_PATH__`
+- `test_plan`: `__TEST_PLAN_PATH__`
+- `traceability`: `__TRACEABILITY_PATH__`
+- `eval_plan`: `__EVAL_PLAN_PATH__`
+- `runbook`: `__RUNBOOK_PATH__`
+- `technical_debt_register`: `__TECHNICAL_DEBT_REGISTER_PATH__`
+- `agent_rules_audit`: `__AGENT_RULES_AUDIT_PATH__`
+- `qa_normalized_spec`: `__QA_NORMALIZED_SPEC_PATH__`
+- `qa_test_design`: `__QA_TEST_DESIGN_PATH__`
+- `qa_test_cases`: `__QA_TEST_CASES_PATH__`
+- `content_review`: `__DOCUMENTATION_REVIEW_PATH__`
+
+采用 `adapt_existing` 时，本节必须列出所有真实路径并说明现有组织方式；缺失内容在最合适的
+现有位置补齐，不为了模仿模板创建第二份事实源。
 
 ## 求助与接管
 

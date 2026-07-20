@@ -14,16 +14,29 @@ clean enough to support the change.
 4. Locate existing analogues, shared components, models, and interfaces.
 5. From a clean environment, attempt install, build, start, health, existing tests,
    and applicable Eval; retain observed results.
-6. Add or correct README, `PROJECT.yaml`, and every applicable repository document.
-7. Establish behavioral, test, Eval, and runtime baselines; name anything that
+6. Inventory existing documents by responsibility and identify missing content.
+7. If the repository is not already standard, ask the user to choose exactly one
+   organization path: convert to the standard structure, or adapt the existing
+   structure in place.
+8. Add or correct README, `PROJECT.yaml`, and every applicable repository document
+   under the selected organization path. In adapt-in-place mode, map actual paths
+   in both `PROJECT.yaml` and README; do not create duplicate sources of truth.
+9. Run an independent semantic content review that binds every mapped document's
+   required topics and exact locators to its current SHA-256; fill gaps and repeat
+   until the review passes.
+10. Establish behavioral, test, Eval, and runtime baselines; name anything that
    cannot be observed.
-8. Compare the active Spec with current behavior, data, permissions, architecture,
+11. Compare the active Spec with current behavior, data, permissions, architecture,
    and runtime.
-9. Produce an evidenced debt register and an independent architecture-repair plan.
-10. Ask the user to choose exactly one: full debt repair or minimum clean repair.
-11. Execute the selected repair with characterization tests, full verification,
+12. Produce an evidenced debt register and an independent architecture-repair plan.
+13. Ask the user to choose exactly one: full debt repair or minimum clean repair.
+14. Execute the selected repair with characterization tests, full verification,
     independent review, and separate commits.
-12. Record the new baseline and `last_green_commit`; only then plan the feature.
+15. Record the new baseline and `last_green_commit`; only then plan the feature.
+
+The repository-organization choice and technical-debt choice are separate. Moving
+documents does not repair architecture debt, and adapting paths does not excuse
+missing content.
 
 ## Required classifications
 

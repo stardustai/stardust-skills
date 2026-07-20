@@ -183,6 +183,22 @@
         "Does not treat automated review as satisfying CODEOWNERS or branch protection.",
         "Reports pr_open_waiting with the exact unmet approval rather than merged or done."
       ]
+    },
+    {
+      "id": 13,
+      "name": "existing-complete-nonstandard-documentation-layout",
+      "prompt": "这个已有项目把架构放在 handbook/architecture.md，业务目标和指标在 product/outcomes.md，测试与 Eval 计划在 quality/，Runbook 在 operations/。内容基本齐全，但不符合 vibe-coding 的 docs/ 示例目录。缺的技术债登记和 Agent 规则审计可以补。请初始化后继续开发，不要擅自大规模移动文件。",
+      "expected_output": "The Skill should treat the template as a content contract, inventory the real documents, and pause with exactly two organization choices: convert to the standard structure or adapt in place. It should recommend adapt-in-place when the current organization is coherent, then map actual paths in PROJECT.yaml and README, fill only missing content in suitable existing locations, and validate completeness without creating duplicate sources of truth.",
+      "files": [],
+      "assertions": [
+        "Does not fail initialization merely because required content uses different paths and does not move files before the user chooses an organization option.",
+        "Offers exactly two organization choices: convert to the standard structure, or adapt the existing structure in place, with a recommendation and impact.",
+        "When adapt-in-place is chosen, records documentation.organization=adapt_existing and maps each required and conditional responsibility to a normalized project-relative path.",
+        "Adds an exact README responsibility-to-path map covering the active Spec, Design, Plan, business goal, architecture, runtime, tests, traceability, Eval, runbook, technical debt, rule audit, QA normalized Spec/test design/test cases, content review, and conditional documents.",
+        "Inspects mapped content for completeness, fills missing content in coherent existing locations, and does not create standard-path duplicates solely to satisfy the template.",
+        "Requires an independent documentation review bound to current file hashes, every required semantic topic, and exact locators present in each mapped document; generic long prose is not accepted as complete.",
+        "Keeps the separate technical-debt choice and all test, Eval, evidence, ownership, runtime, and recovery gates unchanged."
+      ]
     }
   ]
 }

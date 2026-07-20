@@ -112,3 +112,22 @@
 - [x] Commit the `vibe-coding` feature with a detailed message.
 - [x] Push `codex/vibe-coding` to `origin`.
 - [x] Create a ready PR containing summary, risk, validation evidence, deployment impact, and review policy.
+
+### Task 8: Support existing repository organization without weakening content gates
+
+**Files:**
+- Modify: `skills/vibe-coding/SKILL.md`
+- Modify: `skills/vibe-coding/references/*initialization*.md`
+- Modify: `skills/vibe-coding/references/repository-template-standard.md`
+- Create: `skills/vibe-coding/references/documentation-content-standard.md`
+- Modify: `skills/vibe-coding/assets/schemas/project.schema.json`
+- Create: `skills/vibe-coding/assets/schemas/documentation-review.schema.json`
+- Modify: `skills/vibe-coding/scripts/validate_project.py`
+- Modify: `skills/vibe-coding/tests/test_validate_project.py`
+
+- [x] Offer exactly two organization choices for nonstandard existing repositories: convert to standard structure or adapt in place.
+- [x] Map required, QA, and conditional document responsibilities to normalized project-relative paths and mirror exact entries in README.
+- [x] Fill missing content in the coherent existing location without creating duplicate sources of truth.
+- [x] Require an independent semantic content review bound to current file hashes, required topics, and exact locators.
+- [x] Keep the repository-organization choice independent from the technical-debt remediation choice.
+- [x] Add positive and adversarial unit/behavior cases and rerun the complete verification suite.

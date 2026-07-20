@@ -16,12 +16,27 @@ from urllib.parse import urlparse
 from schema_runtime import validate_instance
 
 
-REQUIRED_DOCUMENTS = (
-    "README.md", "docs/business-goal.md", "docs/system-architecture.md",
-    "docs/runtime-constraints.md", "docs/test-plan.md", "docs/traceability.md",
-    "docs/eval-plan.md", "docs/runbook.md", "docs/technical-debt-register.md",
-    "docs/agent-rules-audit.md",
+REQUIRED_DOCUMENT_KEYS = (
+    "business_goal", "system_architecture", "runtime_constraints", "test_plan",
+    "traceability", "eval_plan", "runbook", "technical_debt_register",
+    "agent_rules_audit", "qa_normalized_spec", "qa_test_design", "qa_test_cases",
 )
+DOCUMENT_TOPICS = {
+    "business_goal": ("problem_and_users", "business_goal", "success_metrics", "business_success_scenarios"),
+    "system_architecture": ("system_context", "boundaries", "components", "data_flow", "authorization", "observability", "failure_recovery"),
+    "runtime_constraints": ("environments", "versions", "commands", "configuration", "resources", "dependencies", "observability", "recovery"),
+    "test_plan": ("scope", "traceability", "test_layers", "commands", "test_data", "pass_fail_rules", "evidence"),
+    "traceability": ("requirements", "business_scenarios", "qa_cases", "automated_checks", "evidence"),
+    "eval_plan": ("acceptance_cases", "datasets", "metrics", "thresholds", "commands", "evidence"),
+    "runbook": ("start_stop", "health", "monitoring", "incidents", "rollback", "ownership"),
+    "technical_debt_register": ("definition", "evidence", "strategy", "scope", "verification"),
+    "agent_rules_audit": ("sources", "scope", "compliance", "evidence", "exceptions"),
+    "qa_normalized_spec": ("scope", "requirements", "business_rules", "success_scenarios", "risks"),
+    "qa_test_design": ("coverage_strategy", "positive", "negative", "permissions", "recovery"),
+    "qa_test_cases": ("case_ids", "preconditions", "steps", "expected_results", "traceability"),
+    "algorithm_design": ("problem", "inputs_outputs", "algorithm", "constraints", "evaluation", "failure_modes"),
+    "ui_spec": ("user_flows", "screens", "states", "validation", "accessibility", "permissions"),
+}
 COMMAND_NAMES = (
     "install", "start", "stop", "build", "pre_commit_full", "test_full",
     "eval_full", "smoke", "health_check",
@@ -84,7 +99,11 @@ def required_string(parent: dict[str, Any], key: str, field: str, errors: list[s
 def project_path(root: Path, value: str, field: str, errors: list[str]) -> Path | None:
     if not value:
         return None
-    path = (root / value).resolve()
+    relative = Path(value)
+    if relative.is_absolute() or ".." in relative.parts:
+        errors.append(f"{field} must be a normalized project-relative path")
+        return None
+    path = (root / relative).resolve()
     try:
         path.relative_to(root)
     except ValueError:
@@ -121,6 +140,185 @@ def validate_document(path: Path, label: str, errors: list[str]) -> None:
         errors.append(f"required document is an incomplete placeholder: {label}")
     if PLACEHOLDER_PATTERN.search(content):
         errors.append(f"required document contains unresolved placeholders: {label}")
+
+
+def reviewed_section(content: str, locator: str) -> str | None:
+    lines = content.splitlines()
+    matches = [index for index, line in enumerate(lines) if line.strip() == locator]
+    if len(matches) != 1:
+        return None
+    start = matches[0] + 1
+    end = len(lines)
+    for index in range(start, len(lines)):
+        if lines[index].lstrip().startswith("#"):
+            end = index
+            break
+    return "\n".join(lines[start:end]).strip()
+
+
+def validate_documentation(
+    root: Path,
+    project: dict[str, Any],
+    artifact_paths: dict[str, Path],
+    errors: list[str],
+) -> dict[str, Path]:
+    readme = root / "README.md"
+    validate_document(readme, "README.md", errors)
+    readme_content = readme.read_text(encoding="utf-8", errors="replace") if readme.is_file() else ""
+    documentation = required_object(project, "documentation", errors)
+    organization = documentation.get("organization")
+    if organization not in {"standard", "adapt_existing"}:
+        errors.append("documentation.organization must be standard or adapt_existing")
+    paths = documentation.get("paths")
+    if not isinstance(paths, dict):
+        errors.append("documentation.paths must map every required document responsibility")
+        paths = {}
+    conditional = documentation.get("conditional_paths")
+    if not isinstance(conditional, dict):
+        errors.append("documentation.conditional_paths must map algorithm_design and ui_spec")
+        conditional = {}
+
+    resolved: dict[str, Path] = {}
+    for key in REQUIRED_DOCUMENT_KEYS:
+        value = paths.get(key)
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"documentation.paths.{key} must be a non-empty project path")
+            continue
+        path = project_path(root, value, f"documentation.paths.{key}", errors)
+        if path is not None:
+            resolved[key] = path
+            validate_document(path, value, errors)
+    for key in ("algorithm_design", "ui_spec"):
+        value = conditional.get(key)
+        if value is None:
+            continue
+        if not isinstance(value, str) or not value.strip():
+            errors.append(f"documentation.conditional_paths.{key} must be a project path or null")
+            continue
+        path = project_path(root, value, f"documentation.conditional_paths.{key}", errors)
+        if path is not None:
+            resolved[key] = path
+            validate_document(path, value, errors)
+
+    if organization == "standard":
+        canonical_conditional = {
+            "algorithm_design": "docs/algorithm-design.md",
+            "ui_spec": "docs/ui-spec.md",
+        }
+        for key, value in conditional.items():
+            if value is not None and value != canonical_conditional.get(key):
+                errors.append(
+                    f"documentation.conditional_paths.{key} must use {canonical_conditional[key]} in standard structure"
+                )
+
+    readme_entries = {"organization": organization}
+    readme_entries.update({key: value for key, value in paths.items() if isinstance(value, str)})
+    readme_entries.update({key: value for key, value in conditional.items() if isinstance(value, str)})
+    for key, path in artifact_paths.items():
+        if path.is_relative_to(root):
+            readme_entries[key] = str(path.relative_to(root))
+    content_review_value = documentation.get("content_review")
+    if isinstance(content_review_value, str):
+        readme_entries["content_review"] = content_review_value
+    readme_lines = {line.strip() for line in readme_content.splitlines()}
+    missing_from_readme = sorted(
+        key for key, value in readme_entries.items()
+        if f"- `{key}`: `{value}`" not in readme_lines
+    )
+    if missing_from_readme:
+        errors.append(
+            "README documentation map must contain exact responsibility-to-path entries for: "
+            + ", ".join(missing_from_readme)
+        )
+
+    review_value = required_string(documentation, "content_review", "documentation.content_review", errors)
+    review_path = project_path(root, review_value, "documentation.content_review", errors)
+    if review_path is None:
+        return resolved
+    review = load_json(review_path, "documentation content review", errors)
+    if not review:
+        return resolved
+    errors.extend(validate_instance(
+        review,
+        Path(__file__).resolve().parents[1] / "assets/schemas/documentation-review.schema.json",
+        "documentation content review",
+    ))
+    if review.get("status") != "pass":
+        errors.append("documentation content review status must be pass")
+    reviewer_id = review.get("reviewer_id")
+    author_id = review.get("author_agent_id")
+    if isinstance(reviewer_id, str) and isinstance(author_id, str) and reviewer_id.strip().casefold() == author_id.strip().casefold():
+        errors.append("documentation content review reviewer must differ from the document author agent")
+    if review.get("execution_context_id") == review.get("author_execution_context_id"):
+        errors.append("documentation content review must run in an independent execution context")
+    documents = review.get("documents")
+    if not isinstance(documents, list):
+        errors.append("documentation content review documents must be an array")
+        return resolved
+    by_responsibility: dict[str, dict[str, Any]] = {}
+    for item in documents:
+        if not isinstance(item, dict) or not isinstance(item.get("responsibility"), str):
+            continue
+        responsibility = item["responsibility"]
+        if responsibility in by_responsibility:
+            errors.append(f"documentation content review contains duplicate responsibility: {responsibility}")
+        by_responsibility[responsibility] = item
+    if set(by_responsibility) != set(resolved):
+        missing = sorted(set(resolved) - set(by_responsibility))
+        extra = sorted(set(by_responsibility) - set(resolved))
+        if missing:
+            errors.append("documentation content review is missing responsibilities: " + ", ".join(missing))
+        if extra:
+            errors.append("documentation content review contains unmapped responsibilities: " + ", ".join(extra))
+    for responsibility, path in resolved.items():
+        item = by_responsibility.get(responsibility)
+        if not isinstance(item, dict) or not path.is_file():
+            continue
+        expected_relative = str(path.relative_to(root))
+        if item.get("path") != expected_relative:
+            errors.append(f"documentation content review path mismatch for {responsibility}")
+        if item.get("sha256") != sha256(path):
+            errors.append(f"documentation content review checksum mismatch for {responsibility}")
+        coverage = item.get("coverage")
+        if not isinstance(coverage, list):
+            errors.append(f"documentation content review coverage must be an array for {responsibility}")
+            continue
+        covered: dict[str, dict[str, str]] = {}
+        used_locators: set[str] = set()
+        for entry in coverage:
+            if (
+                isinstance(entry, dict)
+                and isinstance(entry.get("topic"), str)
+                and isinstance(entry.get("locator"), str)
+                and isinstance(entry.get("section_sha256"), str)
+            ):
+                if entry["topic"] in covered:
+                    errors.append(f"documentation content review contains duplicate topic for {responsibility}: {entry['topic']}")
+                if entry["locator"] in used_locators:
+                    errors.append(
+                        f"documentation content review requires a unique full-line locator for every topic in {responsibility}"
+                    )
+                used_locators.add(entry["locator"])
+                covered[entry["topic"]] = entry
+        expected_topics = set(DOCUMENT_TOPICS[responsibility])
+        if set(covered) != expected_topics:
+            errors.append(f"documentation content review topics are incomplete for {responsibility}")
+        content = path.read_text(encoding="utf-8", errors="replace")
+        for topic, entry in covered.items():
+            locator = entry["locator"]
+            section = reviewed_section(content, locator)
+            if section is None:
+                errors.append(
+                    f"documentation content review requires a unique full-line locator for {responsibility}.{topic}"
+                )
+                continue
+            if len(section) < 40 or PLACEHOLDER_PATTERN.search(section):
+                errors.append(f"documentation content review section is incomplete for {responsibility}.{topic}")
+                continue
+            section_hash = hashlib.sha256(section.encode("utf-8")).hexdigest()
+            if entry["section_sha256"] != section_hash:
+                errors.append(f"documentation content review section checksum mismatch for {responsibility}.{topic}")
+    return resolved
 
 
 def validate_spec_with_authority(spec_path: Path, errors: list[str]) -> dict[str, Any]:
@@ -330,6 +528,9 @@ def validate_project(root: Path) -> list[str]:
     artifact_paths: dict[str, Path] = {}
     for key in ("spec", "design", "plan"):
         value = required_string(artifacts, key, f"artifacts.{key}", errors)
+        expected_prefix = "docs/superpowers/plans/" if key == "plan" else "docs/superpowers/specs/"
+        if value and not value.startswith(expected_prefix):
+            errors.append(f"artifacts.{key} must use the Superpowers path prefix {expected_prefix}")
         path = project_path(root, value, f"artifacts.{key}", errors)
         if path is not None:
             artifact_paths[key] = path
@@ -340,6 +541,7 @@ def validate_project(root: Path) -> list[str]:
     expected_checksum = required_string(artifacts, "spec_sha256", "artifacts.spec_sha256", errors)
     if "spec" in artifact_paths and artifact_paths["spec"].is_file() and sha256(artifact_paths["spec"]) != expected_checksum:
         errors.append("artifacts.spec_sha256 does not match the pinned Spec content")
+    document_paths = validate_documentation(root, project, artifact_paths, errors)
 
     risk = required_object(project, "risk", errors)
     if risk.get("tier") not in {"R0", "R1", "R2", "R3"}:
@@ -364,6 +566,9 @@ def validate_project(root: Path) -> list[str]:
     decision_path = project_path(root, decision, "technical_debt.decision_record", errors)
     if decision_path is not None and (not decision_path.is_file() or decision_path.stat().st_size == 0):
         errors.append("technical_debt.decision_record must reference a non-empty file")
+    debt_document = document_paths.get("technical_debt_register")
+    if decision_path is not None and debt_document is not None and decision_path != debt_document:
+        errors.append("technical_debt.decision_record must match documentation.paths.technical_debt_register")
     excluded_ids, excluded_paths = debt.get("excluded_debt_ids"), debt.get("excluded_paths")
     if not isinstance(excluded_ids, list) or any(not isinstance(v, str) or not v for v in excluded_ids):
         errors.append("technical_debt.excluded_debt_ids must be an array of non-empty IDs")
@@ -371,6 +576,9 @@ def validate_project(root: Path) -> list[str]:
     if not isinstance(excluded_paths, list) or any(not isinstance(v, str) or not v for v in excluded_paths):
         errors.append("technical_debt.excluded_paths must be an array of non-empty project paths")
         excluded_paths = []
+    else:
+        for index, value in enumerate(excluded_paths):
+            project_path(root, value, f"technical_debt.excluded_paths[{index}]", errors)
     if strategy == "minimum_safe" and (not excluded_ids or not excluded_paths):
         errors.append("minimum_safe requires excluded debt IDs and paths")
     if strategy == "full_remediation" and (excluded_ids or excluded_paths):
@@ -405,13 +613,9 @@ def validate_project(root: Path) -> list[str]:
     if deployment.get("required") and not isinstance(deployment.get("target_environment"), str):
         errors.append("deployment.target_environment must be set when deployment.required=true")
 
-    for relative in REQUIRED_DOCUMENTS:
-        path = root / relative
-        validate_document(path, relative, errors)
-    for enabled, relative in ((features.get("algorithmic"), "docs/algorithm-design.md"), (features.get("business_ui"), "docs/ui-spec.md")):
-        path = root / relative
-        if enabled and (not path.is_file() or path.stat().st_size == 0):
-            errors.append(f"required conditional document is missing or empty: {relative}")
+    for enabled, key in ((features.get("algorithmic"), "algorithm_design"), (features.get("business_ui"), "ui_spec")):
+        if enabled and key not in document_paths:
+            errors.append(f"required conditional document is missing or empty: documentation.conditional_paths.{key}")
 
     if "spec" in artifact_paths and artifact_paths["spec"].is_file():
         spec = validate_spec_with_authority(artifact_paths["spec"], errors)
