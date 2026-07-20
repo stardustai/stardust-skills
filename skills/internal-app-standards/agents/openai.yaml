@@ -1,0 +1,7 @@
+interface:
+  display_name: "Internal App Standards"
+  short_description: "Standardize enterprise internal AI-coded apps"
+  default_prompt: "Use $internal-app-standards to design, build, or review this internal enterprise system against our React, TypeScript, PostgreSQL, and Kubernetes standards."
+
+policy:
+  allow_implicit_invocation: true
