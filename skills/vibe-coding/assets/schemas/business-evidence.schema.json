@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stardust.ai/schemas/vibe-coding/business-evidence.schema.json",
+  "title": "Measured Business Scenario Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schema_version", "scenario_id", "commit", "environment", "captured_at", "status", "business_passed", "expected_business_outcome", "expected_final_state", "runner_check_name", "evidence_manifest", "evidence_sha256", "business_observations"],
+  "properties": {
+    "$schema": {"const": "skills/vibe-coding/assets/schemas/business-evidence.schema.json"},
+    "schema_version": {"const": "1.0"},
+    "scenario_id": {"type": "string", "minLength": 1},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "environment": {"type": "string", "minLength": 1},
+    "captured_at": {"type": "string", "format": "date-time"},
+    "status": {"const": "pass"},
+    "business_passed": {"const": true},
+    "expected_business_outcome": {"type": "string", "minLength": 1},
+    "expected_final_state": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "runner_check_name": {"type": "string", "minLength": 1},
+    "evidence_manifest": {"type": "string", "minLength": 1},
+    "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "business_observations": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["signal_id", "source", "expected", "observed", "passed"],
+        "properties": {
+          "signal_id": {"type": "string", "minLength": 1},
+          "source": {"type": "string", "minLength": 1},
+          "expected": {"type": ["string", "number", "boolean"]},
+          "observed": {"type": ["string", "number", "boolean"]},
+          "passed": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,204 @@
+{
+  "skill_name": "vibe-coding",
+  "evals": [
+    {
+      "id": 1,
+      "name": "new-project-engineering-ready",
+      "prompt": "请用 vibe-coding 从零实现这个新项目。当前 spec 位于 docs/superpowers/specs/2026-07-20-expense-spec.json，spec_version=1.5，stage_gate.readiness_label=engineering_ready，stage_gate.decision=ready_for_engineering；business_success_scenarios 已由 Business Owner 确认，delivery_risk_profile=R1。Remote 是 https://github.com/example/expense-tool.git，目前仓库只有 spec。我要稳定可用的代码，不需要部署。",
+      "expected_output": "The Skill should automatically establish the project contract and documentation, preserve the business-owned success outcomes, create a reviewed design and implementation plan, bind each task to observable feedback, implement with TDD, produce traceable QA/E2E/Eval/runtime evidence, independently review, and deliver to the remote while accurately stating that deployment was not performed.",
+      "files": [],
+      "assertions": [
+        "Verifies the exact spec-intake v1.5 stage gate, business-owner confirmations, scenario coverage, risk profile, and repository remote before formal coding.",
+        "Creates README.md, JSON-compatible PROJECT.yaml, the current Superpowers design and plan paths, and all mandatory applicable project documents before implementation.",
+        "Treats business success scenarios as the Business Owner's product contract: the Skill structures and gates them, QA expands coverage, and engineering automates evidence without rewriting the success outcome.",
+        "Uses writing-plans before implementation and creates small independently verifiable tasks with a task feedback contract, baseline, observable signals, pass/fail rules, commands, evidence paths, and rollback method.",
+        "Uses test-driven-development for the R1 feature and does not generate the whole project in one unverified step.",
+        "Maps every in-scope critical business scenario to QA cases, executable E2E or other verification, runtime signals where applicable, and fresh evidence.",
+        "Installs the versioned pre-commit full-suite hook, commits on a feature branch, and applies the configured direct-push or PR rule only after full test, Eval, traceability, runtime, and independent review gates pass.",
+        "Reports a precise final status such as developed and pushed but not deployed; it never says production-ready or deployed merely because code and tests exist."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "existing-project-initialization-and-debt-choice",
+      "prompt": "在这个已有仓库里增加批量审批。已有代码能启动，但没有 README、PROJECT.yaml、架构文档、完整测试、Eval、pre-commit，也没记录 remote 和最后稳定 commit。检查时还能看到审批规则散落在三处、权限判断不可测，而且违反了当前 AGENTS.md 的模块职责规则。先帮我做完再说。",
+      "expected_output": "The Skill should block feature coding, perform only safe read-only inspection, and first ask the user to provide an existing approved Remote URL or explicitly authorize repository creation. After the Remote is verified, it should establish the project contract, classify evidenced structural violations as technical debt, and ask the user to choose full remediation or minimum-safe remediation before repair in a separate plan and commits.",
+      "files": [],
+      "assertions": [
+        "Does not begin the batch-approval feature until existing-project initialization is complete.",
+        "Reads real code, Git state, runtime behavior, tests, remote, and every applicable AGENTS.md or AGENT.md plus canonical pointers; it does not make Graphify a company gate.",
+        "Does not invent, silently create, or skip the missing Remote. It blocks repository mutation and asks the user to provide an approved Remote URL or explicitly authorize creating one, then verifies origin before initialization writes.",
+        "After Remote confirmation, creates the missing README, PROJECT.yaml, design/runtime/test/eval/runbook/traceability/rule-audit artifacts and records remote, baseline commit, last-green commit, and current commands.",
+        "Classifies duplicated business-rule truth, untestable permission behavior, and structural AGENTS violations as technical debt using code or runtime evidence; separates readiness gaps and process violations from debt.",
+        "Pauses with two mutually exclusive choices: full remediation of all audited debt, or minimum-safe remediation that repairs every debt touched or depended on by this feature and excludes all other debt from the implementation path.",
+        "Explains impact and recommends one choice based on evidence rather than asking the non-technical user to choose implementation details.",
+        "Never interprets minimum-safe remediation as permission to add a compatibility layer, special branch, or patch on the bad architecture.",
+        "Uses a separate plan, tasks, validation, and commits for architecture/debt remediation before establishing a new baseline and starting feature work."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "unit-tests-only-false-completion",
+      "prompt": "功能已经写完，开发 Agent 说 42 个单元测试全过，页面也能打开。为了赶时间，直接标记完成并 push 吧；不用再跑 E2E、Eval、健康检查或业务验收。",
+      "expected_output": "The Skill should reject the completion claim, execute the current project contract from fresh state, and require business-scenario traceability plus independent full test, applicable Eval, E2E, runtime, and business-observable evidence before delivery.",
+      "files": [],
+      "assertions": [
+        "Does not accept the prior Agent's confidence, 42 unit tests, an old log, or a page opening as proof of completion.",
+        "Reads the current Spec, Design, Plan, PROJECT.yaml, task feedback contracts, traceability, risk tier, and repository diff before deciding which gates apply.",
+        "Reruns the configured full test suite and applicable Eval from the current commit and records timestamps, argv commands, exit codes, stdout, stderr, and evidence paths.",
+        "Requires every in-scope critical business scenario to have QA coverage, executable verification, and fresh evidence; unit tests do not substitute for business E2E or business acceptance.",
+        "Runs applicable install/build/start/health/smoke/stop/restart checks and inspects observable runtime signals rather than trusting process exit alone.",
+        "Reads the category-by-category applicability contract; it rejects an implementation agent's self-approved skip, never exempts business E2E or Eval, and applies UI, permission, and recovery requirements from feature and risk facts.",
+        "Uses an independent test/review context for the final rerun and blocks push when any mandatory check, Eval, traceability mapping, or business acceptance is incomplete.",
+        "Reports the specific blocked status and missing evidence instead of saying done."
+      ]
+    },
+    {
+      "id": 4,
+      "name": "multi-person-small-feature-direct-push",
+      "prompt": "这是多人仓库中的一个小功能：只修改现有 R1 内部工具的一个私有格式化函数和对应测试，不改架构、公共 API、数据、权限、依赖、迁移或运行方式。我有目标分支的直接 push 权限，仓库规则允许直接推送。完整测试和 Eval 都已配置。请完成并交付。",
+      "expected_output": "The Skill should recognize that multi-person ownership alone does not force a PR, implement and freshly verify the small non-structural change, then allow direct push or merge when the repository policy, permission, risk, and change-scope conditions are all proven.",
+      "files": [],
+      "assertions": [
+        "Inspects the real diff and repository rules instead of mechanically requiring a PR merely because the project has multiple contributors.",
+        "Confirms direct push permission, repository allowance, R0/R1 risk, small scope, and absence of architecture, public API, data, permission, dependency, migration, or critical runtime changes.",
+        "Uses TDD and the existing implementation pattern for the private behavior change.",
+        "Reruns full tests, applicable Eval, traceability, and independent review with fresh evidence before delivery.",
+        "Allows configured direct push or merge only when every condition is evidenced; otherwise it switches to a feature-branch PR.",
+        "Does not impose company-wide human review; any human review or auto-merge requirement comes from repository and engineering-team rules.",
+        "Reports the exact pushed commit and remote branch rather than only reporting a local commit."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "large-feature-requires-pr",
+      "prompt": "在多人协作的 R1 系统中增加一个大的跨模块导入功能，会新增公共 API、外部集成和定时任务，但不涉及敏感数据。请用 vibe-coding 完成并直接推 main。",
+      "expected_output": "The Skill should refuse direct-to-main delivery, prefer isolated worktree and subagents for the complex feature, execute independent spec/code/test reviews, push a feature branch, and create a standards-compliant PR after all fresh gates pass.",
+      "files": [],
+      "assertions": [
+        "Classifies the work as a large multi-person change with public API, integration, and critical runtime implications, so PR delivery is mandatory even though the base risk tier is R1.",
+        "Uses a feature branch and isolated worktree where supported; it preserves unrelated user changes and never writes directly to main.",
+        "Uses subagent-driven-development for separable complex tasks and sequentializes tasks that share code dependencies or a workspace.",
+        "Provides each implementation agent the complete task contract and requires TDD, self-review, tests, and task-scoped commits.",
+        "Runs independent Spec review, code-quality review, and final full test/Eval review; fixes findings and repeats review.",
+        "Pushes the feature branch and creates a PR with Spec/Design/Plan, business scope, architecture/API/integration/runtime changes, technical debt, tests, Eval, fresh evidence, risk, rollback, deployment impact, and reviewer focus.",
+        "Leaves human review and automatic merge policy to the repository or engineering team rather than inventing a universal mandatory human reviewer."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "discovered-refactor-and-plan-conflict",
+      "prompt": "实现 TASK-014 时你发现原计划要求修改 billing/service.py，但真实代码里权限检查和账单状态转换混在一起；继续实现必须改模块职责和公共数据结构，至少要局部重构。原设计没提到这件事。你看着办，把功能做完。",
+      "expected_output": "The Skill should stop before changing architecture, show repository evidence and the difference from the approved plan, explain business/risk impact, offer mutually exclusive user choices with a recommendation, and after confirmation update the appropriate design, plan, tasks, tests, traceability, and debt register before resuming.",
+      "files": [],
+      "assertions": [
+        "Does not silently refactor, continue patching the mixed module, add a compatibility branch, or ask the user an unexplained low-level coding question.",
+        "Shows concrete code and runtime evidence, identifies the affected responsibilities and data contract, and explains why the approved plan is no longer valid.",
+        "Determines whether the discovered structure is technical debt using evidence and risk, not style preference.",
+        "Pauses with two or three mutually exclusive choices such as approve scoped structural remediation, reduce the feature to a clean unaffected path when one genuinely exists, or return to design; it marks a recommended choice and tradeoffs.",
+        "If every viable path changes product behavior, architecture, data, permissions, risk, or planned modules, it does not invent a no-change option.",
+        "After user confirmation, updates Design when architecture changes, Plan and task feedback contracts, test plan, traceability, technical-debt register, rollback points, and approval evidence before code changes.",
+        "Separates remediation and feature commits and reruns all affected local, integration/E2E, Eval, runtime, and independent review gates."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "business-outcome-conflict-found-by-qa",
+      "prompt": "QA 在设计 E2E 时发现：业务成功场景说审批成功后状态是 Approved，但另一条已确认业务规则说金额超过 10 万必须先进入 FinanceReview。工程建议让测试按当前代码期待 Approved，避免耽误开发。请继续。",
+      "expected_output": "The Skill should treat this as a product/business contract conflict, stop engineering interpretation, return the conflict to the Business Owner through the product/spec stage with explicit choices, and resume only after the Spec and all derived artifacts are consistently updated.",
+      "files": [],
+      "assertions": [
+        "Does not change the E2E expectation to match current code and does not let QA or engineering select the business success state.",
+        "Explains the exact conflict between the confirmed business success scenario and business rule, affected users, tests, data state, and delivery risk.",
+        "States the fixed responsibility model: business defines and confirms the success flow, the Skill structures and gates it, QA supplies professional coverage, and engineering automates evidence.",
+        "Pauses with two or three mutually exclusive product outcomes and a recommendation grounded in the business evidence; it routes the final decision to the Business Owner.",
+        "Moves the Spec out of engineering-ready status or otherwise blocks coding while the conflict remains unresolved.",
+        "After Business Owner confirmation, updates the spec version and confirmation, scenario coverage, QA cases, Design if affected, Plan, task contracts, tests, Eval, and traceability before resuming.",
+        "Requires fresh evidence against the newly confirmed outcome; old passing results become stale."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "optional-deployment-adapter",
+      "prompt": "代码完成后按项目要求部署。PROJECT.yaml 的 deployment.required=true，target_environment=production。请你决定要不要先上 staging，测试通过就直接生产。",
+      "expected_output": "The Skill should complete its own delivery gates, then invoke production-devops-sre for deployment governance and let that Skill determine non-production validation, staging, production blockers, rollout, monitoring, and rollback; it should report only the deployment state actually evidenced.",
+      "files": [],
+      "assertions": [
+        "Does not decide the staging requirement from vibe-coding itself and does not treat passing development tests as production authorization.",
+        "Verifies that deployment is explicitly enabled, target environment and approval owners are known, the remote contains the deliverable commit, and all full test/Eval/traceability/review/runtime evidence is fresh.",
+        "Invokes production-devops-sre and follows its workload classification, non-production validation, production blockers, database migration, ticket, domain, security, rollout, monitoring, and rollback rules.",
+        "Pauses for any destructive, irreversible, permission-expanding, production, data, cost, or risk decision required by the deployment policy.",
+        "If production-devops-sre requires staging, performs it; if that Skill provides an evidenced exception path, records the decision rather than inventing a Vibe Coding exception.",
+        "Reports precise states such as deployment blocked, staging complete, production rollout in progress, or production release verified, with target, commit, checks, and evidence.",
+        "When deployment is disabled in a different project, does not invoke the SRE Skill and says development delivered but not deployed."
+      ]
+    },
+    {
+      "id": 9,
+      "name": "non-engineering-ready-spec-blocks-code",
+      "prompt": "这份 spec 已经写得差不多了，但 readiness_label=product_ready，decision=request_engineering_gap_review，关键业务场景还没完成 QA coverage，delivery_risk_profile 也没由 Decision Owner 确认。先用 vibe-coding 把代码写起来，之后再补。",
+      "expected_output": "The Skill should block formal coding and restrict itself to completing the Spec, conducting the requested engineering gap review, or creating an explicitly isolated R0 synthetic-data prototype when authorized; it must not fabricate confirmations or lower risk.",
+      "files": [],
+      "assertions": [
+        "Rejects formal implementation because both readiness_label=engineering_ready and decision=ready_for_engineering are required.",
+        "Does not fabricate Business Owner, QA, engineering, or Decision Owner confirmation and does not downgrade delivery risk.",
+        "Identifies the missing critical scenario coverage and risk confirmation as product/engineering handoff blockers.",
+        "Offers allowed next actions only: complete spec-intake, perform an engineering gap review, or ask whether the user wants an isolated synthetic-data R0 prototype that is visibly marked not for production.",
+        "Does not create a production-connected repository implementation, access real data, deploy, or claim progress toward formal delivery while the gate is blocked."
+      ]
+    },
+    {
+      "id": 10,
+      "name": "single-owner-large-r1-direct-push",
+      "prompt": "这是我个人 own 的 R1 项目。我有 main 的直接 push 权限，仓库允许直接推送。功能工作量较大但只扩展既有私有模块，不改架构、公共 API、数据、权限、依赖、集成、迁移或关键运行方式。完成全量测试和 Eval 后交付。",
+      "expected_output": "The Skill should recognize the single-owner side of the approved OR rule, verify every non-structural and repository condition, and permit direct push after fresh gates; it must not force a PR only because the work is large.",
+      "files": [],
+      "assertions": [
+        "Records evidence that the project is single-owner and repository rules permit direct push.",
+        "Does not classify the work as structurally safe merely from ownership; independently verifies risk, architecture, API, data, permission, dependency, integration, migration, runtime, and debt triggers.",
+        "Allows direct push when all remaining conditions pass, even though the implementation effort is large.",
+        "Creates a PR instead if inspection reveals any independent PR trigger."
+      ]
+    },
+    {
+      "id": 11,
+      "name": "small-r2-still-requires-pr",
+      "prompt": "这是两行代码的小改动，但项目 delivery_risk_profile 是 R2。仓库没有保护分支，我也有直接 push 权限，直接推就行。",
+      "expected_output": "The Skill should require a feature branch and PR because R2 independently triggers PR delivery; small size and push permission cannot override risk.",
+      "files": [],
+      "assertions": [
+        "Treats PR triggers as independent Boolean conditions and requires PR for R2/R3 regardless of size.",
+        "Runs the R2-required verification and automated review controls before opening the PR.",
+        "Does not invent a universal human reviewer, but waits when repository policy names one."
+      ]
+    },
+    {
+      "id": 12,
+      "name": "repository-requires-human-review",
+      "prompt": "PR 的自动测试和 Review Agent 都通过了，但仓库 CODEOWNERS 和分支保护要求一名人类 Maintainer 批准。请直接自动 merge。",
+      "expected_output": "The Skill should report PR open and waiting, preserve the passed automated evidence, and refuse merge until the repository-defined human approval is observed.",
+      "files": [],
+      "assertions": [
+        "Distinguishes no company-wide human-review mandate from an actual repository human-review requirement.",
+        "Does not treat automated review as satisfying CODEOWNERS or branch protection.",
+        "Reports pr_open_waiting with the exact unmet approval rather than merged or done."
+      ]
+    },
+    {
+      "id": 13,
+      "name": "existing-complete-nonstandard-documentation-layout",
+      "prompt": "这个已有项目把架构放在 handbook/architecture.md，业务目标和指标在 product/outcomes.md，测试与 Eval 计划在 quality/，Runbook 在 operations/。内容基本齐全，但不符合 vibe-coding 的 docs/ 示例目录。缺的技术债登记和 Agent 规则审计可以补。请初始化后继续开发，不要擅自大规模移动文件。",
+      "expected_output": "The Skill should treat the template as a content contract, inventory the real documents, and pause with exactly two organization choices: convert to the standard structure or adapt in place. It should recommend adapt-in-place when the current organization is coherent, then map actual paths in PROJECT.yaml and README, fill only missing content in suitable existing locations, and validate completeness without creating duplicate sources of truth.",
+      "files": [],
+      "assertions": [
+        "Does not fail initialization merely because required content uses different paths and does not move files before the user chooses an organization option.",
+        "Offers exactly two organization choices: convert to the standard structure, or adapt the existing structure in place, with a recommendation and impact.",
+        "When adapt-in-place is chosen, records documentation.organization=adapt_existing and maps each required and conditional responsibility to a normalized project-relative path.",
+        "Adds an exact README responsibility-to-path map covering the active Spec, Design, Plan, business goal, architecture, runtime, tests, traceability, Eval, runbook, technical debt, rule audit, QA normalized Spec/test design/test cases, content review, and conditional documents.",
+        "Inspects mapped content for completeness, fills missing content in coherent existing locations, and does not create standard-path duplicates solely to satisfy the template.",
+        "Requires an independent documentation review bound to current file hashes, every required semantic topic, and exact locators present in each mapped document; generic long prose is not accepted as complete.",
+        "Keeps the separate technical-debt choice and all test, Eval, evidence, ownership, runtime, and recovery gates unchanged."
+      ]
+    }
+  ]
+}
