@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stardust.ai/schemas/vibe-coding/traceability.schema.json",
+  "title": "Business Scenario Traceability",
+  "description": "Maps authoritative spec-intake scenario coverage to executable checks and fresh business evidence.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mappings"],
+  "properties": {
+    "$schema": {"type": "string", "minLength": 1},
+    "schema_version": {"const": "1.0"},
+    "mappings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario_id", "qa_case_refs", "automated_test_refs", "evaluation_asset_refs", "business_signal_refs", "business_signal_rules", "business_owner_approval", "verification_commands", "evidence_paths"],
+        "properties": {
+          "scenario_id": {"type": "string", "minLength": 1},
+          "qa_case_refs": {"$ref": "#/$defs/non_empty_strings"},
+          "automated_test_refs": {"$ref": "#/$defs/non_empty_strings"},
+          "evaluation_asset_refs": {"$ref": "#/$defs/non_empty_strings"},
+          "business_signal_refs": {"$ref": "#/$defs/non_empty_strings"},
+          "business_signal_rules": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["signal_id", "source", "operator", "expected"],
+              "properties": {
+                "signal_id": {"type": "string", "minLength": 1},
+                "source": {"type": "string", "minLength": 1},
+                "operator": {"enum": ["equals", "not_equals", "less_than", "less_than_or_equal", "greater_than", "greater_than_or_equal", "contains"]},
+                "expected": {"type": ["string", "number", "boolean"]}
+              }
+            }
+          },
+          "business_owner_approval": {
+            "type": "object", "additionalProperties": false,
+            "required": ["approved_by", "confirmed_version"],
+            "properties": {
+              "approved_by": {"type": "string", "minLength": 1},
+              "confirmed_version": {"type": "string", "minLength": 1}
+            }
+          },
+          "verification_commands": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/command"}},
+          "evidence_paths": {"$ref": "#/$defs/non_empty_strings"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "non_empty_strings": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "command": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  }
+}
