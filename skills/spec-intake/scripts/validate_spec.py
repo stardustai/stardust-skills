@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +26,28 @@ WORKFLOW_STEP_KEYS = [
     "output",
     "human_review_required",
     "failure_handling",
+]
+
+BUSINESS_SUCCESS_SCENARIO_KEYS = [
+    "scenario_id",
+    "title",
+    "scope_status",
+    "priority",
+    "business_owner",
+    "user_role",
+    "business_goal",
+    "preconditions",
+    "trigger",
+    "workflow_step_refs",
+    "expected_business_outcome",
+    "expected_final_state",
+    "success_signals",
+    "business_invariants",
+    "unacceptable_outcomes",
+    "alternate_paths",
+    "exception_paths",
+    "recovery_expectations",
+    "confirmation",
 ]
 
 MEMORY_WRITE_RULE_KEYS = [
@@ -70,6 +93,75 @@ PRODUCT_PROOF_REQUIRED_LABELS = {
 
 TECHNICAL_DESIGN_REVIEW_TYPES = {"technical_design", "delivery_plan"}
 
+SCENARIO_COVERAGE_REQUIRED_LABELS = {
+    "poc_design_ready",
+    "poc_execution_ready",
+    "engineering_ready",
+}
+
+READINESS_STAGE = {
+    "business_ready": "business_feasibility",
+    "product_ready": "product_shape",
+    "engineering_gap_review_ready": "engineering_gap_review",
+    "poc_design_ready": "poc_design",
+    "poc_execution_ready": "poc_execution",
+    "engineering_ready": "engineering_delivery",
+}
+
+DECISION_NEXT_STAGE = {
+    "handoff_to_product": "product_shape",
+    "request_engineering_gap_review": "engineering_gap_review",
+    "continue_technical_spec": "technical_spec",
+    "mark_poc_design_ready": "poc_design",
+    "mark_poc_execution_ready": "poc_execution",
+    "ready_for_engineering": "engineering_delivery",
+}
+
+RISK_LEVEL = {"R0": 0, "R1": 1, "R2": 2, "R3": 3}
+
+RISK_DIMENSION_FLOORS = {
+    "user_exposure": {
+        "prototype_only": 0,
+        "internal_single_team": 1,
+        "internal_multi_team": 1,
+        "external_users": 2,
+        "customer_facing": 2,
+    },
+    "data_sensitivity": {
+        "synthetic": 0,
+        "public": 0,
+        "internal": 1,
+        "confidential": 2,
+        "restricted": 3,
+    },
+    "write_impact": {
+        "none": 0,
+        "read_only": 1,
+        "reversible_write": 2,
+        "irreversible_write": 3,
+        "bulk_destructive": 3,
+    },
+    "integrations_and_permissions": {
+        "none": 0,
+        "approved_internal": 1,
+        "external_or_elevated": 2,
+        "production_privileged": 3,
+    },
+    "reversibility": {
+        "easy": 0,
+        "moderate": 1,
+        "difficult": 2,
+        "irreversible": 3,
+    },
+    "business_impact": {
+        "demo": 0,
+        "low": 1,
+        "medium": 2,
+        "high": 2,
+        "critical": 3,
+    },
+}
+
 
 def _load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as f:
@@ -104,7 +196,32 @@ def _schema_type_errors(value: Any, schema: dict[str, Any], path: str) -> list[s
     return []
 
 
-def _validate_schema_subset(value: Any, schema: dict[str, Any], path: str = "$") -> list[str]:
+def _resolve_local_ref(root_schema: dict[str, Any], ref: str) -> dict[str, Any] | None:
+    if not ref.startswith("#/"):
+        return None
+    current: Any = root_schema
+    for part in ref[2:].split("/"):
+        if not isinstance(current, dict) or part not in current:
+            return None
+        current = current[part]
+    return current if isinstance(current, dict) else None
+
+
+def _validate_schema_subset(
+    value: Any,
+    schema: dict[str, Any],
+    path: str = "$",
+    root_schema: dict[str, Any] | None = None,
+) -> list[str]:
+    if root_schema is None:
+        root_schema = schema
+    ref = schema.get("$ref")
+    if isinstance(ref, str):
+        resolved = _resolve_local_ref(root_schema, ref)
+        if resolved is None:
+            return [f"unresolved schema reference at {path}: {ref}"]
+        schema = resolved
+
     errors: list[str] = []
     errors.extend(_schema_type_errors(value, schema, path))
     if errors:
@@ -128,13 +245,17 @@ def _validate_schema_subset(value: Any, schema: dict[str, Any], path: str = "$")
 
         for key, child_schema in properties.items():
             if key in value and isinstance(child_schema, dict):
-                errors.extend(_validate_schema_subset(value[key], child_schema, f"{path}.{key}"))
+                errors.extend(
+                    _validate_schema_subset(value[key], child_schema, f"{path}.{key}", root_schema)
+                )
 
     if isinstance(value, list):
         item_schema = schema.get("items")
-        if isinstance(item_schema, dict) and "$ref" not in item_schema:
+        if isinstance(item_schema, dict):
             for index, item in enumerate(value):
-                errors.extend(_validate_schema_subset(item, item_schema, f"{path}[{index}]"))
+                errors.extend(
+                    _validate_schema_subset(item, item_schema, f"{path}[{index}]", root_schema)
+                )
 
     return errors
 
@@ -233,6 +354,16 @@ def _score_out_of_range(value: Any) -> bool:
         and not isinstance(value, bool)
         and (value < 1 or value > 5)
     )
+
+
+def _is_iso_date(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
 
 
 def _stage_readiness(spec: dict[str, Any]) -> str | None:
@@ -433,6 +564,10 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
     if readiness == "engineering_ready" and decision != "ready_for_engineering":
         errors.append("engineering_ready requires stage_gate.decision=ready_for_engineering")
 
+    expected_stage = READINESS_STAGE.get(readiness)
+    if expected_stage is not None and current_stage != expected_stage:
+        errors.append(f"{readiness} requires stage_gate.current_stage={expected_stage}")
+
     exit_check = stage_gate.get("stage_exit_check")
     if isinstance(exit_check, dict):
         if decision in NEXT_STAGE_DECISIONS:
@@ -441,6 +576,11 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
             for key in ["exit_summary", "confirmation_question", "confirmed_by", "next_stage"]:
                 if _is_unknown_or_empty(exit_check.get(key)):
                     errors.append(f"{decision} requires stage_gate.stage_exit_check.{key}")
+            expected_next_stage = DECISION_NEXT_STAGE.get(decision)
+            if expected_next_stage is not None and exit_check.get("next_stage") != expected_next_stage:
+                errors.append(
+                    f"{decision} requires stage_gate.stage_exit_check.next_stage={expected_next_stage}"
+                )
             if current_stage == "business_feasibility" and decision == "handoff_to_product":
                 missing_fields = _business_handoff_missing_fields(spec)
                 if missing_fields:
@@ -573,6 +713,240 @@ def _validate_workflow(spec: dict[str, Any]) -> list[str]:
         errors.extend(_missing_keys(step, WORKFLOW_STEP_KEYS, f"workflow.steps[{index}]"))
         if not isinstance(step.get("human_review_required"), bool):
             errors.append(f"workflow.steps[{index}].human_review_required must be boolean")
+    return errors
+
+
+def _validate_business_success_scenarios(spec: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    scenarios = spec.get("business_success_scenarios")
+    readiness = _stage_readiness(spec)
+    if not isinstance(scenarios, list):
+        errors.append("business_success_scenarios must be an array")
+        if readiness in PRODUCT_PROOF_REQUIRED_LABELS:
+            errors.append(f"{readiness} requires business_success_scenarios")
+        return errors
+
+    workflow = spec.get("workflow", {})
+    workflow_steps = workflow.get("steps", []) if isinstance(workflow, dict) else []
+    workflow_step_ids = {
+        step.get("step_id")
+        for step in workflow_steps
+        if isinstance(step, dict) and isinstance(step.get("step_id"), str)
+    }
+
+    seen_ids: set[str] = set()
+    in_scope_critical = 0
+    for index, scenario in enumerate(scenarios):
+        prefix = f"business_success_scenarios[{index}]"
+        if not isinstance(scenario, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+
+        errors.extend(_missing_keys(scenario, BUSINESS_SUCCESS_SCENARIO_KEYS, prefix))
+        scenario_id = scenario.get("scenario_id")
+        if isinstance(scenario_id, str):
+            if scenario_id in seen_ids:
+                errors.append(f"business_success_scenarios has duplicate scenario_id: {scenario_id}")
+            seen_ids.add(scenario_id)
+
+        for ref in scenario.get("workflow_step_refs", []):
+            if ref not in workflow_step_ids:
+                errors.append(f"{prefix}.workflow_step_refs references unknown workflow step: {ref}")
+
+        if scenario.get("scope_status") != "in_scope":
+            continue
+        if scenario.get("priority") == "critical":
+            in_scope_critical += 1
+
+        if readiness in PRODUCT_PROOF_REQUIRED_LABELS:
+            for key in [
+                "scenario_id",
+                "title",
+                "business_owner",
+                "user_role",
+                "business_goal",
+                "trigger",
+                "workflow_step_refs",
+                "expected_business_outcome",
+                "expected_final_state",
+                "success_signals",
+                "business_invariants",
+                "unacceptable_outcomes",
+            ]:
+                if _is_unknown_or_empty(scenario.get(key)):
+                    errors.append(f"{readiness} requires {prefix}.{key}")
+
+            confirmation = scenario.get("confirmation")
+            if not isinstance(confirmation, dict) or confirmation.get("status") != "confirmed":
+                errors.append(
+                    f"{readiness} requires confirmed critical business success scenario: {scenario_id}"
+                    if scenario.get("priority") == "critical"
+                    else f"{readiness} requires confirmed in-scope business success scenario: {scenario_id}"
+                )
+            elif any(
+                _is_unknown_or_empty(confirmation.get(key))
+                for key in ["confirmer_role", "confirmed_by", "confirmed_at", "confirmed_version"]
+            ):
+                errors.append(f"{readiness} requires complete confirmation for business success scenario: {scenario_id}")
+            else:
+                if confirmation.get("confirmer_role") != "business_owner":
+                    errors.append(
+                        f"{readiness} requires business-owner confirmation for business success scenario: {scenario_id}"
+                    )
+                if confirmation.get("confirmed_by") != scenario.get("business_owner"):
+                    errors.append(
+                        f"{readiness} requires confirmed_by to match business_owner for business success scenario: {scenario_id}"
+                    )
+                owners = spec.get("owners", {})
+                if isinstance(owners, dict) and owners.get("business_owner") != scenario.get("business_owner"):
+                    errors.append(
+                        f"{readiness} requires scenario business_owner to match owners.business_owner: {scenario_id}"
+                    )
+                if not _is_iso_date(confirmation.get("confirmed_at")):
+                    errors.append(
+                        f"{readiness} requires a valid ISO confirmation date for business success scenario: {scenario_id}"
+                    )
+                if confirmation.get("confirmed_version") != spec.get("spec_version"):
+                    errors.append(
+                        f"{readiness} requires confirmation version {spec.get('spec_version')} "
+                        f"for business success scenario: {scenario_id}"
+                    )
+
+    if readiness in PRODUCT_PROOF_REQUIRED_LABELS and in_scope_critical == 0:
+        errors.append(f"{readiness} requires business_success_scenarios")
+    return errors
+
+
+def _validate_scenario_coverage(spec: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    validation = spec.get("validation_plan")
+    if not isinstance(validation, dict):
+        return errors
+
+    coverage = validation.get("scenario_coverage")
+    if not isinstance(coverage, list):
+        errors.append("validation_plan.scenario_coverage must be an array")
+        readiness = _stage_readiness(spec)
+        if readiness in SCENARIO_COVERAGE_REQUIRED_LABELS:
+            for scenario in spec.get("business_success_scenarios", []):
+                if not isinstance(scenario, dict):
+                    continue
+                if scenario.get("scope_status") == "in_scope" and scenario.get("priority") == "critical":
+                    errors.append(
+                        f"{readiness} requires validation_plan.scenario_coverage for critical scenario: "
+                        f"{scenario.get('scenario_id')}"
+                    )
+        return errors
+
+    scenarios = spec.get("business_success_scenarios", [])
+    scenario_by_id = {
+        scenario.get("scenario_id"): scenario
+        for scenario in scenarios
+        if isinstance(scenario, dict) and isinstance(scenario.get("scenario_id"), str)
+    }
+    coverage_by_id: dict[str, dict[str, Any]] = {}
+    for index, item in enumerate(coverage):
+        prefix = f"validation_plan.scenario_coverage[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        scenario_id = item.get("scenario_id")
+        if scenario_id not in scenario_by_id:
+            errors.append(f"{prefix}.scenario_id references unknown business scenario: {scenario_id}")
+            continue
+        if scenario_id in coverage_by_id:
+            errors.append(f"validation_plan.scenario_coverage has duplicate scenario_id: {scenario_id}")
+        coverage_by_id[scenario_id] = item
+
+    readiness = _stage_readiness(spec)
+    if readiness not in SCENARIO_COVERAGE_REQUIRED_LABELS:
+        return errors
+
+    for scenario_id, scenario in scenario_by_id.items():
+        if scenario.get("scope_status") != "in_scope" or scenario.get("priority") != "critical":
+            continue
+        item = coverage_by_id.get(scenario_id)
+        if item is None:
+            errors.append(
+                f"{readiness} requires validation_plan.scenario_coverage for critical scenario: {scenario_id}"
+            )
+            continue
+        if item.get("qa_status") not in ("drafted", "approved"):
+            errors.append(f"{readiness} requires QA coverage design for critical scenario: {scenario_id}")
+        if not item.get("qa_case_refs") and not item.get("evaluation_asset_refs"):
+            errors.append(f"{readiness} requires QA cases or evaluation assets for critical scenario: {scenario_id}")
+        if readiness == "engineering_ready":
+            if item.get("qa_status") != "approved":
+                errors.append(f"engineering_ready requires approved QA coverage for critical scenario: {scenario_id}")
+            requirement = item.get("automation_requirement")
+            if requirement == "required" and item.get("automation_plan_status") not in (
+                "planned",
+                "implemented",
+                "verified",
+            ):
+                errors.append(
+                    f"engineering_ready requires an automation plan for critical scenario: {scenario_id}"
+                )
+    return errors
+
+
+def _validate_delivery_risk_profile(spec: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    readiness = _stage_readiness(spec)
+    profile = spec.get("delivery_risk_profile")
+    if not isinstance(profile, dict):
+        errors.append("delivery_risk_profile must be an object")
+        if readiness in PRODUCT_PROOF_REQUIRED_LABELS:
+            errors.append(f"{readiness} requires delivery_risk_profile")
+        return errors
+
+    tier = profile.get("risk_tier")
+    dimensions = profile.get("dimensions")
+    if not isinstance(dimensions, dict):
+        return errors
+
+    dimension_floor = 0
+    unknown_dimensions: list[str] = []
+    for dimension, floor_by_value in RISK_DIMENSION_FLOORS.items():
+        value = dimensions.get(dimension)
+        if value == "unknown" or value is None:
+            unknown_dimensions.append(dimension)
+            continue
+        floor = floor_by_value.get(value)
+        if floor is not None:
+            dimension_floor = max(dimension_floor, floor)
+
+    if tier in RISK_LEVEL and RISK_LEVEL[tier] < dimension_floor:
+        required_tier = f"R{dimension_floor}"
+        errors.append(f"delivery_risk_profile.risk_tier {tier} is below required floor {required_tier}")
+
+    if readiness in PRODUCT_PROOF_REQUIRED_LABELS:
+        if tier not in RISK_LEVEL:
+            errors.append(f"{readiness} requires delivery_risk_profile.risk_tier R0-R3")
+        if unknown_dimensions:
+            errors.append(
+                f"{readiness} requires resolved delivery risk dimensions: " + ", ".join(unknown_dimensions)
+            )
+        if _is_unknown_or_empty(profile.get("rationale")):
+            errors.append(f"{readiness} requires delivery_risk_profile.rationale")
+        if tier in ("R1", "R2", "R3") and _is_unknown_or_empty(profile.get("required_controls")):
+            errors.append(f"{readiness} requires delivery_risk_profile.required_controls for {tier}")
+
+        assessment = profile.get("assessment")
+        if not isinstance(assessment, dict) or assessment.get("status") != "confirmed":
+            errors.append(f"{readiness} requires confirmed delivery_risk_profile.assessment")
+        else:
+            owners = spec.get("owners", {})
+            decision_owner = owners.get("decision_owner") if isinstance(owners, dict) else None
+            if assessment.get("confirmed_by") != decision_owner:
+                errors.append(
+                    f"{readiness} requires delivery risk confirmation by owners.decision_owner"
+                )
+            if _is_unknown_or_empty(assessment.get("assessed_by")):
+                errors.append(f"{readiness} requires delivery_risk_profile.assessment.assessed_by")
+            if not _is_iso_date(assessment.get("confirmed_at")):
+                errors.append(f"{readiness} requires a valid delivery risk confirmation date")
+
     return errors
 
 
@@ -788,10 +1162,13 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
     errors.extend(_validate_opportunity(spec))
     errors.extend(_validate_product_context(spec))
     errors.extend(_validate_workflow(spec))
+    errors.extend(_validate_business_success_scenarios(spec))
+    errors.extend(_validate_delivery_risk_profile(spec))
     errors.extend(_validate_ui(spec, spec_path))
     errors.extend(_validate_friday_object_model(spec))
     errors.extend(_validate_memory_policy(spec))
     errors.extend(_validate_validation_plan(spec))
+    errors.extend(_validate_scenario_coverage(spec))
     errors.extend(_validate_implementation_mapping(spec))
     errors.extend(_validate_engineering_ready(spec))
 

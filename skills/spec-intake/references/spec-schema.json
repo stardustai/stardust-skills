@@ -16,6 +16,8 @@
     "business_context",
     "scope",
     "workflow",
+    "business_success_scenarios",
+    "delivery_risk_profile",
     "friday_object_model",
     "knowledge_and_memory_policy",
     "ui_requirements",
@@ -27,7 +29,7 @@
     "missing_fields"
   ],
   "properties": {
-    "spec_version": { "type": "string" },
+    "spec_version": { "type": "string", "enum": ["1.5"] },
     "spec_id": { "type": "string" },
     "title": { "type": "string" },
     "status": {
@@ -511,6 +513,11 @@
         "roles": { "type": "array", "items": { "type": "string" } }
       }
     },
+    "business_success_scenarios": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/business_success_scenario" }
+    },
+    "delivery_risk_profile": { "$ref": "#/$defs/delivery_risk_profile" },
     "friday_object_model": {
       "type": "object",
       "additionalProperties": false,
@@ -624,6 +631,7 @@
       "required": [
         "business_acceptance",
         "product_acceptance",
+        "scenario_coverage",
         "poc_design_ready",
         "poc_execution_ready",
         "metrics",
@@ -632,6 +640,10 @@
       "properties": {
         "business_acceptance": { "type": "array", "items": { "type": "string" } },
         "product_acceptance": { "type": "array", "items": { "type": "string" } },
+        "scenario_coverage": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scenario_coverage" }
+        },
         "poc_design_ready": { "$ref": "#/$defs/readiness_check" },
         "poc_execution_ready": { "$ref": "#/$defs/readiness_check" },
         "metrics": {
@@ -855,6 +867,157 @@
         "output": { "type": ["string", "array", "object", "null"] },
         "human_review_required": { "type": "boolean" },
         "failure_handling": { "type": ["string", "null"] }
+      }
+    },
+    "business_success_scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "title",
+        "scope_status",
+        "priority",
+        "business_owner",
+        "user_role",
+        "business_goal",
+        "preconditions",
+        "trigger",
+        "workflow_step_refs",
+        "expected_business_outcome",
+        "expected_final_state",
+        "success_signals",
+        "business_invariants",
+        "unacceptable_outcomes",
+        "alternate_paths",
+        "exception_paths",
+        "recovery_expectations",
+        "confirmation"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "title": { "type": "string" },
+        "scope_status": { "type": "string", "enum": ["in_scope", "deferred", "out_of_scope"] },
+        "priority": { "type": "string", "enum": ["critical", "important", "optional"] },
+        "business_owner": { "type": ["string", "null"] },
+        "user_role": { "type": ["string", "null"] },
+        "business_goal": { "type": ["string", "null"] },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "trigger": { "type": ["string", "null"] },
+        "workflow_step_refs": { "type": "array", "items": { "type": "string" } },
+        "expected_business_outcome": { "type": ["string", "null"] },
+        "expected_final_state": { "type": "array", "items": { "type": "string" } },
+        "success_signals": { "type": "array", "items": { "type": "string" } },
+        "business_invariants": { "type": "array", "items": { "type": "string" } },
+        "unacceptable_outcomes": { "type": "array", "items": { "type": "string" } },
+        "alternate_paths": { "type": "array", "items": { "type": "string" } },
+        "exception_paths": { "type": "array", "items": { "$ref": "#/$defs/business_exception_path" } },
+        "recovery_expectations": { "type": "array", "items": { "type": "string" } },
+        "confirmation": { "$ref": "#/$defs/business_scenario_confirmation" }
+      }
+    },
+    "business_exception_path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["condition", "expected_business_response", "expected_final_state"],
+      "properties": {
+        "condition": { "type": "string" },
+        "expected_business_response": { "type": "string" },
+        "expected_final_state": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "business_scenario_confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "confirmer_role", "confirmed_by", "confirmed_at", "confirmed_version"],
+      "properties": {
+        "status": { "type": "string", "enum": ["pending", "confirmed", "rejected"] },
+        "confirmer_role": { "type": "string", "enum": ["business_owner"] },
+        "confirmed_by": { "type": ["string", "null"] },
+        "confirmed_at": { "type": ["string", "null"] },
+        "confirmed_version": { "type": ["string", "null"] }
+      }
+    },
+    "scenario_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id",
+        "qa_status",
+        "qa_case_refs",
+        "automation_requirement",
+        "automation_plan_status",
+        "automated_test_refs",
+        "evaluation_asset_refs",
+        "owner"
+      ],
+      "properties": {
+        "scenario_id": { "type": "string" },
+        "qa_status": { "type": "string", "enum": ["not_started", "drafted", "approved"] },
+        "qa_case_refs": { "type": "array", "items": { "type": "string" } },
+        "automation_requirement": { "type": "string", "enum": ["required", "optional", "not_applicable"] },
+        "automation_plan_status": { "type": "string", "enum": ["not_started", "planned", "implemented", "verified"] },
+        "automated_test_refs": { "type": "array", "items": { "type": "string" } },
+        "evaluation_asset_refs": { "type": "array", "items": { "type": "string" } },
+        "owner": { "type": ["string", "null"] }
+      }
+    },
+    "delivery_risk_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["risk_tier", "rationale", "dimensions", "required_controls", "assessment"],
+      "properties": {
+        "risk_tier": { "type": "string", "enum": ["R0", "R1", "R2", "R3", "unknown"] },
+        "rationale": { "type": ["string", "null"] },
+        "dimensions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "user_exposure",
+            "data_sensitivity",
+            "write_impact",
+            "integrations_and_permissions",
+            "reversibility",
+            "business_impact"
+          ],
+          "properties": {
+            "user_exposure": {
+              "type": "string",
+              "enum": ["prototype_only", "internal_single_team", "internal_multi_team", "external_users", "customer_facing", "unknown"]
+            },
+            "data_sensitivity": {
+              "type": "string",
+              "enum": ["synthetic", "public", "internal", "confidential", "restricted", "unknown"]
+            },
+            "write_impact": {
+              "type": "string",
+              "enum": ["none", "read_only", "reversible_write", "irreversible_write", "bulk_destructive", "unknown"]
+            },
+            "integrations_and_permissions": {
+              "type": "string",
+              "enum": ["none", "approved_internal", "external_or_elevated", "production_privileged", "unknown"]
+            },
+            "reversibility": {
+              "type": "string",
+              "enum": ["easy", "moderate", "difficult", "irreversible", "unknown"]
+            },
+            "business_impact": {
+              "type": "string",
+              "enum": ["demo", "low", "medium", "high", "critical", "unknown"]
+            }
+          }
+        },
+        "required_controls": { "type": "array", "items": { "type": "string" } },
+        "assessment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "assessed_by", "confirmed_by", "confirmed_at"],
+          "properties": {
+            "status": { "type": "string", "enum": ["pending", "confirmed", "rejected"] },
+            "assessed_by": { "type": ["string", "null"] },
+            "confirmed_by": { "type": ["string", "null"] },
+            "confirmed_at": { "type": ["string", "null"] }
+          }
+        }
       }
     },
     "friday_object": {

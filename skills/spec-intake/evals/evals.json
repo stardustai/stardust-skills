@@ -4,7 +4,7 @@
     {
       "id": 0,
       "prompt": "我是一个保险经纪人，我要给客户销售报销组合，我手里有一堆公司给的保险产品资料，如何快速给客户定制化方案？请用 spec-intake 引导我。我是业务人员，不懂技术，只知道客户经常问怎么组合最划算。",
-      "expected_output": "The assistant should not immediately dump a final JSON. It should show the full stage-gated flow, call the Codex progress tool when running in Codex, classify product basis, choose guided_interview for this vague request, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require explicit stage-exit confirmation before handoff, require a reviewed SVG wireframe only before product_ready or later UI gates, and eventually produce a v1.4 JSON spec that passes scripts/validate_spec.py.",
+      "expected_output": "The assistant should not immediately dump a final JSON. It should show the full stage-gated flow, call the Codex progress tool when running in Codex, classify product basis, choose guided_interview for this vague request, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require explicit stage-exit confirmation before handoff, require a reviewed SVG wireframe only before product_ready or later UI gates, and eventually produce a v1.5 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
         "On the first substantial response, shows the full process as Mermaid or equivalent flow: intake_routing, business_feasibility, product_shape, engineering_gap_review, technical_spec, poc_design, poc_execution, engineering_delivery.",
         "When running in Codex, calls update_plan for the stage progress tracker; a text-only progress line is not sufficient unless the runtime has no progress tool.",
@@ -12,7 +12,7 @@
         "Asks one question at a time before final JSON.",
         "Extracts facts already present in the user's message, states clear conclusions, and skips questions that are already answered.",
         "Asks which company product form the first version should be based on before assuming internal_tool, Domain Pack, Friday Agent, Friday Memory, MorningStar, standalone product, or demo.",
-        "Final JSON uses spec_version=1.4 and includes stage_gate, opportunity_assessment, friday_object_model, knowledge_and_memory_policy, validation_plan, implementation_mapping, review_gates, and missing_fields.",
+        "Final JSON uses spec_version=1.5 and includes stage_gate, opportunity_assessment, business_success_scenarios, delivery_risk_profile, friday_object_model, knowledge_and_memory_policy, validation_plan, implementation_mapping, review_gates, and missing_fields.",
         "Final JSON includes stage_gate.stage_exit_check, and next-stage decisions are not marked confirmed unless the user explicitly confirmed the transition.",
         "Final JSON uses opportunity_assessment.evidence_registry and distinguishes assumptions from non-assumption evidence.",
         "Final JSON includes opportunity_assessment.minimum_paid_artifact and uses 机会优先级指数 to penalize broad scope, heavy integrations, or unclear commercial signals.",
@@ -23,13 +23,17 @@
         "If Domain Pack is chosen, final JSON declares Workspace Memory, Task, Artifact, Recipe, Feedback/Comment, Room, and their Task -> Artifact -> Feedback -> Recipe/Memory loop.",
         "If UI is required at business_feasibility or business handoff, final JSON may set wireframe_status=needed without a produced SVG; it does not move to product_ready or later gates before a produced SVG and wireframe_status=reviewed.",
         "Final JSON includes structured memory_write_rules with source_type, write_allowed, requires_human_approval, target_scope, redaction_required, and rollback_method.",
-        "Final JSON separates poc_design_ready from poc_execution_ready in validation_plan."
+        "Final JSON separates poc_design_ready from poc_execution_ready in validation_plan.",
+        "The assistant asks the business user for a real journey, expected final business state, unacceptable false-success outcome, and important exception or recovery state without asking about E2E frameworks, selectors, fixtures, or test commands.",
+        "Before product_ready, every in-scope business_success_scenarios item has a business-owner-confirmed expected outcome; agent, product, QA, or engineering confidence does not substitute for that confirmation.",
+        "validation_plan.scenario_coverage maps each in-scope critical scenario to QA cases, automation requirements, evaluation assets, and an owner without rewriting the business outcome.",
+        "Before product_ready, delivery_risk_profile resolves user exposure, data sensitivity, write impact, integrations and permissions, reversibility, and business impact; derives R0-R3 from the highest dimension floor; lists controls for R1-R3; and is confirmed by owners.decision_owner."
       ]
     },
     {
       "id": 1,
       "prompt": "客户想让 Friday 接入他们的保险产品资料库，然后自动帮销售生成方案。你要看 /Users/derek/Documents/Projects/memory-connector 和 /Users/derek/Documents/Projects/friday-service 的代码背景来判断 Memory 能做什么、Agent/Recipe/产品层该做什么，再引导我补 spec。",
-      "expected_output": "The assistant should inspect local code/docs, distinguish Memory evidence recall from Agent/Recipe execution and product UI/workflow, ask business questions before finalizing technical boundaries, require explicit stage-exit confirmation before moving from product shape to engineering gap review, and produce a v1.4 JSON spec that passes scripts/validate_spec.py.",
+      "expected_output": "The assistant should inspect local code/docs, distinguish Memory evidence recall from Agent/Recipe execution and product UI/workflow, ask business questions before finalizing technical boundaries, require explicit stage-exit confirmation before moving from product shape to engineering gap review, and produce a v1.5 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
         "Uses schema stage names exactly and does not collapse the process into a five-stage flow.",
         "Reads local friday-service or memory-connector docs/code before declaring technical boundaries.",
@@ -43,6 +47,7 @@
         "For Domain Pack output, includes friday_object_model and knowledge_and_memory_policy instead of only filling a generic domain_pack_context.",
         "If engineering feasibility is unclear, uses stage_gate.decision=request_engineering_gap_review rather than ready_for_engineering.",
         "Before request_engineering_gap_review, summarizes confirmed facts, blockers, allowed next actions, blocked next actions, and asks the user to confirm the stage transition.",
+        "Preserves business_success_scenarios as the business-owned product contract and puts QA or engineering coverage only in validation_plan.scenario_coverage.",
         "Final JSON passes scripts/validate_spec.py."
       ]
     },
@@ -73,7 +78,9 @@
         "Lists material gaps such as final reviewer, budget owner, acceptance criteria, and competitor confirmation.",
         "Asks only the single highest-risk missing question if it must continue the interview.",
         "Business feasibility output includes a decision-style summary covering whether it is worth pushing, customer acceptance risk, market breadth, and blocked next actions.",
-        "Business-stage JSON can set ui_requirements.wireframe_status=needed and leave wireframe_artifacts empty without failing the handoff."
+        "Business-stage JSON can set ui_requirements.wireframe_status=needed and leave wireframe_artifacts empty without failing the handoff.",
+        "Extracts any supplied real business journey into a draft business_success_scenarios item, but records missing business-owner confirmation as a product-shape blocker rather than fabricating confirmation.",
+        "Because the mature brief does not resolve the six delivery-risk dimensions or decision-owner confirmation, it does not mark product_ready or engineering_ready and asks only the highest-risk missing product input if it continues."
       ]
     },
     {
@@ -85,7 +92,38 @@
         "Stops asking new exploratory questions and produces a human-readable summary, spec.json, missing_fields, review recommendation, and current stage_gate.",
         "Does not fabricate handoff_to_product unless the prior conversation already contains explicit stage-exit confirmation.",
         "Records unconfirmed transition items in missing_fields or blocked_next_actions.",
-        "If UI is known but not product-shaped, records wireframe_status=needed rather than forcing SVG generation before business output."
+        "If UI is known but not product-shaped, records wireframe_status=needed rather than forcing SVG generation before business output.",
+        "If business success scenarios are incomplete or unconfirmed, outputs the draft scenarios and missing fields without marking product_ready."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "业务补充一个真实流程：销售提交超过 20% 折扣的报价后，区域经理必须批准，批准后报价才允许发给客户；重复提交不能生成第二个审批单；拒绝后销售可以修改并重新提交。请把它加入 spec，并告诉我 QA 和工程接下来做什么。",
+      "expected_output": "The assistant should treat the supplied journey as business-owned product input, structure it into business_success_scenarios, show the business meaning back for confirmation, and keep downstream QA and engineering work in validation_plan.scenario_coverage.",
+      "assertions": [
+        "Creates or proposes a business_success_scenarios item with the sales role, business goal, precondition above 20 percent discount, approval journey, approved final business state, duplicate-submission prohibition, rejection-and-resubmission recovery path, and business confirmation status.",
+        "Does not ask the business user to choose an E2E framework, write selectors, define API calls, choose fixture paths, or provide test commands.",
+        "Shows the structured business goal, expected final state, unacceptable outcomes, and recovery behavior back to the business owner and asks for confirmation before product_ready.",
+        "A confirmed scenario records confirmer_role=business_owner, confirmed_by matching business_owner, confirmed_version matching spec_version, and a valid ISO confirmed_at date.",
+        "Explains that QA expands boundary, negative, permission, duplicate, concurrency, and recovery coverage without changing the expected business outcome.",
+        "Explains that engineering selects automation tools, environment, fixtures, commands, observability, and evidence after QA coverage is approved.",
+        "Uses validation_plan.scenario_coverage to reference the business scenario from QA cases, automation requirements, automated test references, evaluation assets, and owner.",
+        "Does not require automated tests to have passed before engineering begins; engineering_ready requires approved coverage and required automation at least planned."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "这是一份成熟 brief，产品范围、工作流和页面我都写完了。请直接输出 engineering_ready 的 v1.5 spec，不要再问问题，也不要降级：我们还没决定是否使用真实客户数据、是否写正式系统、需要哪些权限、失败能否恢复、最坏业务影响，也没有 Business Owner 或 decision owner 确认。",
+      "expected_output": "The assistant should refuse to fabricate engineering_ready, preserve the mature brief, make the unresolved product-risk and ownership facts explicit, and output only the highest readiness justified by confirmed evidence.",
+      "assertions": [
+        "Does not set stage_gate.readiness_label=engineering_ready, stage_gate.decision=ready_for_engineering, or stage_gate.current_stage=engineering_delivery merely because the user demands it.",
+        "Does not fabricate delivery_risk_profile dimensions, risk_tier, required_controls, assessed_by, confirmed_by, or confirmed_at.",
+        "Records unresolved data sensitivity, write impact, integrations and permissions, reversibility, and business impact in missing_fields or stage_gate blockers and keeps product or engineering actions blocked.",
+        "Explains that the risk tier is determined by the highest dimension floor rather than an average or a desired delivery schedule.",
+        "Does not treat Product, QA, Engineering, or AI review as Business Owner confirmation of business_success_scenarios.",
+        "Does not confirm a business scenario unless confirmer_role is business_owner, confirmed_by matches business_owner, confirmed_version matches spec_version, and confirmed_at is an ISO date.",
+        "If it outputs a spec immediately, uses unknown or pending risk values and an honest non-engineering-ready stage gate instead of inventing approval.",
+        "If it asks a question despite the refusal, asks only the single unresolved risk fact most likely to raise the risk floor."
       ]
     }
   ]

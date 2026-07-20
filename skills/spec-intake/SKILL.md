@@ -26,6 +26,8 @@ The goal is not to write code. The goal is to make the requirement clear enough 
 13. Do not move from one stage to the next without an explicit stage-exit summary and user confirmation.
 14. Use the schema stage names exactly. Do not invent a simplified five-stage process.
 15. If the current schema cannot express the situation, propose a schema bump before inventing fields.
+16. Business defines end-to-end success in `business_success_scenarios`. Product or the spec agent may structure the input, but only the business owner may confirm the expected business outcome. QA adds coverage and engineering adds automation through `validation_plan.scenario_coverage`; neither may silently rewrite the business outcome.
+17. Product defines `delivery_risk_profile` from six concrete dimensions before engineering. The tier is at least the highest dimension floor, and the decision owner must confirm it before `product_ready` or later.
 
 ## Intake Modes
 
@@ -153,8 +155,10 @@ Do not compress the flow into "market validation, product shape, PoC design, tec
 
 Read only as needed:
 
-- `references/spec-schema.json` - v1.4 JSON structure.
+- `references/spec-schema.json` - v1.5 JSON structure.
 - `references/question-bank.md` - question patterns by gate.
+- `references/business-success-scenarios.md` - required when collecting, confirming, reviewing, or mapping business success scenarios, or when setting `product_ready`, `poc_design_ready`, or `engineering_ready`.
+- `references/delivery-risk-profile.md` - required when collecting, assessing, confirming, or changing delivery risk, and before setting `product_ready` or a later readiness label.
 - `scripts/validate_spec.py` - deterministic validator.
 
 When the spec depends on Friday, Memory, Domain Pack, Recipe, Workspace, MCP, document upload, CRM, policy database, or any existing system, inspect the relevant local docs/code before declaring technical boundaries.
@@ -327,6 +331,8 @@ After the commercial gate, define:
 - `business_context`
 - `scope`
 - `workflow.canonical_workflow`
+- `business_success_scenarios`
+- `delivery_risk_profile`
 - `friday_object_model`
 - `ui_requirements`
 - `capability_boundaries`
@@ -345,6 +351,41 @@ Use structured workflow steps with:
 - `output`
 - `human_review_required`
 - `failure_handling`
+
+### Business Success Scenarios
+
+Use top-level `business_success_scenarios` for concrete end-to-end business journeys.
+This is business-owned product input, not an engineering test script.
+
+- Ask for a real journey, final business state, false-success outcome, and important
+  exception or recovery state in business language.
+- Structure the answer and show it back to the business owner; do not ask the user to
+  fill a testing template.
+- Business defines and confirms the meaning. Product/spec agent structures it. QA adds
+  coverage. Engineering adds automation and evidence.
+- QA or engineering findings that change the expected business outcome must return to
+  product shape for business-owner confirmation.
+- At `business_ready`, missing or draft scenarios are allowed but remain blockers.
+- Do not mark `product_ready` or later unless at least one in-scope critical scenario
+  exists and every in-scope scenario is complete and confirmed by the business owner.
+
+Read `references/business-success-scenarios.md` before collecting, confirming, reviewing,
+or mapping these scenarios, and before setting `product_ready` or a later readiness gate.
+
+### Delivery Risk Profile
+
+Collect top-level `delivery_risk_profile` during product shape. Ask for the actual user
+exposure, data sensitivity, write impact, integrations and permissions, reversibility,
+and business impact; do not ask the user to guess R0-R3 first.
+
+Derive `risk_tier` from the highest-risk dimension, state the rationale and required
+controls, then ask `owners.decision_owner` to confirm the assessment. Before
+`product_ready` or later, all six dimensions must be resolved, the tier must be R0-R3,
+the assessment must be confirmed, and R1-R3 must have concrete controls. A mature brief
+or a request to start coding does not bypass this product gate.
+
+Read `references/delivery-risk-profile.md` for exact values, R0-R3 floors, field contract,
+questions, and gate behavior.
 
 ## Product Leadership Gate
 
@@ -461,6 +502,22 @@ Ask the AI engineer to confirm the score. Do not mark `engineering_ready` unless
 
 Use `validation_plan`, not scattered acceptance/testing fields.
 
+Use `validation_plan.scenario_coverage` as the downstream mapping:
+
+```text
+business_success_scenarios
+  -> validation_plan.scenario_coverage
+  -> QA cases
+  -> automated E2E or other verification
+  -> execution evidence
+```
+
+Before `poc_design_ready`, every in-scope critical scenario needs QA coverage design and
+QA cases or evaluation assets. Before `engineering_ready`, that coverage must be approved
+and required automation must be at least planned. Do not require passing tests before
+implementation. Read `references/business-success-scenarios.md` for the field contract,
+responsibility boundary, and exact gate rules.
+
 `poc_design_ready` requires:
 
 - scenario
@@ -520,6 +577,8 @@ Required top-level sections:
 - `business_context`
 - `scope`
 - `workflow`
+- `business_success_scenarios`
+- `delivery_risk_profile`
 - `friday_object_model`
 - `knowledge_and_memory_policy`
 - `ui_requirements`
@@ -551,10 +610,13 @@ Before returning or saving the final spec, check:
 9. Domain Pack specs declare the Friday object loop.
 10. Memory write rules have approval, target scope, redaction, and rollback.
 11. UI specs include a produced SVG and reviewed status before product-ready or later gates; business handoff specs may instead record `wireframe_status=needed`.
-12. `validation_plan` separates PoC design readiness from execution readiness.
-13. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
-14. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
-15. `engineering_ready` has real owners, no missing fields, and no missing or unknown implementation capabilities.
+12. `product_ready` or later specs have at least one in-scope critical `business_success_scenarios` item, and every in-scope scenario has a business-owner-confirmed expected outcome.
+13. `validation_plan.scenario_coverage` maps business scenarios to QA cases, required automation, evaluation assets, and owners without rewriting business outcomes.
+14. `delivery_risk_profile` resolves all six dimensions, uses at least the highest required R0-R3 floor, lists controls for R1-R3, and is confirmed by `owners.decision_owner` before product-ready or later gates.
+15. `validation_plan` separates PoC design readiness from execution readiness.
+16. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
+17. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
+18. `engineering_ready` has real owners, no missing fields, no missing or unknown implementation capabilities, and complete approved scenario coverage with required automation planned.
 
 ## Style
 

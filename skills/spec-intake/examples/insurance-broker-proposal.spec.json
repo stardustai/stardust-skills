@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.4",
+  "spec_version": "1.5",
   "spec_id": "SPEC-INS-BROKER-PROPOSAL-001",
   "title": "保险经纪人客户报销组合方案生成 Domain Pack",
   "status": "spec_review",
@@ -295,7 +295,7 @@
   "created_at": "2026-07-09",
   "updated_at": "2026-07-10",
   "owners": {
-    "business_owner": "待确认",
+    "business_owner": "示例业务 owner",
     "product_owner": "待确认",
     "engineering_owner": null,
     "qa_owner": null,
@@ -411,6 +411,87 @@
       "产品 owner",
       "交付 owner"
     ]
+  },
+  "business_success_scenarios": [
+    {
+      "scenario_id": "BIZ-E2E-001",
+      "title": "经纪人基于可追溯证据完成方案草稿并通过人工审阅",
+      "scope_status": "in_scope",
+      "priority": "critical",
+      "business_owner": "示例业务 owner",
+      "user_role": "保险经纪人",
+      "business_goal": "在不越过正式报价和合规审批边界的前提下，显著缩短定制方案准备时间",
+      "preconditions": [
+        "本次使用的保险产品资料和合规口径已完成版本确认",
+        "客户画像已经脱敏并得到使用授权"
+      ],
+      "trigger": "经纪人提交客户画像并请求生成报销组合方案草稿",
+      "workflow_step_refs": ["WF-001", "WF-002", "WF-003"],
+      "expected_business_outcome": "经纪人在 15 分钟内得到一份证据可追溯、边界明确且可人工修改的方案草稿",
+      "expected_final_state": [
+        "方案草稿 Artifact 已生成并绑定资料版本",
+        "关键推荐理由具有来源引用",
+        "经纪人完成审阅后才允许导出"
+      ],
+      "success_signals": [
+        "草稿生成耗时不超过 15 分钟",
+        "所有关键推荐理由都有来源证据",
+        "Artifact 保存了审阅状态和修改记录"
+      ],
+      "business_invariants": [
+        "AI 草稿不能被表示为正式报价或合规批准",
+        "未经经纪人审阅的草稿不能导出给客户"
+      ],
+      "unacceptable_outcomes": [
+        "界面显示生成成功但没有可审阅 Artifact",
+        "方案包含无依据推荐、正式报价或合规承诺"
+      ],
+      "alternate_paths": [
+        "资料不足时向经纪人展示待补问题，补齐后继续同一任务"
+      ],
+      "exception_paths": [
+        {
+          "condition": "产品资料缺失、过期或版本不明",
+          "expected_business_response": "停止生成结论并展示缺失资料清单",
+          "expected_final_state": ["任务保持待补资料状态", "没有产生可导出的方案草稿"]
+        }
+      ],
+      "recovery_expectations": [
+        "补齐资料后可从原任务继续，不重复创建客户案例",
+        "生成失败时保留输入和可诊断记录，但不得保存不完整结论"
+      ],
+      "confirmation": {
+        "status": "confirmed",
+        "confirmer_role": "business_owner",
+        "confirmed_by": "示例业务 owner",
+        "confirmed_at": "2026-07-20",
+        "confirmed_version": "1.5"
+      }
+    }
+  ],
+  "delivery_risk_profile": {
+    "risk_tier": "R2",
+    "rationale": "使用脱敏前可能包含客户敏感资料，业务结果需要合规人工审阅，且错误方案可能影响客户决策",
+    "dimensions": {
+      "user_exposure": "internal_single_team",
+      "data_sensitivity": "confidential",
+      "write_impact": "read_only",
+      "integrations_and_permissions": "approved_internal",
+      "reversibility": "easy",
+      "business_impact": "medium"
+    },
+    "required_controls": [
+      "客户资料脱敏和授权检查",
+      "合规 reviewer 审阅",
+      "不得输出正式报价或合规承诺",
+      "关键结论必须有来源证据"
+    ],
+    "assessment": {
+      "status": "confirmed",
+      "assessed_by": "spec agent",
+      "confirmed_by": "PMF owner",
+      "confirmed_at": "2026-07-20"
+    }
   },
   "friday_object_model": {
     "workspace_memory": [
@@ -649,6 +730,18 @@
       "用户能看到证据和风险",
       "用户能修改、评论并导出草稿",
       "用户能把通用反馈标记为 Recipe/Memory 更新候选"
+    ],
+    "scenario_coverage": [
+      {
+        "scenario_id": "BIZ-E2E-001",
+        "qa_status": "drafted",
+        "qa_case_refs": ["QA-BIZ-E2E-001"],
+        "automation_requirement": "required",
+        "automation_plan_status": "planned",
+        "automated_test_refs": [],
+        "evaluation_asset_refs": ["ASSET-GOLDEN-CASES", "ASSET-FAILURE-CASES"],
+        "owner": "QA owner / Engineering owner 待确认"
+      }
     ],
     "poc_design_ready": {
       "status": "blocked",
@@ -897,6 +990,7 @@
     "当前只允许进入 engineering gap review，不允许工程排期"
   ],
   "change_log": [
-    "2026-07-10: 升级为 spec-intake schema v1.4"
+    "2026-07-10: 升级为 spec-intake schema v1.4",
+    "2026-07-20: 升级为 v1.5，新增业务成功场景与 QA/工程覆盖映射"
   ]
 }

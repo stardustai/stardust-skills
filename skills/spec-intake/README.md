@@ -20,6 +20,9 @@
 14. 如果是 Domain Pack，必须明确 Workspace Memory、Task、Artifact、Recipe、Feedback/Comment、Room 的闭环。
 15. Memory 写入、自学习、隐私、人工确认和回滚必须结构化。
 16. 验收测试统一进入 `validation_plan`，区分 `poc_design_ready` 和 `poc_execution_ready`。
+17. 业务端到端成功流程统一进入顶层 `business_success_scenarios`：业务定义真实流程和成功终态，产品或 spec agent 负责结构化，业务 owner 负责确认。
+18. QA 和工程不得重写业务成功定义；它们通过 `validation_plan.scenario_coverage` 补充 QA 用例、自动化计划、Eval 资产和执行证据。
+19. 交付风险是产品输入：先采集用户范围、数据敏感度、写入影响、集成与权限、可恢复性、业务影响六个事实，再按最高风险维度确定 R0-R3，由 decision owner 确认。
 
 ## 交互流程
 
@@ -105,7 +108,9 @@ spec-intake/
 ├── SKILL.md - Codex/agent 实际执行该 skill 时读取的主指令。
 ├── README.md - 给人阅读的说明文档，也适合培训和推广。
 ├── references/
-│   ├── spec-schema.json - Spec Driven JSON v1.4 的结构定义和枚举。
+│   ├── spec-schema.json - Spec Driven JSON v1.5 的结构定义和枚举。
+│   ├── business-success-scenarios.md - 业务成功场景、QA/工程映射和阶段门禁的详细规范。
+│   ├── delivery-risk-profile.md - 六维风险输入、R0-R3、控制项和产品门禁的详细规范。
 │   └── question-bank.md - 按阶段和字段组织的问题库。
 ├── scripts/
 │   └── validate_spec.py - JSON 校验脚本，包含 stage gate、证据、UI、PoC、Memory 规则。
@@ -135,6 +140,9 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 - Friday / Domain Pack 是否声明 Task -> Artifact -> Feedback -> Recipe/Memory 的闭环。
 - Memory 写入是否有人工确认、scope、脱敏和回滚。
 - `validation_plan` 是否区分 PoC 设计 ready 和 PoC 执行 ready。
+- `product_ready` 或更后阶段是否至少有一个由业务 owner 确认的关键 `business_success_scenarios`，且所有本期场景都有明确业务终态。
+- `validation_plan.scenario_coverage` 是否完整映射业务场景、QA 用例、自动化要求和 Eval 资产，并且没有改写业务预期结果。
+- `delivery_risk_profile` 的六个维度是否已解决，R0-R3 是否不低于最高维度下限，R1-R3 是否有控制项，并由 `owners.decision_owner` 确认。
 - 技术方案设计是否完成源码读取、技术评分维度和 AI 工程师确认。
 - `engineering_ready` 是否没有缺失字段、没有 missing/unknown implementation capabilities。
 
@@ -154,11 +162,13 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 | `business_context` | 产品形态判断 | 产品 owner / 业务 owner | 解释用户是谁、现在怎么做、成功后业务结果是什么。 | 不重复目标工作流细节；目标工作流统一放在 `workflow.canonical_workflow`。 |
 | `scope` | 产品形态判断 | 产品 owner | 定义第一版做什么、不做什么、为什么不做。它控制范围膨胀。 | 不记录商业优先级公式；公式在 `opportunity_assessment.priority_decision`。 |
 | `workflow` | 产品形态到技术评审 | 产品 owner / AI 工程 owner | 定义唯一 canonical workflow 和结构化步骤，是产品、AI 工程和 QA 对齐的主线。 | 不承载 PMF 证据，也不重复 `business_context` 的用户背景。 |
+| `business_success_scenarios` | 产品形态 | 业务 owner；产品 owner / spec agent 负责结构化 | 记录真实业务旅程、前置条件、业务目标、关键步骤、成功终态、不可接受结果、异常恢复和业务确认。 | 不记录测试框架、API、selector、fixture 路径、命令或工程实现。 |
+| `delivery_risk_profile` | 产品形态 | 产品 owner / decision owner | 用六个事实维度确定最低 R0-R3、理由、控制项和确认状态，约束后续产品边界和工程深度。 | 不按平均值降级，不等到编码后再补风险，也不把风险判断交给工程自行决定。 |
 | `friday_object_model` | Domain Pack / Friday 产品形态判断 | 产品 owner / AI 工程 owner | 把 Friday 的 Workspace Memory、Task、Artifact、Recipe、Feedback/Comment、Room 建成一等对象，避免退化成“资料库 + prompt”。 | 不定义具体代码路径；代码落点在 `implementation_mapping`。 |
 | `knowledge_and_memory_policy` | Domain Pack / Memory 设计 | AI 工程 owner / 合规 owner | 定义什么能进 Memory、什么不能进、如何人工确认、脱敏、回滚。 | 不描述最终 UI；UI 在 `ui_requirements`。 |
 | `ui_requirements` | 产品形态判断 | 产品 owner / 设计 owner | 判断是否有 UI、需要哪些页面、SVG 线框图是否已确认。 | 不替代产品需求；它只确认界面意图和对象关系。 |
 | `capability_boundaries` | 技术缺口评审 | AI 工程 owner / 产品 owner | 切清 Memory、Agent/Recipe、产品 UI、外部系统、人和合规分别负责什么。 | 不声明现有代码是否支持；现有支持度在 `implementation_mapping`。 |
-| `validation_plan` | QA / PoC 设计 | QA owner / 产品 owner | 统一管理业务验收、产品验收、指标、测试资产，并区分 PoC 设计 ready 和执行 ready。 | 不做运维监控；监控在 `operation_standards`。 |
+| `validation_plan` | QA / PoC 设计 | QA owner / 产品 owner | 统一管理验收、指标、测试资产和 `scenario_coverage`，把业务成功场景映射为 QA 与工程验证，并区分 PoC 设计 ready 和执行 ready。 | 不重新定义业务成功终态，也不做运维监控；监控在 `operation_standards`。 |
 | `operation_standards` | PoC 执行 / 交付准备 | DevOps owner / 工程 owner | 定义监控、兜底、支持和审计事件。 | 不定义 pass/fail 规则；规则在 `validation_plan.metrics`。 |
 | `implementation_mapping` | 技术缺口评审 / 技术设计 / 工程准备 | AI 工程 owner / 工程 owner | 标明每个关键能力是已有、部分已有、缺失、外部系统负责还是未知，并给本地代码路径或缺口。技术设计阶段还必须记录源码读取和 AI 评分。 | 不代表可以排期；只有 `stage_gate` 到 `engineering_ready` 才能进入工程计划。 |
 | `review_gates` | 阶段评审 | 各 owner | 记录业务、产品、AI 工程、QA、合规、工程启动前分别要 review 什么。 | 不替代 `stage_gate` 的当前决策。 |
@@ -174,6 +184,8 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 - `technical_leadership` 放在 `product_context` 下，因为它是产品 owner 对产品独特性的论证，不是工程实现方案。
 - `source_code_review` 和 `technical_design_assessment` 放在 `implementation_mapping` 下，因为它们必须基于真实代码和技术方案判断。
 - 旧 `business_context.user_scenario.target_workflow` 删除，目标流程统一使用 `workflow.canonical_workflow`，避免同一工作流被写两遍。
+- `workflow.canonical_workflow` 只描述通用主流程；具体、可确认的真实业务旅程单独放入 `business_success_scenarios`，避免把抽象流程当作可验收场景。
+- QA 和工程对业务场景的覆盖关系放入 `validation_plan.scenario_coverage`；场景的业务终态仍以 `business_success_scenarios` 为准。
 - `acceptance_standards`、`testing_standards`、`poc_metrics`、`evaluation_assets` 合并到 `validation_plan`，避免 QA 需要在多个地方找验收标准。
 - `input_materials`、`evidence_requirements`、`data_governance`、Memory 自学习策略合并到 `knowledge_and_memory_policy`，因为它们都在回答“材料、证据和记忆如何被治理”。
 - `capability_boundaries` 和 `implementation_mapping` 不合并：前者讲职责边界，后者讲现有代码/能力落点。合并会让产品边界和工程事实混在一起。
@@ -227,6 +239,16 @@ spec.json
 │   ├── steps: array - 每步包含 actor、input、action、output、human_review_required、failure_handling。
 │   └── roles: array - 参与角色。
 │
+├── business_success_scenarios: array - 由业务提供并确认的具体端到端成功场景。
+│   └── item: object - scenario_id、title、scope_status、priority、business_owner、user_role、business_goal、preconditions、trigger、workflow_step_refs、expected_business_outcome、expected_final_state、success_signals、business_invariants、unacceptable_outcomes、alternate_paths、exception_paths、recovery_expectations、confirmation。
+│
+├── delivery_risk_profile: object - 产品阶段确认的交付风险合同。
+│   ├── risk_tier: enum - R0、R1、R2、R3 或尚未解决时的 unknown；不得低于六维最高风险下限。
+│   ├── rationale: string|null - 风险等级如何由真实产品事实得出。
+│   ├── dimensions: object - user_exposure、data_sensitivity、write_impact、integrations_and_permissions、reversibility、business_impact。
+│   ├── required_controls: array - 下游交付必须落实的权限、数据、审批、审计、回滚和发布控制。
+│   └── assessment: object - status、assessed_by、confirmed_by、confirmed_at；product-ready 后由 decision owner 确认。
+│
 ├── friday_object_model: object - Friday 核心对象模型。
 │   ├── workspace_memory: array - 可复用记忆和上下文资产。
 │   ├── tasks: array - 用户真实任务实例。
@@ -250,6 +272,7 @@ spec.json
 ├── validation_plan: object - 业务验收、产品验收、PoC 准备度、指标和测试资产。
 │   ├── business_acceptance: array - 业务验收标准。
 │   ├── product_acceptance: array - 产品验收标准。
+│   ├── scenario_coverage: array - scenario_id 对应的 QA 状态、QA 用例、自动化要求与计划、自动化测试引用、Eval 资产和 owner。
 │   ├── poc_design_ready: object - PoC 设计是否 ready。
 │   ├── poc_execution_ready: object - PoC 执行是否 ready。
 │   ├── metrics: array - metric_id、definition、baseline、target、measurement_method、fixture_id、owner、pass_fail_rule。
@@ -277,3 +300,17 @@ spec.json
 4. PoC 是设计 ready，还是执行 ready。
 
 最容易误用的是把 `engineering_gap_review_ready` 当成 `engineering_ready`。前者表示“可以让技术看缺口”，后者才表示“可以进入工程实现计划”。
+
+另一个常见误用是让 QA 或工程自己定义“端到端成功”。正确关系是：
+
+```text
+业务确认的 business_success_scenarios
+  -> validation_plan.scenario_coverage
+  -> QA 用例
+  -> 自动化 E2E 或其他验证
+  -> 执行证据
+```
+
+业务不需要懂测试工具，只需要确认真实流程、业务终态、不可接受结果和失败后的业务状态。QA 负责专业化覆盖，工程负责自动化与可观测性。
+
+风险也不要求业务先猜 R0-R3。业务和产品提供六个事实维度，Spec Agent 计算最低等级并解释原因，Decision Owner 确认。任何一个维度达到更高风险，都不能被其他低风险维度“平均掉”；产品边界变化后必须重新评估。

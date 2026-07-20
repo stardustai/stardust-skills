@@ -127,6 +127,48 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 如果资料找不到、客户信息不完整、条件冲突，应该怎么处理？
 - 输出要能追溯到哪些原文证据？
 
+## Business Success Scenarios
+
+These questions collect product input from business users. Do not ask the business user
+about E2E frameworks, selectors, fixtures, APIs, test commands, or automation tools. First
+extract any real scenario already present, then ask only the single missing question that
+most changes the business outcome or product gate.
+
+- 请讲一个真实案例：谁在什么业务状态下开始，要完成什么目标，最后什么业务状态才算真正成功？
+- 这个成功流程的发起角色、参与角色和最终确认角色分别是谁？
+- 开始这条流程前，哪些业务条件必须已经成立？
+- 哪些输入值最能代表真实业务，而不是为了演示而准备的理想数据？
+- 这个场景会经过 `workflow.steps` 中的哪些步骤？有没有跨角色交接或人工决策？
+- 页面显示“成功”但业务实际上仍然失败，最可能是哪一种情况？
+- 哪些结果绝对不可接受，例如重复单据、越权审批、错误写入、遗漏通知或错误业务状态？
+- 如果发生资料缺失、重复提交、权限不足、外部系统超时或部分成功，业务上应该停在哪个状态、恢复到哪个状态，谁负责接管？
+- 这是本期 `in_scope`、延期 `deferred`，还是明确 `out_of_scope`？优先级是 `critical`、`important` 还是 `optional`？
+- 我已经把你的口述整理成结构化业务成功场景。业务目标、成功终态、不可接受结果和异常恢复是否准确？A. 准确并确认；B. 有一处需要修改；C. 场景不成立。
+
+Before marking `product_ready` or later, check:
+
+- 是否至少有一个本期关键场景？
+- 每个本期场景是否有明确、非空的 `expected_business_outcome`？
+- 每个本期场景是否由真实 business owner 确认，而不是由 agent、产品、QA 或工程代为确认？
+- 是否把业务场景与通用 `workflow.canonical_workflow` 区分开，而不是只写一条抽象主流程？
+
+## Delivery Risk Profile
+
+Do not ask the user to choose R0-R3 before collecting facts. Extract every dimension
+already present and ask only the single unresolved dimension most likely to raise the
+risk floor.
+
+- 第一版谁会使用？A. 只做隔离演示；B. 一个内部团队；C. 多个内部团队；D. 外部用户；E. 直接面向客户。
+- 第一版可能读取、生成或记录的最高敏感数据是什么？A. 模拟；B. 公开；C. 内部；D. 机密；E. 受限。
+- 系统对业务系统的操作是什么？A. 不操作；B. 只读；C. 可撤销写入；D. 不可撤销写入；E. 批量破坏性操作。
+- 它需要什么集成或权限？A. 无；B. 已批准内部系统；C. 外部系统或提权；D. 生产特权。
+- 如果结果错误，恢复到最后正确状态有多难？A. 容易；B. 中等；C. 困难；D. 不可恢复。
+- 最坏的合理业务影响是什么？A. 演示失败；B. 低；C. 中；D. 高；E. 关键业务影响。
+- 哪个维度给出了最高风险下限？是否存在试图用其他低风险维度把它平均掉的情况？
+- R1-R3 分别需要哪些具体控制：脱敏、最小权限、只读、人工审批、幂等、审计、回滚、灰度或生产审批？
+- 谁是 `owners.decision_owner`？是否确认六维事实、风险等级、理由和控制项？
+- 如果用户直接要求 `engineering_ready`，六维是否全部解决、assessment 是否确认、Business Owner 场景是否确认、阶段和 next_stage 是否一致？任何一项缺失都必须拒绝该门禁。
+
 ## Friday Object Model
 
 - 这个需求里的 Task 是什么真实工作实例？
@@ -182,6 +224,10 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 
 - 业务如何验收第一版？
 - 产品如何验收第一版？
+- 每个本期关键 `business_success_scenarios[].scenario_id` 是否都有对应的 `validation_plan.scenario_coverage`？
+- QA 为每个业务场景补充了哪些边界、负向、权限、重复、外部失败和恢复用例？这些补充是否保持原业务成功终态不变？
+- 哪些场景必须自动化，哪些允许人工验证，哪些不适用？理由和 owner 是什么？
+- 要进入 `engineering_ready` 的场景是否已经 QA approved，且所有 required automation 至少为 planned？
 - 现在只是 PoC 设计 ready，还是 PoC 执行 ready？
 - 有没有黄金样例：客户画像 + 产品资料 + 标准答案？
 - 失败样例有哪些：信息缺失、客户预算不匹配、产品互斥、地区限制、资料过期？
