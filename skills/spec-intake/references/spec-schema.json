@@ -29,7 +29,7 @@
     "missing_fields"
   ],
   "properties": {
-    "spec_version": { "type": "string", "enum": ["1.5"] },
+    "spec_version": { "type": "string", "enum": ["1.6"] },
     "spec_id": { "type": "string" },
     "title": { "type": "string" },
     "status": {
@@ -394,6 +394,8 @@
         "build_target",
         "spec_type",
         "company_product",
+        "product_goals",
+        "business_metrics",
         "product_assumptions",
         "technical_leadership",
         "product_open_questions"
@@ -425,6 +427,14 @@
           ]
         },
         "company_product": { "type": ["string", "null"] },
+        "product_goals": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/product_goal" }
+        },
+        "business_metrics": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/business_metric" }
+        },
         "product_assumptions": { "type": "array", "items": { "type": "string" } },
         "technical_leadership": {
           "type": "object",
@@ -502,7 +512,7 @@
     "workflow": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["canonical_workflow", "phases", "steps", "roles"],
+      "required": ["canonical_workflow", "phases", "steps", "roles", "user_journeys", "user_operation_flows"],
       "properties": {
         "canonical_workflow": { "type": ["string", "null"] },
         "phases": { "type": "array", "items": { "type": "string" } },
@@ -510,7 +520,15 @@
           "type": "array",
           "items": { "$ref": "#/$defs/workflow_step" }
         },
-        "roles": { "type": "array", "items": { "type": "string" } }
+        "roles": { "type": "array", "items": { "type": "string" } },
+        "user_journeys": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/user_journey" }
+        },
+        "user_operation_flows": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/user_operation_flow" }
+        }
       }
     },
     "business_success_scenarios": {
@@ -854,6 +872,56 @@
         "measurable_kpi": { "type": "array", "items": { "type": "string" } }
       }
     },
+    "product_goal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal_id",
+        "business_owner_definition",
+        "product_refinement",
+        "target_user",
+        "target_outcome",
+        "business_metric_refs",
+        "product_metric_refs",
+        "loop_engineering_signal"
+      ],
+      "properties": {
+        "goal_id": { "type": "string" },
+        "business_owner_definition": { "type": ["string", "null"] },
+        "product_refinement": { "type": ["string", "null"] },
+        "target_user": { "type": ["string", "null"] },
+        "target_outcome": { "type": ["string", "null"] },
+        "business_metric_refs": { "type": "array", "items": { "type": "string" } },
+        "product_metric_refs": { "type": "array", "items": { "type": "string" } },
+        "loop_engineering_signal": { "type": ["string", "null"] }
+      }
+    },
+    "business_metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "business_definition",
+        "product_refinement",
+        "owner",
+        "baseline",
+        "target",
+        "measurement_method",
+        "review_cadence",
+        "loop_engineering_use"
+      ],
+      "properties": {
+        "metric_id": { "type": "string" },
+        "business_definition": { "type": ["string", "null"] },
+        "product_refinement": { "type": ["string", "null"] },
+        "owner": { "type": ["string", "null"] },
+        "baseline": { "type": ["string", "null"] },
+        "target": { "type": ["string", "null"] },
+        "measurement_method": { "type": ["string", "null"] },
+        "review_cadence": { "type": ["string", "null"] },
+        "loop_engineering_use": { "type": ["string", "null"] }
+      }
+    },
     "workflow_step": {
       "type": "object",
       "additionalProperties": false,
@@ -867,6 +935,60 @@
         "output": { "type": ["string", "array", "object", "null"] },
         "human_review_required": { "type": "boolean" },
         "failure_handling": { "type": ["string", "null"] }
+      }
+    },
+    "user_journey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "journey_id",
+        "name",
+        "primary_actor",
+        "business_goal",
+        "entry_point",
+        "happy_path",
+        "exception_paths",
+        "exit_criteria",
+        "covered_operation_flow_ids"
+      ],
+      "properties": {
+        "journey_id": { "type": "string" },
+        "name": { "type": "string" },
+        "primary_actor": { "type": ["string", "null"] },
+        "business_goal": { "type": ["string", "null"] },
+        "entry_point": { "type": ["string", "null"] },
+        "happy_path": { "type": "array", "items": { "type": "string" } },
+        "exception_paths": { "type": "array", "items": { "type": "string" } },
+        "exit_criteria": { "type": "array", "items": { "type": "string" } },
+        "covered_operation_flow_ids": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "user_operation_flow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "flow_id",
+        "journey_id",
+        "actor",
+        "trigger",
+        "preconditions",
+        "user_actions",
+        "system_responses",
+        "expected_result",
+        "failure_modes",
+        "test_case_seed"
+      ],
+      "properties": {
+        "flow_id": { "type": "string" },
+        "journey_id": { "type": "string" },
+        "actor": { "type": ["string", "null"] },
+        "trigger": { "type": ["string", "null"] },
+        "preconditions": { "type": "array", "items": { "type": "string" } },
+        "user_actions": { "type": "array", "items": { "type": "string" } },
+        "system_responses": { "type": "array", "items": { "type": "string" } },
+        "expected_result": { "type": ["string", "null"] },
+        "failure_modes": { "type": "array", "items": { "type": "string" } },
+        "test_case_seed": { "type": ["string", "null"] }
       }
     },
     "business_success_scenario": {

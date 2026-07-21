@@ -84,23 +84,57 @@ def capture_auth_headers(timeout_seconds: float = 12.0) -> dict[str, str]:
   function done(o){ document.documentElement.setAttribute(ATTR, JSON.stringify(o)); }
   try {
     let captured = null;
+    function capture(url, headers) {
+      if (!/\\/data\\/okr\\//.test(String(url || '')) || captured) return;
+      const normalized = {};
+      if (headers) {
+        if (headers.forEach) {
+          headers.forEach(function(v, k){ normalized[k] = v; });
+        } else {
+          Object.keys(headers).forEach(function(k){ normalized[k] = headers[k]; });
+        }
+      }
+      if (Object.keys(normalized).length) captured = normalized;
+    }
     const of = window.fetch;
     window.fetch = function(input, init){
       try {
         const url = (typeof input==='string')?input:(input&&input.url);
-        if(/\\/data\\/okr\\//.test(url) && !captured){
-          const headers = {};
-          const h = (init&&init.headers);
-          if(h){ if(h.forEach){h.forEach(function(v,k){headers[k]=v;});} else {Object.keys(h).forEach(function(k){headers[k]=h[k];});} }
-          captured = headers;
-        }
+        capture(url, init && init.headers);
       } catch(e){}
       return of.apply(this, arguments);
     };
-    window.webpackChunkallinone.push([['__okrauth'+Date.now()],{},function(require){window.__okrAuthReq=require;}]);
-    const api = window.__okrAuthReq(37615).Z;
-    await api.person.period.list({ userId: '__noop__' }).catch(function(){});
-    setTimeout(function(){ done(captured || {__none:true}); }, 400);
+    const xhrOpen = XMLHttpRequest.prototype.open;
+    const xhrSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+    const xhrSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this.__codexOkrUrl = url;
+      this.__codexOkrHeaders = {};
+      return xhrOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+      if (this.__codexOkrHeaders) this.__codexOkrHeaders[name] = value;
+      return xhrSetRequestHeader.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function() {
+      try { capture(this.__codexOkrUrl, this.__codexOkrHeaders); } catch (e) {}
+      return xhrSend.apply(this, arguments);
+    };
+    const objectiveItems = Array.from(document.querySelectorAll('[data-testid^=ObjectiveItem]'));
+    const target = objectiveItems.reverse().find(function(element) {
+      return element.querySelector('[data-testid^=Editable]');
+    }) || objectiveItems[0];
+    if (!target) throw new Error('No objective item available to trigger an OKR request');
+    const closeButtons = Array.from(document.querySelectorAll('[aria-label=close]'));
+    if (closeButtons.length) closeButtons[closeButtons.length - 1].click();
+    setTimeout(function(){ target.click(); }, 100);
+    setTimeout(function(){
+      window.fetch = of;
+      XMLHttpRequest.prototype.open = xhrOpen;
+      XMLHttpRequest.prototype.setRequestHeader = xhrSetRequestHeader;
+      XMLHttpRequest.prototype.send = xhrSend;
+      done(captured || {__none:true});
+    }, 1800);
   } catch(e){ done({__err:String(e)}); }
 })();
 """ % json.dumps(attr)

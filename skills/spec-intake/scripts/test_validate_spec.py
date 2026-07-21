@@ -199,7 +199,7 @@ class ValidateBusinessSuccessScenarioTests(unittest.TestCase):
                     "confirmer_role": "business_owner",
                     "confirmed_by": "业务 owner",
                     "confirmed_at": "2026-07-20",
-                    "confirmed_version": "1.5",
+                    "confirmed_version": "1.6",
                 },
             }
         ]
@@ -290,7 +290,7 @@ class ValidateBusinessSuccessScenarioTests(unittest.TestCase):
             errors,
         )
         self.assertIn(
-            "engineering_ready requires confirmation version 1.5 for business success scenario: BIZ-E2E-001",
+            "engineering_ready requires confirmation version 1.6 for business success scenario: BIZ-E2E-001",
             errors,
         )
 
@@ -362,6 +362,64 @@ class ValidateDeliveryRiskProfileTests(unittest.TestCase):
 
         self.assertIn(
             "delivery_risk_profile.risk_tier R1 is below required floor R3",
+            errors,
+        )
+
+
+class ValidateProductShapeCoverageTests(unittest.TestCase):
+    def test_product_ready_requires_product_goals_and_business_metrics(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "product_shape"
+        spec_data["stage_gate"]["readiness_label"] = "product_ready"
+        spec_data["product_context"]["product_goals"] = []
+        spec_data["product_context"]["business_metrics"] = []
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn("product_ready requires product_context.product_goals", errors)
+        self.assertIn("product_ready requires product_context.business_metrics", errors)
+
+    def test_product_ready_requires_user_journeys_and_operation_flows(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "product_shape"
+        spec_data["stage_gate"]["readiness_label"] = "product_ready"
+        spec_data["workflow"]["user_journeys"] = []
+        spec_data["workflow"]["user_operation_flows"] = []
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn("product_ready requires workflow.user_journeys", errors)
+        self.assertIn("product_ready requires workflow.user_operation_flows", errors)
+
+    def test_operation_flow_references_must_be_valid(self) -> None:
+        spec_data = _load_example()
+        spec_data["workflow"]["user_journeys"][0]["covered_operation_flow_ids"].append("UOF-UNKNOWN")
+        spec_data["workflow"]["user_operation_flows"][0]["journey_id"] = "UJ-UNKNOWN"
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "workflow.user_operation_flows[0].journey_id references unknown journey: UJ-UNKNOWN",
+            errors,
+        )
+        self.assertIn(
+            "workflow.user_journeys[0].covered_operation_flow_ids references unknown operation flow: UOF-UNKNOWN",
+            errors,
+        )
+
+    def test_product_goal_metric_refs_must_be_valid(self) -> None:
+        spec_data = _load_example()
+        spec_data["product_context"]["product_goals"][0]["business_metric_refs"].append("BM-UNKNOWN")
+        spec_data["product_context"]["product_goals"][0]["product_metric_refs"].append("M-UNKNOWN")
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "product_context.product_goals[0].business_metric_refs references unknown business metric: BM-UNKNOWN",
+            errors,
+        )
+        self.assertIn(
+            "product_context.product_goals[0].product_metric_refs references unknown validation metric: M-UNKNOWN",
             errors,
         )
 

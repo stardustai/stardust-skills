@@ -23,6 +23,7 @@
 17. 业务端到端成功流程统一进入顶层 `business_success_scenarios`：业务定义真实流程和成功终态，产品或 spec agent 负责结构化，业务 owner 负责确认。
 18. QA 和工程不得重写业务成功定义；它们通过 `validation_plan.scenario_coverage` 补充 QA 用例、自动化计划、Eval 资产和执行证据。
 19. 交付风险是产品输入：先采集用户范围、数据敏感度、写入影响、集成与权限、可恢复性、业务影响六个事实，再按最高风险维度确定 R0-R3，由 decision owner 确认。
+20. 产品阶段必须把业务目标细化为产品目标、业务指标、用户旅程和用户操作流，方便 QA 生成测试用例，也方便工程埋点和 loop engineering。
 
 ## 交互流程
 
@@ -108,7 +109,7 @@ spec-intake/
 ├── SKILL.md - Codex/agent 实际执行该 skill 时读取的主指令。
 ├── README.md - 给人阅读的说明文档，也适合培训和推广。
 ├── references/
-│   ├── spec-schema.json - Spec Driven JSON v1.5 的结构定义和枚举。
+│   ├── spec-schema.json - Spec Driven JSON v1.6 的结构定义和枚举。
 │   ├── business-success-scenarios.md - 业务成功场景、QA/工程映射和阶段门禁的详细规范。
 │   ├── delivery-risk-profile.md - 六维风险输入、R0-R3、控制项和产品门禁的详细规范。
 │   └── question-bank.md - 按阶段和字段组织的问题库。
@@ -136,6 +137,8 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 - PMF 分数 >= 3 是否有非假设证据支撑。
 - 市场验证是否包含业务提供或 agent 调研的竞品矩阵、重叠度、差异度和用户确认。
 - 产品论证是否包含技术领先性/独特性论述、agent 评分和产品 owner 确认。
+- 产品论证是否包含业务先定义、产品再细化的产品目标和业务指标。
+- 产品论证是否包含覆盖主要角色、正常路径、异常路径和关键操作的 user journey / operation flows。
 - UI spec 是否包含存在的 `.svg` 线框图，并在 product-ready 之后为 reviewed。
 - Friday / Domain Pack 是否声明 Task -> Artifact -> Feedback -> Recipe/Memory 的闭环。
 - Memory 写入是否有人工确认、scope、脱敏和回滚。
@@ -156,12 +159,16 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 | `stage_gate` | 每次阶段切换 | PMF owner / 接收方 owner | 决定当前能交给谁、允许做什么、禁止做什么。它是防止“证据不足却进入工程”的总闸门。 | 不替代商业证据、产品定义或测试方案。 |
 | `opportunity_assessment` | 业务验证 | 业务 owner / PMF owner / PMM | 判断这个 use case 是否值得产品注意。旧的 `commercial_context`、`pmf_validation`、`priority_decision` 都收敛在这里。 | 不描述 UI、技术实现或测试细节。 |
 | `opportunity_assessment.competitive_research` | 市场验证 | 业务 owner / 解决方案 / spec agent | 记录业务提供或 agent 调研的竞品矩阵，给出重叠度、差异度和确认状态。 | 不替代 PMF 判断；它只说明外部参照和差异。 |
-| `product_context` | 产品形态判断 | 产品 owner | 说明基于哪个公司产品形态做、spec 类型，以及产品领先性/独特性论证。`spec_type` 已合并到这里，因为它本质上是产品分类。 | 不判断客户是否愿意付钱；那属于 `opportunity_assessment`。 |
+| `product_context` | 产品形态判断 | 产品 owner | 说明基于哪个公司产品形态做、spec 类型、产品目标、业务指标，以及产品领先性/独特性论证。`spec_type` 已合并到这里，因为它本质上是产品分类。 | 不判断客户是否愿意付钱；那属于 `opportunity_assessment`。 |
+| `product_context.product_goals` | 产品形态判断 | 业务 owner / 产品 owner | 业务先定义希望达成什么，产品再细化为第一版必须支持的目标用户、目标结果、指标引用和 loop engineering 信号。 | 不替代 `business_success_scenarios` 的真实业务旅程，也不替代 `validation_plan.metrics` 的测试口径。 |
+| `product_context.business_metrics` | 产品形态判断 | 业务 owner / 产品 owner | 把业务语言里的成功指标转成产品可测的事件、状态、质量或行为，并说明 baseline、target、测量方法、复盘节奏和工程改进用途。 | 不直接写测试用例；测试映射在 `validation_plan`。 |
 | `product_context.technical_leadership` | 产品论证 | 产品 owner / spec agent | 要求产品 owner 给出领先性证明或论述，spec agent 给出 1-5 分，产品 owner 确认。 | 不等于技术方案可做；代码事实和方案可行性在 `implementation_mapping`。 |
 | `owners` | 全流程 | PMF owner | 明确业务、产品、工程、QA、DevOps、合规和最终决策责任人。 | 不表达审批规则；审批规则在 `review_gates`。 |
 | `business_context` | 产品形态判断 | 产品 owner / 业务 owner | 解释用户是谁、现在怎么做、成功后业务结果是什么。 | 不重复目标工作流细节；目标工作流统一放在 `workflow.canonical_workflow`。 |
 | `scope` | 产品形态判断 | 产品 owner | 定义第一版做什么、不做什么、为什么不做。它控制范围膨胀。 | 不记录商业优先级公式；公式在 `opportunity_assessment.priority_decision`。 |
-| `workflow` | 产品形态到技术评审 | 产品 owner / AI 工程 owner | 定义唯一 canonical workflow 和结构化步骤，是产品、AI 工程和 QA 对齐的主线。 | 不承载 PMF 证据，也不重复 `business_context` 的用户背景。 |
+| `workflow` | 产品形态到技术评审 | 产品 owner / AI 工程 owner | 定义唯一 canonical workflow、结构化步骤、用户旅程和用户操作流，是产品、AI 工程和 QA 对齐的主线。 | 不承载 PMF 证据，也不重复 `business_context` 的用户背景。 |
+| `workflow.user_journeys` | 产品形态判断 | 产品 owner | 覆盖主要角色的真实使用旅程，包括入口、正常路径、异常路径、退出条件和关联操作流。 | 不写成抽象流程口号；也不替代业务 owner 确认的成功终态。 |
+| `workflow.user_operation_flows` | 产品形态判断 / QA 输入 | 产品 owner / QA owner | 把每个 journey 拆成可操作流程，记录触发、前置条件、用户动作、系统响应、预期结果、失败模式和测试种子。 | 不指定具体自动化框架或 selector；工程测试细节后续再定。 |
 | `business_success_scenarios` | 产品形态 | 业务 owner；产品 owner / spec agent 负责结构化 | 记录真实业务旅程、前置条件、业务目标、关键步骤、成功终态、不可接受结果、异常恢复和业务确认。 | 不记录测试框架、API、selector、fixture 路径、命令或工程实现。 |
 | `delivery_risk_profile` | 产品形态 | 产品 owner / decision owner | 用六个事实维度确定最低 R0-R3、理由、控制项和确认状态，约束后续产品边界和工程深度。 | 不按平均值降级，不等到编码后再补风险，也不把风险判断交给工程自行决定。 |
 | `friday_object_model` | Domain Pack / Friday 产品形态判断 | 产品 owner / AI 工程 owner | 把 Friday 的 Workspace Memory、Task、Artifact、Recipe、Feedback/Comment、Room 建成一等对象，避免退化成“资料库 + prompt”。 | 不定义具体代码路径；代码落点在 `implementation_mapping`。 |
@@ -182,9 +189,11 @@ python3 /Users/derek/.agents/skills/spec-intake/scripts/validate_spec.py path/to
 - `competitive_research` 放在 `opportunity_assessment` 下，因为它属于市场验证，不属于产品设计或技术设计。
 - 旧顶层 `spec_type` 合并到 `product_context.spec_type`，因为它和 `build_target` 都是在回答“这到底基于什么产品形态做”。
 - `technical_leadership` 放在 `product_context` 下，因为它是产品 owner 对产品独特性的论证，不是工程实现方案。
+- `product_goals` 和 `business_metrics` 放在 `product_context` 下，因为它们是产品 owner 对业务目标的细化，不是市场判断，也不是 QA 测试细节。
 - `source_code_review` 和 `technical_design_assessment` 放在 `implementation_mapping` 下，因为它们必须基于真实代码和技术方案判断。
 - 旧 `business_context.user_scenario.target_workflow` 删除，目标流程统一使用 `workflow.canonical_workflow`，避免同一工作流被写两遍。
 - `workflow.canonical_workflow` 只描述通用主流程；具体、可确认的真实业务旅程单独放入 `business_success_scenarios`，避免把抽象流程当作可验收场景。
+- `workflow.user_journeys` 和 `workflow.user_operation_flows` 不合并到 `business_success_scenarios`：前者是产品层操作覆盖，后者是业务 owner 确认的业务成功终态。
 - QA 和工程对业务场景的覆盖关系放入 `validation_plan.scenario_coverage`；场景的业务终态仍以 `business_success_scenarios` 为准。
 - `acceptance_standards`、`testing_standards`、`poc_metrics`、`evaluation_assets` 合并到 `validation_plan`，避免 QA 需要在多个地方找验收标准。
 - `input_materials`、`evidence_requirements`、`data_governance`、Memory 自学习策略合并到 `knowledge_and_memory_policy`，因为它们都在回答“材料、证据和记忆如何被治理”。
@@ -223,6 +232,8 @@ spec.json
 │   ├── build_target: enum - 基于哪个公司产品形态做。
 │   ├── spec_type: enum - spec 类型：customer_poc、domain_pack、product_feature、internal_tool、data_project、automation、platform_capability。
 │   ├── company_product: string|null - 具体公司产品。
+│   ├── product_goals: array - 业务 owner 先定义、产品 owner 再细化的产品目标，包含指标引用和 loop engineering 信号。
+│   ├── business_metrics: array - 业务指标的产品化定义，包含 baseline、target、测量方法、复盘节奏和工程改进用途。
 │   ├── product_assumptions: array - 产品假设。
 │   ├── technical_leadership: object - 技术领先性/独特性论述、证据、agent 评分、产品 owner 确认。
 │   └── product_open_questions: array - 产品待确认问题。
@@ -237,7 +248,9 @@ spec.json
 │   ├── canonical_workflow: string|null - 标准工作流一句话。
 │   ├── phases: array - 阶段列表。
 │   ├── steps: array - 每步包含 actor、input、action、output、human_review_required、failure_handling。
-│   └── roles: array - 参与角色。
+│   ├── roles: array - 参与角色。
+│   ├── user_journeys: array - 产品层用户旅程，覆盖入口、正常路径、异常路径、退出条件和关联操作流。
+│   └── user_operation_flows: array - 用户操作流，覆盖触发、前置条件、用户动作、系统响应、预期结果、失败模式和测试种子。
 │
 ├── business_success_scenarios: array - 由业务提供并确认的具体端到端成功场景。
 │   └── item: object - scenario_id、title、scope_status、priority、business_owner、user_role、business_goal、preconditions、trigger、workflow_step_refs、expected_business_outcome、expected_final_state、success_signals、business_invariants、unacceptable_outcomes、alternate_paths、exception_paths、recovery_expectations、confirmation。
@@ -312,5 +325,7 @@ spec.json
 ```
 
 业务不需要懂测试工具，只需要确认真实流程、业务终态、不可接受结果和失败后的业务状态。QA 负责专业化覆盖，工程负责自动化与可观测性。
+
+产品阶段需要再向前推进一步：把业务语言里的成功目标变成产品目标、业务指标、用户旅程和操作流。这样 QA 后续可以直接从 `workflow.user_operation_flows[].test_case_seed` 推导测试用例，工程也能从 `product_context.product_goals[].loop_engineering_signal` 和 `product_context.business_metrics[].loop_engineering_use` 判断哪些数据要记录、哪些结果要进入下一轮改进。
 
 风险也不要求业务先猜 R0-R3。业务和产品提供六个事实维度，Spec Agent 计算最低等级并解释原因，Decision Owner 确认。任何一个维度达到更高风险，都不能被其他低风险维度“平均掉”；产品边界变化后必须重新评估。

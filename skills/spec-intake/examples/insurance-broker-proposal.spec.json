@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.5",
+  "spec_version": "1.6",
   "spec_id": "SPEC-INS-BROKER-PROPOSAL-001",
   "title": "保险经纪人客户报销组合方案生成 Domain Pack",
   "status": "spec_review",
@@ -271,6 +271,63 @@
     "build_target": "domain_pack",
     "spec_type": "domain_pack",
     "company_product": "Friday Domain Pack",
+    "product_goals": [
+      {
+        "goal_id": "PG-001",
+        "business_owner_definition": "经纪人在客户沟通前快速得到一份可被资深经纪人审阅的方案草稿，减少从零查资料和改历史方案的时间",
+        "product_refinement": "工作台必须让经纪人从客户案例创建、生成、证据检查、人工修改到导出都在同一个 Artifact 闭环内完成",
+        "target_user": "保险经纪人",
+        "target_outcome": "15 分钟内生成可审阅方案草稿，且导出前必须完成人工 review",
+        "business_metric_refs": ["BM-001", "BM-002"],
+        "product_metric_refs": ["M-001", "M-002"],
+        "loop_engineering_signal": "记录生成耗时、证据覆盖率、人工修改点和阻止导出原因，用于后续 Recipe/Memory 迭代和回归"
+      },
+      {
+        "goal_id": "PG-002",
+        "business_owner_definition": "方案不能越界成为正式报价、合规承诺或无证据购买建议",
+        "product_refinement": "产品必须把证据缺失、合规红线和导出阻断设计成显式状态，而不是只在提示词里约束",
+        "target_user": "保险经纪人 / 合规负责人",
+        "target_outcome": "不可接受错误为 0，且每次阻断都有可追溯原因",
+        "business_metric_refs": ["BM-003"],
+        "product_metric_refs": ["M-003"],
+        "loop_engineering_signal": "把阻断错误、失败样例和人工确认修正作为 Pack 更新候选，进入回归集后再发布"
+      }
+    ],
+    "business_metrics": [
+      {
+        "metric_id": "BM-001",
+        "business_definition": "业务希望经纪人准备一份客户方案草稿的时间明显少于当前人工方式",
+        "product_refinement": "从提交脱敏客户画像到方案 Artifact 可打开 review 的系统耗时",
+        "owner": "业务 owner / 产品 owner",
+        "baseline": "人工查资料和复制历史方案，基线待客户确认",
+        "target": "<= 15 分钟",
+        "measurement_method": "记录生成开始时间、Artifact 完成时间和人工 review 开始时间",
+        "review_cadence": "每轮 PoC 样例集结束后复盘",
+        "loop_engineering_use": "耗时超标时分析资料召回、生成、Artifact 保存或 UI 操作瓶颈"
+      },
+      {
+        "metric_id": "BM-002",
+        "business_definition": "业务希望关键推荐理由能被资深经纪人追溯和审阅，而不是依赖模型口头解释",
+        "product_refinement": "每个 critical claim 必须绑定产品资料或合规口径来源",
+        "owner": "产品 owner / QA owner",
+        "baseline": "人工方案引用不稳定，基线待客户确认",
+        "target": "100% critical claims 有证据引用",
+        "measurement_method": "QA 按 rubric 标记 critical claim 并检查 source link",
+        "review_cadence": "每次 Pack 回归时复核",
+        "loop_engineering_use": "低于目标时修正资料切分、召回规则、引用展示和 Recipe"
+      },
+      {
+        "metric_id": "BM-003",
+        "business_definition": "业务不能接受 AI 生成正式报价、合规承诺、无依据推荐或敏感信息泄露",
+        "product_refinement": "把正式报价、合规承诺、无证据购买建议和敏感信息泄露定义为 blocking error",
+        "owner": "合规负责人 / QA owner",
+        "baseline": "现有 GPT 临时生成可能出现越界表达，基线待验证",
+        "target": "0 blocking errors",
+        "measurement_method": "合规 reviewer 对黄金样例和失败样例进行错误分级",
+        "review_cadence": "每次 PoC 评审和 Pack 发布前",
+        "loop_engineering_use": "出现 blocking error 时冻结发布，补失败样例、更新 Recipe/Memory 规则并重跑回归"
+      }
+    ],
     "product_assumptions": [
       "第一版是客户私有 Domain Pack，不默认上 marketplace",
       "Recipe 是完整方案生成方法论，不是单个 prompt",
@@ -410,6 +467,116 @@
       "Friday Agent",
       "产品 owner",
       "交付 owner"
+    ],
+    "user_journeys": [
+      {
+        "journey_id": "UJ-001",
+        "name": "经纪人生成并审阅客户方案草稿",
+        "primary_actor": "保险经纪人",
+        "business_goal": "在客户沟通前快速准备一份可解释、可追溯、可人工修改的方案草稿",
+        "entry_point": "经纪人从客户案例列表创建或打开一个客户方案任务",
+        "happy_path": [
+          "选择资料版本并提交脱敏客户画像",
+          "查看 AI 生成的方案草稿、证据引用和风险提示",
+          "修改草稿并完成人工 review",
+          "确认没有阻断错误后导出草稿"
+        ],
+        "exception_paths": [
+          "资料缺失或版本不明时停在待补资料状态",
+          "证据不足时只输出待补问题，不生成推荐结论",
+          "出现正式报价或合规承诺时阻止导出"
+        ],
+        "exit_criteria": [
+          "Artifact 进入已确认或被阻断状态",
+          "关键推荐理由都有来源证据",
+          "所有导出都发生在人工 review 之后"
+        ],
+        "covered_operation_flow_ids": ["UOF-001", "UOF-002", "UOF-003", "UOF-004"]
+      },
+      {
+        "journey_id": "UJ-002",
+        "name": "产品 owner 处理 Pack 更新候选",
+        "primary_actor": "产品 owner",
+        "business_goal": "把经纪人确认过的通用修正沉淀为可回归、可发布、可回滚的 Pack 资产",
+        "entry_point": "产品 owner 从更新候选队列查看经纪人 review 反馈和失败样例",
+        "happy_path": [
+          "筛选可泛化反馈",
+          "标记 Recipe 或 Memory 更新候选",
+          "关联回归样例并请求 review",
+          "通过回归后发布 Pack 新版本"
+        ],
+        "exception_paths": [
+          "包含客户隐私或单次个案判断时拒绝沉淀",
+          "回归失败时回滚候选并记录原因"
+        ],
+        "exit_criteria": [
+          "更新候选被批准、拒绝或退回补充",
+          "所有批准项都有人工确认、脱敏和回归记录"
+        ],
+        "covered_operation_flow_ids": ["UOF-005"]
+      }
+    ],
+    "user_operation_flows": [
+      {
+        "flow_id": "UOF-001",
+        "journey_id": "UJ-001",
+        "actor": "保险经纪人",
+        "trigger": "需要为一个客户准备报销组合方案草稿",
+        "preconditions": ["经纪人已登录", "至少有一个已确认资料版本"],
+        "user_actions": ["创建客户案例", "选择资料版本", "提交脱敏客户画像和需求"],
+        "system_responses": ["创建 Task 和 Room", "校验资料版本", "展示生成按钮和资料状态"],
+        "expected_result": "客户案例进入可生成状态，并绑定本次使用的资料版本",
+        "failure_modes": ["资料版本缺失", "客户画像未脱敏", "经纪人无权限"],
+        "test_case_seed": "用一个缺少资料版本的客户画像验证系统停在待补资料状态"
+      },
+      {
+        "flow_id": "UOF-002",
+        "journey_id": "UJ-001",
+        "actor": "Friday Agent",
+        "trigger": "经纪人点击生成方案草稿",
+        "preconditions": ["客户案例可生成", "资料版本有效", "Recipe 已发布"],
+        "user_actions": ["点击生成", "等待生成完成或查看待补问题"],
+        "system_responses": ["召回产品证据", "生成方案草稿 Artifact", "标出证据引用和风险提示"],
+        "expected_result": "生成一份可打开、可审阅、带证据引用的方案草稿 Artifact",
+        "failure_modes": ["证据不足", "召回结果冲突", "生成超时"],
+        "test_case_seed": "用证据不足样例验证系统只输出待补问题且不产生推荐结论"
+      },
+      {
+        "flow_id": "UOF-003",
+        "journey_id": "UJ-001",
+        "actor": "保险经纪人",
+        "trigger": "方案草稿生成完成",
+        "preconditions": ["Artifact 已生成", "证据和风险侧栏可见"],
+        "user_actions": ["打开草稿", "检查证据引用", "修改文本", "添加 review 评论"],
+        "system_responses": ["保存修改版本", "保留证据链接", "记录人工 review 状态"],
+        "expected_result": "草稿进入人工已审阅状态，并保留修改记录和评论",
+        "failure_modes": ["证据链接失效", "修改保存失败", "重复评论"],
+        "test_case_seed": "修改一个推荐理由后验证 Artifact 版本和评论记录仍可追溯"
+      },
+      {
+        "flow_id": "UOF-004",
+        "journey_id": "UJ-001",
+        "actor": "保险经纪人",
+        "trigger": "经纪人准备导出方案草稿",
+        "preconditions": ["草稿已人工 review", "不存在 blocking error"],
+        "user_actions": ["点击导出", "确认导出边界提示"],
+        "system_responses": ["检查阻断规则", "生成导出文件", "记录审计事件"],
+        "expected_result": "只有人工 review 且无阻断错误的草稿可以导出",
+        "failure_modes": ["存在正式报价表达", "存在无证据推荐", "未完成 review"],
+        "test_case_seed": "构造包含正式报价表达的草稿，验证导出按钮被阻断并显示原因"
+      },
+      {
+        "flow_id": "UOF-005",
+        "journey_id": "UJ-002",
+        "actor": "产品 owner",
+        "trigger": "经纪人把通用修改或失败样例标记为更新候选",
+        "preconditions": ["候选反馈已脱敏", "候选关联原 Artifact 和证据"],
+        "user_actions": ["打开更新候选", "选择 Recipe 或 Memory 更新类型", "关联回归样例", "提交 review"],
+        "system_responses": ["生成更新候选记录", "检查脱敏状态", "等待人工审批和回归"],
+        "expected_result": "只有经过人工确认和回归的候选才能进入 Pack 新版本",
+        "failure_modes": ["候选包含客户隐私", "候选只是单次个案判断", "回归失败"],
+        "test_case_seed": "提交包含客户可识别信息的候选，验证系统拒绝写入 Domain Pack Memory"
+      }
     ]
   },
   "business_success_scenarios": [
@@ -465,7 +632,7 @@
         "confirmer_role": "business_owner",
         "confirmed_by": "示例业务 owner",
         "confirmed_at": "2026-07-20",
-        "confirmed_version": "1.5"
+        "confirmed_version": "1.6"
       }
     }
   ],
@@ -991,6 +1158,7 @@
   ],
   "change_log": [
     "2026-07-10: 升级为 spec-intake schema v1.4",
-    "2026-07-20: 升级为 v1.5，新增业务成功场景与 QA/工程覆盖映射"
+    "2026-07-20: 升级为 v1.5，新增业务成功场景与 QA/工程覆盖映射",
+    "2026-07-20: 升级为 v1.6，新增产品目标、业务指标、用户旅程和用户操作流"
   ]
 }

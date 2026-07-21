@@ -28,6 +28,7 @@ The goal is not to write code. The goal is to make the requirement clear enough 
 15. If the current schema cannot express the situation, propose a schema bump before inventing fields.
 16. Business defines end-to-end success in `business_success_scenarios`. Product or the spec agent may structure the input, but only the business owner may confirm the expected business outcome. QA adds coverage and engineering adds automation through `validation_plan.scenario_coverage`; neither may silently rewrite the business outcome.
 17. Product defines `delivery_risk_profile` from six concrete dimensions before engineering. The tier is at least the highest dimension floor, and the decision owner must confirm it before `product_ready` or later.
+18. Product defines `product_context.product_goals`, `product_context.business_metrics`, `workflow.user_journeys`, and `workflow.user_operation_flows` before `product_ready` or later. Business defines the product/business goal first; product refines it into measurable product behavior and loop-engineering signals.
 
 ## Intake Modes
 
@@ -155,7 +156,7 @@ Do not compress the flow into "market validation, product shape, PoC design, tec
 
 Read only as needed:
 
-- `references/spec-schema.json` - v1.5 JSON structure.
+- `references/spec-schema.json` - v1.6 JSON structure.
 - `references/question-bank.md` - question patterns by gate.
 - `references/business-success-scenarios.md` - required when collecting, confirming, reviewing, or mapping business success scenarios, or when setting `product_ready`, `poc_design_ready`, or `engineering_ready`.
 - `references/delivery-risk-profile.md` - required when collecting, assessing, confirming, or changing delivery risk, and before setting `product_ready` or a later readiness label.
@@ -333,6 +334,10 @@ After the commercial gate, define:
 - `workflow.canonical_workflow`
 - `business_success_scenarios`
 - `delivery_risk_profile`
+- `product_context.product_goals`
+- `product_context.business_metrics`
+- `workflow.user_journeys`
+- `workflow.user_operation_flows`
 - `friday_object_model`
 - `ui_requirements`
 - `capability_boundaries`
@@ -351,6 +356,39 @@ Use structured workflow steps with:
 - `output`
 - `human_review_required`
 - `failure_handling`
+
+### Product Goals, Metrics, And User Journeys
+
+Product shape must translate the business owner's goal into product behavior that QA and engineering can later test and improve.
+
+Use `product_context.product_goals` for product goals:
+
+- `business_owner_definition`: the business owner's definition of success, in business language.
+- `product_refinement`: the product owner's sharper interpretation of what the first version must make possible.
+- `target_user` and `target_outcome`: who benefits and what state must be achieved.
+- `business_metric_refs`: references to `product_context.business_metrics`.
+- `product_metric_refs`: references to `validation_plan.metrics`.
+- `loop_engineering_signal`: what runtime or review signal will tell engineering whether the loop should be improved.
+
+Use `product_context.business_metrics` for metrics that start from business language and are refined by product:
+
+- `business_definition`: the metric as the business owner understands it.
+- `product_refinement`: the measurable product event, state, quality, or behavior.
+- `baseline`, `target`, `measurement_method`, `review_cadence`, and `loop_engineering_use`.
+
+Use `workflow.user_journeys` to cover the main user journeys:
+
+- Include the primary actor, business goal, entry point, happy path, important exception paths, exit criteria, and covered operation flow ids.
+- Cover daily users, reviewers, admins, and product/update owners when they exist.
+- Do not treat one abstract `workflow.canonical_workflow` as sufficient for product-ready specs.
+
+Use `workflow.user_operation_flows` to seed downstream QA cases:
+
+- Include actor, trigger, preconditions, user actions, system responses, expected result, failure modes, and a `test_case_seed`.
+- Cover create, view, edit, review, approve/reject, export/share, retry, permission failure, missing data, duplicate action, external-system failure, and rollback/update flows when relevant.
+- Product should aim for comprehensive operation coverage. The validator only enforces structural completeness; the agent must still challenge obvious missing flows during review.
+
+Before `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready`, product goals, business metrics, user journeys, and operation flows must be complete enough for QA to derive test cases and for engineering to know which loop signals to instrument.
 
 ### Business Success Scenarios
 
@@ -613,10 +651,11 @@ Before returning or saving the final spec, check:
 12. `product_ready` or later specs have at least one in-scope critical `business_success_scenarios` item, and every in-scope scenario has a business-owner-confirmed expected outcome.
 13. `validation_plan.scenario_coverage` maps business scenarios to QA cases, required automation, evaluation assets, and owners without rewriting business outcomes.
 14. `delivery_risk_profile` resolves all six dimensions, uses at least the highest required R0-R3 floor, lists controls for R1-R3, and is confirmed by `owners.decision_owner` before product-ready or later gates.
-15. `validation_plan` separates PoC design readiness from execution readiness.
-16. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
-17. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
-18. `engineering_ready` has real owners, no missing fields, no missing or unknown implementation capabilities, and complete approved scenario coverage with required automation planned.
+15. Product-ready or later specs include product goals, business-owned metrics refined by product, user journeys, operation flows, and loop-engineering signals.
+16. `validation_plan` separates PoC design readiness from execution readiness.
+17. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
+18. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
+19. `engineering_ready` has real owners, no missing fields, no missing or unknown implementation capabilities, and complete approved scenario coverage with required automation planned.
 
 ## Style
 

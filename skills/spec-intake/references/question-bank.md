@@ -106,6 +106,10 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 现在这件事怎么做？靠 Excel、PDF、销售经验、群里问人，还是已有系统？
 - 第一版成功后，用户手里会多出什么具体产物？
 - 输出是内部建议、客户方案、正式报价、还是销售话术？
+- 业务 owner 对产品目标的原始定义是什么？产品 owner 如何把它细化为第一版可验证的目标？
+- 业务先定义的指标是什么？产品要把它细化成哪个可记录的事件、状态、质量或行为？
+- 这个指标的 baseline、target、测量方式、复盘节奏和工程改进用途是什么？
+- 这个产品目标对应哪些 `validation_plan.metrics`，以及哪些 loop engineering 信号必须被记录？
 - 第一版一定要做什么？
 - 哪些事情明确不做？
 - 这个需求需要拆成多个 spec 吗？如果不拆，第一版为什么必须一起做？
@@ -126,6 +130,12 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 人审点是在推荐前、生成方案后、还是发给客户前？
 - 如果资料找不到、客户信息不完整、条件冲突，应该怎么处理？
 - 输出要能追溯到哪些原文证据？
+- 主要用户旅程有哪些？请按角色覆盖日常用户、review 人、管理员、产品/更新 owner，而不是只写一条主流程。
+- 每条 user journey 的入口、正常路径、异常路径和退出条件是什么？
+- 每条 journey 下面有哪些具体用户操作流：创建、查看、编辑、review、批准/拒绝、导出/分享、重试、权限失败、资料缺失、重复操作、外部系统失败、回滚/更新？
+- 每个操作流的触发、前置条件、用户动作、系统响应、预期结果和失败模式是什么？
+- 哪个 `test_case_seed` 能让 QA 直接从该操作流派生测试用例？
+- 当前是否有明显缺失的操作流？如果有，不能标记为 `product_ready`，只能继续 `product_shape`。
 
 ## Business Success Scenarios
 

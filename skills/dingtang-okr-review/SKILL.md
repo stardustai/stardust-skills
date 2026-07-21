@@ -214,6 +214,91 @@ Rules:
 - Do not use grade-like shorthand labels. Describe the business gap directly, for example: "原承诺是产品内嵌闭环，实际只落到临时表单".
 - Subagents should flag uncertain or high-impact judgments instead of over-resolving them. The main agent decides final scores, wording, and workbook writeback.
 
+### 2.6 Leadership And Culture Scoring
+
+Leadership and culture/value KRs use the company's formal performance rules, not the generic business-KR rubric alone. The canonical local policy is `management/staff manegement/绩效管理办法.md`. Read the current policy before scoring because role definitions and coefficients may change.
+
+#### Required preparation
+
+- Confirm whether the person is a professional contributor or manager. Leadership is scored only for management roles unless the system explicitly assigns a leadership assessment.
+- Confirm the person's management level from an authorized current source: `经理`, `总监`, `VP`, or `CXO`. Do not infer the level only from the person's OKR title. Prefer HR records, DingTalk contact/title data, or an explicit management roster.
+- Collect both positive and negative behavior cases from the review period. A business result, document, meeting, or self-description is only a lead; map the case to the required behavior and explain its organizational effect.
+- Keep business OKR, leadership, and culture conceptually separate. Business OKR asks what result was delivered. Leadership asks how the manager set direction, enabled the team, built collaboration, and drove innovation at the required level. Culture asks whether repeated behavior demonstrates the company's values. Do not simply reuse the business score.
+
+#### Leadership dimensions and level-specific standards
+
+Score four dimensions separately and use their arithmetic mean as the leadership score. For management roles, leadership contributes `30%` of total performance and business OKRs contribute `70%` unless the current policy says otherwise.
+
+1. `战略能力`
+   - 经理: translate business goals into measurable frontline tasks, detect execution deviation, correct it quickly, and ensure the team understands and executes department priorities.
+   - 总监: turn company strategy and industry trends into a medium-term plan, balance mature-business growth and new-business pilots, allocate resources, and build team alignment.
+   - VP: contribute to top-level strategy from industry and company-resource judgment, resolve cross-business priority/resource conflicts, and establish strategy monitoring and dynamic review.
+   - CXO: design top-level medium/long-term strategy, identify major risks, balance sound operation and innovation, allocate critical internal/external resources, and build company-wide strategic consensus.
+2. `团队赋能能力`
+   - 经理: coach professional methods, solve frontline problems, recruit/onboard well, make necessary talent adjustments, and act as a culture role model.
+   - 总监: build reusable capability systems and core playbooks, develop the talent pipeline, improve recruiting/retention, and deepen the team's understanding and practice of company culture.
+   - VP: build cross-business capabilities and company-level methods, support high-end talent recruiting/retention across business units, and lead culture with resilient entrepreneurial behavior.
+   - CXO: design the long-term direction of enterprise capability building, design top-level recruiting/incentive/retention mechanisms, retain critical talent, and lead the evolution of company culture.
+3. `组织协同能力`
+   - 经理: establish clear internal division and collaboration, prevent buck-passing, identify cross-team blockers, escalate effectively, and cooperate in resolution.
+   - 总监: coordinate teams within the business area, improve processes, mobilize company resources, and remove cross-business barriers.
+   - VP: build enterprise collaboration mechanisms, break functional/business walls, coordinate internal and external resources, and build a collaboration ecosystem.
+   - CXO: design the top-level collaboration architecture, clarify responsibilities and goals, promote internal/external collaboration, and improve company-wide collaboration efficiency.
+4. `创新能力`
+   - 经理: adopt innovative tools/methods to improve team output and stimulate practical micro-innovation.
+   - 总监: extract reusable innovation methods, select/adapt/deploy innovative technology, and establish a team innovation mechanism and culture.
+   - VP: help define innovation strategy, drive cross-business adoption and scaled application of new technology, and design mechanisms that activate broad innovation.
+   - CXO: set innovation direction, identify industry growth opportunities, make critical innovation bets, shape innovation culture, and retain top innovative talent.
+
+#### Culture/value dimensions
+
+Score the following three values separately and use their arithmetic mean as the culture/value score:
+
+1. `AI时代原生能力`: first-principles thinking; curiosity toward unknown fields; hands-on learning and use of new methods/tools to improve work and enable business.
+2. `I Can I Up`: willingness to take intelligent risks and difficult innovative work; Ownership shown through proactive feedback, responsibility, and problem-solving; resilience that learns from failure and continues forward.
+3. `简单可信赖`: customer trust through simple and distinctive value; method trust through simple, efficient, reusable processes; collaboration trust through active help and shared success; commitment trust through on-time, in-scope, quality delivery.
+
+#### Shared score anchors and evidence threshold
+
+- `100`: 卓越，公司级榜样. Requires a concrete review-period case with demonstrable company-level role-model effect. Do not award `100` merely because the person completed a difficult task.
+- `90-99`: 优秀，超出标准. Leadership requires a concrete role-model case; culture requires a concrete case with department-level role-model effect.
+- `80-89`: 较好，略超标准. Requires at least one concrete case that clearly exceeds the role-level behavior standard.
+- `70-79`: 符合标准. Evidence shows the expected role-level behaviors are performed consistently, without a material contrary pattern.
+- `50-69`: 部分不满足标准. State the unmet behavior and the concrete negative or missing-result case.
+- `<50`: 严重未达标准. State the repeated or high-impact contrary cases and organizational damage.
+
+Examples:
+
+- `经理/战略能力`: decomposes the department target into named weekly metrics, catches a delivery deviation early, reallocates work, and the team achieves the target. This can support `70-89` depending on consistency and effect; it does not prove VP-level strategic capability.
+- `总监/团队赋能`: personally solves every difficult issue while the team remains dependent and no method or talent pipeline is built. Strong individual output does not justify a high leadership score; this normally indicates a `50-69` team-enablement gap.
+- `VP/组织协同`: creates a cross-business mechanism with clear owners and data, resolves recurring resource conflicts, and other units adopt it without continued personal pushing. This can support `80-99`; one-off firefighting cannot.
+- `CXO/创新能力`: identifies a company-level AI opportunity, commits resources, creates an adoption mechanism, and multiple teams achieve measurable results. This can support a company-level exemplar score when the evidence shows durable company-wide effect.
+- `AI时代原生能力`: using an AI tool personally is only a lead. Building a reusable workflow that others adopt and that improves cycle time or quality supports a higher score.
+- `I Can I Up`: volunteering for a difficult task supports the risk-taking behavior, but Ownership also requires proactive communication, problem closure, and accepting responsibility when results miss.
+- `简单可信赖`: a polished document does not prove trustworthiness. Repeated on-time commitments, simple reusable methods, reliable cross-team support, and customer/internal acceptance are stronger evidence; repeated missed promises are contrary evidence.
+
+#### Culture coefficient and total performance
+
+Convert the average culture/value score to the policy coefficient:
+
+| Average culture score | Coefficient |
+| --- | --- |
+| `>=100` | `1.20` |
+| `90-99.99` | `1.10` |
+| `80-89.99` | `1.05` |
+| `70-79.99` | `1.00` |
+| `50-69.99` | `0.95` |
+| `<50` | `0.80` |
+
+For managers, calculate final performance as `(business OKR score * 70% + leadership score * 30%) * culture coefficient`. For professional contributors, calculate `business OKR score * culture coefficient`. Keep the raw business, leadership, culture, coefficient, and final result visible and auditable. If the current workbook or policy explicitly uses another weighting, follow that verified current rule and record the deviation.
+
+#### Review output requirements
+
+- Comment on every leadership and culture dimension separately. Include the person's confirmed role level, required behavior, positive evidence, contrary/missing evidence, score, and the evidence needed to move to the next band.
+- A score of `80+` without a concrete case is invalid. A score of `90+` without role-model scope evidence is invalid. A score below `70` without a specific unmet behavior or negative case is invalid.
+- If role level cannot be verified, do not finalize leadership scoring. Mark it `职级待确认` and keep the candidate score out of the final performance calculation.
+- Zero-weight leadership and culture objectives in Dingteam are storage fields only. They still enter the offline performance formula according to the policy; do not treat zero system weight as zero performance impact.
+
 ### 3. Scoring Rules
 
 Score at KR level. Do not score only at O level.

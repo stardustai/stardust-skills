@@ -28,6 +28,54 @@ WORKFLOW_STEP_KEYS = [
     "failure_handling",
 ]
 
+PRODUCT_GOAL_KEYS = [
+    "goal_id",
+    "business_owner_definition",
+    "product_refinement",
+    "target_user",
+    "target_outcome",
+    "business_metric_refs",
+    "product_metric_refs",
+    "loop_engineering_signal",
+]
+
+BUSINESS_METRIC_KEYS = [
+    "metric_id",
+    "business_definition",
+    "product_refinement",
+    "owner",
+    "baseline",
+    "target",
+    "measurement_method",
+    "review_cadence",
+    "loop_engineering_use",
+]
+
+USER_JOURNEY_KEYS = [
+    "journey_id",
+    "name",
+    "primary_actor",
+    "business_goal",
+    "entry_point",
+    "happy_path",
+    "exception_paths",
+    "exit_criteria",
+    "covered_operation_flow_ids",
+]
+
+USER_OPERATION_FLOW_KEYS = [
+    "flow_id",
+    "journey_id",
+    "actor",
+    "trigger",
+    "preconditions",
+    "user_actions",
+    "system_responses",
+    "expected_result",
+    "failure_modes",
+    "test_case_seed",
+]
+
 BUSINESS_SUCCESS_SCENARIO_KEYS = [
     "scenario_id",
     "title",
@@ -684,6 +732,7 @@ def _validate_product_context(spec: dict[str, Any]) -> list[str]:
 
     readiness = _stage_readiness(spec)
     if readiness in PRODUCT_PROOF_REQUIRED_LABELS:
+        errors.extend(_validate_product_goals_and_metrics(spec, product, readiness))
         for key in ["claim", "proof_or_argument", "score_rationale"]:
             if _is_unknown_or_empty(leadership.get(key)):
                 errors.append(f"{readiness} requires product_context.technical_leadership.{key}")
@@ -694,6 +743,69 @@ def _validate_product_context(spec: dict[str, Any]) -> list[str]:
             errors.append("product_context.technical_leadership.spec_agent_score must be between 1 and 5")
         if leadership.get("product_owner_confirmation") != "confirmed":
             errors.append(f"{readiness} requires product_context.technical_leadership.product_owner_confirmation=confirmed")
+
+    return errors
+
+
+def _validate_product_goals_and_metrics(
+    spec: dict[str, Any], product: dict[str, Any], readiness: str
+) -> list[str]:
+    errors: list[str] = []
+    goals = product.get("product_goals")
+    business_metrics = product.get("business_metrics")
+
+    if not isinstance(goals, list) or not goals:
+        errors.append(f"{readiness} requires product_context.product_goals")
+        goals = []
+    if not isinstance(business_metrics, list) or not business_metrics:
+        errors.append(f"{readiness} requires product_context.business_metrics")
+        business_metrics = []
+
+    business_metric_ids: set[str] = set()
+    for index, metric in enumerate(business_metrics):
+        prefix = f"product_context.business_metrics[{index}]"
+        if not isinstance(metric, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        errors.extend(_missing_keys(metric, BUSINESS_METRIC_KEYS, prefix))
+        metric_id = metric.get("metric_id")
+        if isinstance(metric_id, str):
+            if metric_id in business_metric_ids:
+                errors.append(f"product_context.business_metrics has duplicate metric_id: {metric_id}")
+            business_metric_ids.add(metric_id)
+        for key in BUSINESS_METRIC_KEYS:
+            if _is_unknown_or_empty(metric.get(key)):
+                errors.append(f"{readiness} requires {prefix}.{key}")
+
+    validation = spec.get("validation_plan", {})
+    validation_metrics = validation.get("metrics", []) if isinstance(validation, dict) else []
+    product_metric_ids = {
+        item.get("metric_id")
+        for item in validation_metrics
+        if isinstance(item, dict) and isinstance(item.get("metric_id"), str)
+    }
+
+    goal_ids: set[str] = set()
+    for index, goal in enumerate(goals):
+        prefix = f"product_context.product_goals[{index}]"
+        if not isinstance(goal, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        errors.extend(_missing_keys(goal, PRODUCT_GOAL_KEYS, prefix))
+        goal_id = goal.get("goal_id")
+        if isinstance(goal_id, str):
+            if goal_id in goal_ids:
+                errors.append(f"product_context.product_goals has duplicate goal_id: {goal_id}")
+            goal_ids.add(goal_id)
+        for key in PRODUCT_GOAL_KEYS:
+            if _is_unknown_or_empty(goal.get(key)):
+                errors.append(f"{readiness} requires {prefix}.{key}")
+        for ref in goal.get("business_metric_refs", []):
+            if ref not in business_metric_ids:
+                errors.append(f"{prefix}.business_metric_refs references unknown business metric: {ref}")
+        for ref in goal.get("product_metric_refs", []):
+            if ref not in product_metric_ids:
+                errors.append(f"{prefix}.product_metric_refs references unknown validation metric: {ref}")
 
     return errors
 
@@ -713,6 +825,75 @@ def _validate_workflow(spec: dict[str, Any]) -> list[str]:
         errors.extend(_missing_keys(step, WORKFLOW_STEP_KEYS, f"workflow.steps[{index}]"))
         if not isinstance(step.get("human_review_required"), bool):
             errors.append(f"workflow.steps[{index}].human_review_required must be boolean")
+
+    readiness = _stage_readiness(spec)
+    journeys = workflow.get("user_journeys")
+    operation_flows = workflow.get("user_operation_flows")
+    if readiness in PRODUCT_PROOF_REQUIRED_LABELS:
+        if not isinstance(journeys, list) or not journeys:
+            errors.append(f"{readiness} requires workflow.user_journeys")
+            journeys = []
+        if not isinstance(operation_flows, list) or not operation_flows:
+            errors.append(f"{readiness} requires workflow.user_operation_flows")
+            operation_flows = []
+
+    if isinstance(journeys, list) and isinstance(operation_flows, list):
+        errors.extend(_validate_user_journeys_and_operation_flows(journeys, operation_flows, readiness))
+
+    return errors
+
+
+def _validate_user_journeys_and_operation_flows(
+    journeys: list[Any], operation_flows: list[Any], readiness: str | None
+) -> list[str]:
+    errors: list[str] = []
+    require_complete = readiness in PRODUCT_PROOF_REQUIRED_LABELS
+    journey_ids: set[str] = set()
+    flow_ids: set[str] = set()
+
+    for index, journey in enumerate(journeys):
+        prefix = f"workflow.user_journeys[{index}]"
+        if not isinstance(journey, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        errors.extend(_missing_keys(journey, USER_JOURNEY_KEYS, prefix))
+        journey_id = journey.get("journey_id")
+        if isinstance(journey_id, str):
+            if journey_id in journey_ids:
+                errors.append(f"workflow.user_journeys has duplicate journey_id: {journey_id}")
+            journey_ids.add(journey_id)
+        if require_complete:
+            for key in USER_JOURNEY_KEYS:
+                if _is_unknown_or_empty(journey.get(key)):
+                    errors.append(f"{readiness} requires {prefix}.{key}")
+
+    for index, flow in enumerate(operation_flows):
+        prefix = f"workflow.user_operation_flows[{index}]"
+        if not isinstance(flow, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        errors.extend(_missing_keys(flow, USER_OPERATION_FLOW_KEYS, prefix))
+        flow_id = flow.get("flow_id")
+        if isinstance(flow_id, str):
+            if flow_id in flow_ids:
+                errors.append(f"workflow.user_operation_flows has duplicate flow_id: {flow_id}")
+            flow_ids.add(flow_id)
+        journey_id = flow.get("journey_id")
+        if isinstance(journey_id, str) and journey_id not in journey_ids:
+            errors.append(f"{prefix}.journey_id references unknown journey: {journey_id}")
+        if require_complete:
+            for key in USER_OPERATION_FLOW_KEYS:
+                if _is_unknown_or_empty(flow.get(key)):
+                    errors.append(f"{readiness} requires {prefix}.{key}")
+
+    for index, journey in enumerate(journeys):
+        if not isinstance(journey, dict):
+            continue
+        prefix = f"workflow.user_journeys[{index}]"
+        for ref in journey.get("covered_operation_flow_ids", []):
+            if ref not in flow_ids:
+                errors.append(f"{prefix}.covered_operation_flow_ids references unknown operation flow: {ref}")
+
     return errors
 
 
