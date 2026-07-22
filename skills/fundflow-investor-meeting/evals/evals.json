@@ -1,0 +1,23 @@
+{
+  "skill_name": "fundflow-investor-meeting",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我准备一下和弘晖资本的投资人会议",
+      "expected_output": "Uses FundFlow first, identifies current stage and objective, researches investor style if needed, and produces an internal prep note with likely questions and next actions.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "今天国新基金会议在融管通里，读一下会议听记，分析关键点并发到融资支持群",
+      "expected_output": "Uses FundFlow meeting detail/transcript first, separates transcript facts from inference, analyzes investor questions/style/follow-up, sends a verified DingTalk group update only after checking command schema.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "投资人提到奇点智源和知满科技，帮我分析他们真正关心什么，并给出后续跟进口径",
+      "expected_output": "Researches public current sources, classifies the investor's implicit concerns, connects the comparison back to Friday/Stardust positioning, and avoids claiming unsupported transcript facts.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "skill_name": "ocr",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我识别这张中文发票截图里的公司名、日期和金额，并标出不确定的字段。",
+      "expected_output": "Calls the external OCR service, reports recognized fields, and preserves confidence or warnings for uncertain values.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这个扫描版 PDF 没有文字层，只提取第 1、3 到 5 页，按页输出 Markdown。",
+      "expected_output": "Uses one-based page selection and returns page-separated Markdown from the public OCR endpoint.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "把这三张会议白板照片批量 OCR，保留中英文原文，并把结果写到一个文件。",
+      "expected_output": "Batches multiple images in one request and writes combined OCR output without exposing credentials.",
+      "files": []
+    }
+  ]
+}
