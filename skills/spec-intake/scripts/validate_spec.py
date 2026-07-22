@@ -76,6 +76,30 @@ USER_OPERATION_FLOW_KEYS = [
     "test_case_seed",
 ]
 
+VIRTUAL_REVIEW_ROLE_KEYS = [
+    "role_id",
+    "role_name",
+    "role_type",
+    "review_focus",
+    "challenge_questions",
+    "review_findings",
+    "decision_impact",
+    "status",
+]
+
+VIRTUAL_REVIEW_PRODUCT_OWNER_TYPES = {"pm", "owner"}
+
+VIRTUAL_REVIEW_CHALLENGER_TYPES = {
+    "algorithm",
+    "user",
+    "domain_expert",
+    "researcher",
+    "qa",
+    "engineering",
+    "compliance",
+    "sales_gtm",
+}
+
 BUSINESS_SUCCESS_SCENARIO_KEYS = [
     "scenario_id",
     "title",
@@ -109,8 +133,8 @@ MEMORY_WRITE_RULE_KEYS = [
 
 ENGINEERING_DECISIONS = {
     "continue_technical_spec",
-    "mark_poc_design_ready",
-    "mark_poc_execution_ready",
+    "mark_validation_design_ready",
+    "mark_validation_execution_ready",
     "ready_for_engineering",
 }
 
@@ -118,32 +142,48 @@ NEXT_STAGE_DECISIONS = {
     "handoff_to_product",
     "request_engineering_gap_review",
     "continue_technical_spec",
-    "mark_poc_design_ready",
-    "mark_poc_execution_ready",
+    "mark_validation_design_ready",
+    "mark_validation_execution_ready",
     "ready_for_engineering",
 }
 
 UI_REVIEW_REQUIRED_LABELS = {
     "product_ready",
     "engineering_gap_review_ready",
-    "poc_design_ready",
-    "poc_execution_ready",
+    "validation_design_ready",
+    "validation_execution_ready",
     "engineering_ready",
 }
 
 PRODUCT_PROOF_REQUIRED_LABELS = {
     "product_ready",
     "engineering_gap_review_ready",
-    "poc_design_ready",
-    "poc_execution_ready",
+    "validation_design_ready",
+    "validation_execution_ready",
     "engineering_ready",
+}
+
+MARKET_SIZING_REQUIRED_LABELS = PRODUCT_PROOF_REQUIRED_LABELS | {"business_ready"}
+
+FIRST_PARTY_CUSTOMER_EVIDENCE_TYPES = {
+    "customer_interview",
+    "customer_data",
+    "paid_signal",
+    "usage_data",
+    "sales_pipeline",
+}
+
+EXTERNAL_MARKET_EVIDENCE_TYPES = {
+    "consulting_report",
+    "industry_report",
+    "market_research",
 }
 
 TECHNICAL_DESIGN_REVIEW_TYPES = {"technical_design", "delivery_plan"}
 
 SCENARIO_COVERAGE_REQUIRED_LABELS = {
-    "poc_design_ready",
-    "poc_execution_ready",
+    "validation_design_ready",
+    "validation_execution_ready",
     "engineering_ready",
 }
 
@@ -151,8 +191,8 @@ READINESS_STAGE = {
     "business_ready": "business_feasibility",
     "product_ready": "product_shape",
     "engineering_gap_review_ready": "engineering_gap_review",
-    "poc_design_ready": "poc_design",
-    "poc_execution_ready": "poc_execution",
+    "validation_design_ready": "validation_design",
+    "validation_execution_ready": "validation_execution",
     "engineering_ready": "engineering_delivery",
 }
 
@@ -160,8 +200,8 @@ DECISION_NEXT_STAGE = {
     "handoff_to_product": "product_shape",
     "request_engineering_gap_review": "engineering_gap_review",
     "continue_technical_spec": "technical_spec",
-    "mark_poc_design_ready": "poc_design",
-    "mark_poc_execution_ready": "poc_execution",
+    "mark_validation_design_ready": "validation_design",
+    "mark_validation_execution_ready": "validation_execution",
     "ready_for_engineering": "engineering_delivery",
 }
 
@@ -331,6 +371,8 @@ def _business_handoff_missing_fields(spec: dict[str, Any]) -> list[str]:
     required_paths = [
         ("product_context", "build_target"),
         ("opportunity_assessment", "commercial_context", "target_buyer"),
+        ("opportunity_assessment", "market_sizing", "market_attractiveness_score"),
+        ("opportunity_assessment", "market_sizing", "market_size_summary"),
         ("opportunity_assessment", "pmf_validation", "current_alternative"),
         ("opportunity_assessment", "minimum_paid_artifact", "name"),
         ("opportunity_assessment", "minimum_paid_artifact", "buyer_value"),
@@ -464,6 +506,34 @@ def _non_assumption_evidence(refs: Any, evidence_by_id: dict[str, dict[str, Any]
     return False
 
 
+def _non_assumption_evidence_of_type(
+    refs: Any,
+    evidence_by_id: dict[str, dict[str, Any]],
+    allowed_types: set[str],
+) -> bool:
+    if not isinstance(refs, list):
+        return False
+    for ref in refs:
+        item = evidence_by_id.get(ref)
+        if (
+            isinstance(item, dict)
+            and item.get("is_assumption") is False
+            and item.get("type") in allowed_types
+        ):
+            return True
+    return False
+
+
+def _unknown_evidence_refs(
+    refs: Any,
+    evidence_by_id: dict[str, dict[str, Any]],
+    prefix: str,
+) -> list[str]:
+    if not isinstance(refs, list):
+        return [f"{prefix} must be an array"]
+    return [f"{prefix} references unknown evidence item: {ref}" for ref in refs if ref not in evidence_by_id]
+
+
 def _validate_opportunity(spec: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     opportunity = spec.get("opportunity_assessment")
@@ -475,6 +545,12 @@ def _validate_opportunity(spec: dict[str, Any]) -> list[str]:
         errors.append("opportunity_assessment.evidence_registry must include at least one evidence item")
 
     pmf = opportunity.get("pmf_validation")
+    market_sizing = opportunity.get("market_sizing")
+    if isinstance(market_sizing, dict):
+        errors.extend(_validate_market_sizing(spec, market_sizing, evidence_by_id))
+    else:
+        errors.append("opportunity_assessment.market_sizing must be an object")
+
     if isinstance(pmf, dict):
         pain_refs = pmf.get("pain_evidence_refs")
         if not _non_assumption_evidence(pain_refs, evidence_by_id):
@@ -499,8 +575,8 @@ def _validate_opportunity(spec: dict[str, Any]) -> list[str]:
         else:
             errors.append("opportunity_assessment.pmf_validation.four_factor_scores must be an object")
 
-        if pmf.get("overall_decision") == "批准 PoC":
-            errors.extend(_validate_poc_approval(spec))
+        if pmf.get("overall_decision") == "批准客户 PoC":
+            errors.extend(_validate_customer_poc_approval(spec))
         if pmf.get("overall_decision") == "主线候选":
             low_scores: list[str] = []
             scores = pmf.get("four_factor_scores")
@@ -548,6 +624,151 @@ def _validate_opportunity(spec: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _validate_market_sizing(
+    spec: dict[str, Any],
+    market_sizing: dict[str, Any],
+    evidence_by_id: dict[str, dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    readiness = _stage_readiness(spec)
+    require_complete = readiness in MARKET_SIZING_REQUIRED_LABELS
+
+    for key in [
+        "customer_value",
+        "customer_payment_willingness",
+        "competition_intensity",
+    ]:
+        item = market_sizing.get(key)
+        if not isinstance(item, dict):
+            errors.append(f"opportunity_assessment.market_sizing.{key} must be an object")
+            continue
+        score = item.get("score")
+        if _score_out_of_range(score):
+            errors.append(f"opportunity_assessment.market_sizing.{key}.score must be between 1 and 5")
+        if require_complete:
+            for child_key in ["score", "notes"]:
+                if _is_unknown_or_empty(item.get(child_key)):
+                    errors.append(f"{readiness} requires opportunity_assessment.market_sizing.{key}.{child_key}")
+            if not _non_assumption_evidence(item.get("evidence_refs"), evidence_by_id):
+                errors.append(
+                    f"{readiness} requires non-assumption evidence for opportunity_assessment.market_sizing.{key}"
+                )
+
+    for key in ["average_contract_value", "addressable_customer_count"]:
+        item = market_sizing.get(key)
+        if not isinstance(item, dict):
+            errors.append(f"opportunity_assessment.market_sizing.{key} must be an object")
+            continue
+        if require_complete:
+            for child_key in ["estimate", "range", "unit", "notes"]:
+                if _is_unknown_or_empty(item.get(child_key)):
+                    errors.append(f"{readiness} requires opportunity_assessment.market_sizing.{key}.{child_key}")
+            if not _non_assumption_evidence(item.get("evidence_refs"), evidence_by_id):
+                errors.append(
+                    f"{readiness} requires non-assumption evidence for opportunity_assessment.market_sizing.{key}"
+                )
+
+    attractiveness = market_sizing.get("market_attractiveness_score")
+    if _score_out_of_range(attractiveness):
+        errors.append("opportunity_assessment.market_sizing.market_attractiveness_score must be between 1 and 5")
+    if require_complete:
+        for key in ["market_size_summary", "market_attractiveness_score", "calculation_note", "confidence"]:
+            if _is_unknown_or_empty(market_sizing.get(key)):
+                errors.append(f"{readiness} requires opportunity_assessment.market_sizing.{key}")
+        if not _non_assumption_evidence(market_sizing.get("evidence_refs"), evidence_by_id):
+            errors.append(f"{readiness} requires non-assumption evidence for opportunity_assessment.market_sizing.evidence_refs")
+
+    evidence_quality = market_sizing.get("evidence_quality")
+    if isinstance(evidence_quality, dict):
+        errors.extend(_validate_market_evidence_quality(spec, evidence_quality, evidence_by_id))
+    elif require_complete:
+        errors.append(f"{readiness} requires opportunity_assessment.market_sizing.evidence_quality")
+    else:
+        errors.append("opportunity_assessment.market_sizing.evidence_quality must be an object")
+
+    return errors
+
+
+def _validate_market_evidence_quality(
+    spec: dict[str, Any],
+    evidence_quality: dict[str, Any],
+    evidence_by_id: dict[str, dict[str, Any]],
+) -> list[str]:
+    errors: list[str] = []
+    readiness = _stage_readiness(spec)
+    require_complete = readiness in MARKET_SIZING_REQUIRED_LABELS
+
+    for key in [
+        "primary_evidence_refs",
+        "external_market_evidence_refs",
+        "first_party_customer_feedback_refs",
+        "internal_estimate_refs",
+    ]:
+        errors.extend(
+            _unknown_evidence_refs(
+                evidence_quality.get(key),
+                evidence_by_id,
+                f"opportunity_assessment.market_sizing.evidence_quality.{key}",
+            )
+        )
+
+    status = evidence_quality.get("validation_status")
+    if require_complete:
+        if status in (None, "", "unknown", "not_applicable", "unverified_estimate"):
+            errors.append(
+                f"{readiness} requires opportunity_assessment.market_sizing.evidence_quality.validation_status="
+                "partially_supported, supported, or strongly_supported"
+            )
+        if _is_unknown_or_empty(evidence_quality.get("confidence_rationale")):
+            errors.append(
+                f"{readiness} requires opportunity_assessment.market_sizing.evidence_quality.confidence_rationale"
+            )
+        if not _non_assumption_evidence(evidence_quality.get("primary_evidence_refs"), evidence_by_id):
+            errors.append(f"{readiness} requires non-assumption primary evidence for market sizing")
+        if not _non_assumption_evidence_of_type(
+            evidence_quality.get("first_party_customer_feedback_refs"),
+            evidence_by_id,
+            FIRST_PARTY_CUSTOMER_EVIDENCE_TYPES,
+        ):
+            errors.append(
+                f"{readiness} requires first-party customer feedback evidence for market sizing"
+            )
+
+    market_sizing = _value_at_path(spec, ("opportunity_assessment", "market_sizing"))
+    attractiveness = market_sizing.get("market_attractiveness_score") if isinstance(market_sizing, dict) else None
+    confidence = market_sizing.get("confidence") if isinstance(market_sizing, dict) else None
+    priority = _value_at_path(spec, ("opportunity_assessment", "priority_decision", "recommendation"))
+    needs_external = (
+        status in {"supported", "strongly_supported"}
+        or confidence in {"medium", "high"}
+        or priority == "top_8"
+        or (isinstance(attractiveness, (int, float)) and not isinstance(attractiveness, bool) and attractiveness >= 4)
+    )
+    if needs_external and not _non_assumption_evidence_of_type(
+        evidence_quality.get("external_market_evidence_refs"),
+        evidence_by_id,
+        EXTERNAL_MARKET_EVIDENCE_TYPES,
+    ):
+        errors.append(
+            "supported market sizing, medium/high confidence, top_8 priority, or attractiveness >= 4 "
+            "requires external market evidence such as consulting_report, industry_report, or market_research"
+        )
+
+    if status == "strongly_supported":
+        if not _non_assumption_evidence_of_type(
+            evidence_quality.get("first_party_customer_feedback_refs"),
+            evidence_by_id,
+            FIRST_PARTY_CUSTOMER_EVIDENCE_TYPES,
+        ) or not _non_assumption_evidence_of_type(
+            evidence_quality.get("external_market_evidence_refs"),
+            evidence_by_id,
+            EXTERNAL_MARKET_EVIDENCE_TYPES,
+        ):
+            errors.append("strongly_supported market sizing requires both external market evidence and first-party customer feedback")
+
+    return errors
+
+
 def _validate_competitive_research(spec: dict[str, Any], competitive: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     readiness = _stage_readiness(spec)
@@ -583,7 +804,7 @@ def _validate_competitive_research(spec: dict[str, Any], competitive: dict[str, 
         else:
             errors.append("opportunity_assessment.competitive_research.differentiation_score must be an object")
 
-    if readiness in ("product_ready", "engineering_gap_review_ready", "poc_design_ready", "poc_execution_ready", "engineering_ready"):
+    if readiness in ("product_ready", "engineering_gap_review_ready", "validation_design_ready", "validation_execution_ready", "engineering_ready"):
         if research_required and competitive.get("user_confirmation") != "confirmed":
             errors.append(f"{readiness} requires opportunity_assessment.competitive_research.user_confirmation=confirmed")
 
@@ -604,7 +825,7 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
 
     if recommendation == "needs_more_evidence" and decision in ENGINEERING_DECISIONS:
         errors.append(
-            "needs_more_evidence cannot move to technical spec, PoC ready, or engineering ready; "
+            "needs_more_evidence cannot move to technical spec, validation ready, or engineering ready; "
             "use continue_business_validation, handoff_to_product, continue_product_shape, or request_engineering_gap_review"
         )
 
@@ -639,15 +860,15 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
     else:
         errors.append("stage_gate.stage_exit_check must be an object")
 
-    if readiness in ("poc_execution_ready", "engineering_ready"):
-        execution = _readiness_check(spec, "poc_execution_ready")
+    if readiness in ("validation_execution_ready", "engineering_ready"):
+        execution = _readiness_check(spec, "validation_execution_ready")
         if execution and execution.get("status") != "ready":
-            errors.append("poc_execution_ready or engineering_ready requires validation_plan.poc_execution_ready.status=ready")
+            errors.append("validation_execution_ready or engineering_ready requires validation_plan.validation_execution_ready.status=ready")
 
     return errors
 
 
-def _validate_poc_approval(spec: dict[str, Any]) -> list[str]:
+def _validate_customer_poc_approval(spec: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     opportunity = spec.get("opportunity_assessment", {})
     pmf = opportunity.get("pmf_validation", {}) if isinstance(opportunity, dict) else {}
@@ -668,10 +889,10 @@ def _validate_poc_approval(spec: dict[str, Any]) -> list[str]:
                 confirmed_partner = True
                 break
     if not confirmed_partner:
-        errors.append("批准 PoC requires a confirmed design partner with budget owner, reviewer, and available data")
+        errors.append("批准客户 PoC requires a confirmed design partner with budget owner, reviewer, and available data")
 
     if isinstance(minimum_artifact, dict) and _is_unknown_or_empty(minimum_artifact.get("name")):
-        errors.append("批准 PoC requires opportunity_assessment.minimum_paid_artifact.name")
+        errors.append("批准客户 PoC requires opportunity_assessment.minimum_paid_artifact.name")
 
     criteria = pmf.get("poc_entry_criteria") if isinstance(pmf, dict) else None
     if isinstance(criteria, dict):
@@ -688,9 +909,9 @@ def _validate_poc_approval(spec: dict[str, Any]) -> list[str]:
             if _is_unknown_or_empty(criteria.get(key))
         ]
         if missing:
-            errors.append("批准 PoC requires complete poc_entry_criteria: " + ", ".join(missing))
+            errors.append("批准客户 PoC requires complete poc_entry_criteria: " + ", ".join(missing))
     else:
-        errors.append("批准 PoC requires opportunity_assessment.pmf_validation.poc_entry_criteria")
+        errors.append("批准客户 PoC requires opportunity_assessment.pmf_validation.poc_entry_criteria")
 
     return errors
 
@@ -893,6 +1114,104 @@ def _validate_user_journeys_and_operation_flows(
         for ref in journey.get("covered_operation_flow_ids", []):
             if ref not in flow_ids:
                 errors.append(f"{prefix}.covered_operation_flow_ids references unknown operation flow: {ref}")
+
+    return errors
+
+
+def _needs_virtual_review_panel(spec: dict[str, Any]) -> bool:
+    readiness = _stage_readiness(spec)
+    if readiness not in PRODUCT_PROOF_REQUIRED_LABELS:
+        return False
+
+    product = spec.get("product_context", {})
+    if isinstance(product, dict) and product.get("build_target") == "domain_pack":
+        return True
+
+    ui = spec.get("ui_requirements", {})
+    if isinstance(ui, dict) and ui.get("has_ui") is True:
+        return True
+
+    workflow = spec.get("workflow", {})
+    if isinstance(workflow, dict):
+        journeys = workflow.get("user_journeys")
+        operation_flows = workflow.get("user_operation_flows")
+        if isinstance(journeys, list) and len(journeys) > 1:
+            return True
+        if isinstance(operation_flows, list) and len(operation_flows) > 1:
+            return True
+
+    scenarios = spec.get("business_success_scenarios")
+    if isinstance(scenarios, list) and len(scenarios) > 1:
+        return True
+
+    profile = spec.get("delivery_risk_profile", {})
+    if isinstance(profile, dict) and profile.get("risk_tier") in {"R2", "R3"}:
+        return True
+
+    return False
+
+
+def _validate_review_gates(spec: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    review_gates = spec.get("review_gates")
+    if not isinstance(review_gates, dict):
+        return ["review_gates must be an object"]
+
+    panel = review_gates.get("virtual_review_panel")
+    if not isinstance(panel, list):
+        return ["review_gates.virtual_review_panel must be an array"]
+
+    role_ids: set[str] = set()
+    active_role_types: set[str] = set()
+    has_product_owner_review = False
+    has_challenger_review = False
+    completed_count = 0
+
+    for index, role in enumerate(panel):
+        prefix = f"review_gates.virtual_review_panel[{index}]"
+        if not isinstance(role, dict):
+            errors.append(f"{prefix} must be an object")
+            continue
+        errors.extend(_missing_keys(role, VIRTUAL_REVIEW_ROLE_KEYS, prefix))
+
+        role_id = role.get("role_id")
+        if isinstance(role_id, str):
+            if role_id in role_ids:
+                errors.append(f"review_gates.virtual_review_panel has duplicate role_id: {role_id}")
+            role_ids.add(role_id)
+
+        status = role.get("status")
+        role_type = role.get("role_type")
+        if status != "not_needed" and isinstance(role_type, str):
+            active_role_types.add(role_type)
+            if role_type in VIRTUAL_REVIEW_PRODUCT_OWNER_TYPES:
+                has_product_owner_review = True
+            if role_type in VIRTUAL_REVIEW_CHALLENGER_TYPES:
+                has_challenger_review = True
+
+        if status in {"proposed", "active", "completed"}:
+            for key in ["review_focus", "challenge_questions"]:
+                if _is_unknown_or_empty(role.get(key)):
+                    errors.append(f"{prefix}.{key} is required for {status} virtual review role")
+
+        if status == "completed":
+            completed_count += 1
+            for key in ["review_findings", "decision_impact"]:
+                if _is_unknown_or_empty(role.get(key)):
+                    errors.append(f"{prefix}.{key} is required for completed virtual review role")
+
+    readiness = _stage_readiness(spec)
+    if _needs_virtual_review_panel(spec):
+        if not panel:
+            errors.append(f"{readiness} requires review_gates.virtual_review_panel for complex product design")
+        if len(active_role_types) < 2:
+            errors.append(f"{readiness} requires at least two virtual review role types")
+        if not has_product_owner_review:
+            errors.append(f"{readiness} requires a virtual PM or owner review role")
+        if not has_challenger_review:
+            errors.append(f"{readiness} requires a non-product virtual challenger role")
+        if completed_count < 2:
+            errors.append(f"{readiness} requires at least two completed virtual review roles")
 
     return errors
 
@@ -1213,7 +1532,7 @@ def _validate_validation_plan(spec: dict[str, Any]) -> list[str]:
                     errors.append(f"validation_plan.metrics[{index}].{key} is required")
 
     assets = validation.get("evaluation_assets")
-    if readiness in ("poc_design_ready", "poc_execution_ready", "engineering_ready"):
+    if readiness in ("validation_design_ready", "validation_execution_ready", "engineering_ready"):
         if not isinstance(assets, list) or not assets:
             errors.append(f"{readiness} requires validation_plan.evaluation_assets")
         else:
@@ -1225,10 +1544,10 @@ def _validate_validation_plan(spec: dict[str, Any]) -> list[str]:
             if unavailable:
                 errors.append(f"{readiness} requires available or approved evaluation assets: " + ", ".join(unavailable))
 
-    poc_design = validation.get("poc_design_ready")
-    if readiness in ("poc_design_ready", "poc_execution_ready", "engineering_ready"):
-        if not isinstance(poc_design, dict) or poc_design.get("status") != "ready":
-            errors.append(f"{readiness} requires validation_plan.poc_design_ready.status=ready")
+    validation_design = validation.get("validation_design_ready")
+    if readiness in ("validation_design_ready", "validation_execution_ready", "engineering_ready"):
+        if not isinstance(validation_design, dict) or validation_design.get("status") != "ready":
+            errors.append(f"{readiness} requires validation_plan.validation_design_ready.status=ready")
 
     return errors
 
@@ -1346,6 +1665,7 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
     errors.extend(_validate_business_success_scenarios(spec))
     errors.extend(_validate_delivery_risk_profile(spec))
     errors.extend(_validate_ui(spec, spec_path))
+    errors.extend(_validate_review_gates(spec))
     errors.extend(_validate_friday_object_model(spec))
     errors.extend(_validate_memory_policy(spec))
     errors.extend(_validate_validation_plan(spec))

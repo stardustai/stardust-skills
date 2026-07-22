@@ -962,13 +962,27 @@ async function processRow(detailTab, baseDir, row, requestPermissions, requestMe
       timeoutMs: extractOptions.dwsTimeoutMs,
     });
     let aiSummaryMeta = { source: "dws", char_count: aiSummary.length };
+    if (!transcript || transcriptMeta.paragraph_count === 0) {
+      const title = pageMeta.title || row.masked_title || rowKey;
+      emitProgress(`Zero transcript ${title}: DWS returned no paragraphs`);
+      return {
+        ok: false,
+        status: "zero_transcript",
+        row_key: rowKey,
+        topic: title,
+        source_url: pageMeta.url || url,
+        history_row: row,
+        transcript_meta: transcriptMeta,
+        ai_summary: aiSummary,
+        ai_summary_meta: aiSummaryMeta,
+        error: "DWS transcription returned no paragraphs.",
+        last_checked_at: Date.now() / 1000,
+      };
+    }
     if (!aiSummary) {
       const [domSummary, domSummaryMeta] = await extractAiSummary(detailTab);
       aiSummary = domSummary;
       aiSummaryMeta = { ...domSummaryMeta, source: "dom" };
-    }
-    if (!transcript || transcriptMeta.paragraph_count === 0) {
-      throw new Error("DWS transcription returned no paragraphs.");
     }
     const title = pageMeta.title || row.masked_title || rowKey;
     const payload = {
@@ -1142,6 +1156,7 @@ export async function runChromeDingTalkSync(options = {}) {
     skipped_existing: results.filter((item) => item.status === "skipped_existing").length,
     skipped_recent: results.filter((item) => item.status === "skipped_recent").length,
     skipped_short: results.filter((item) => item.status === "skipped_short").length,
+    zero_transcript: results.filter((item) => item.status === "zero_transcript").length,
     permission_requested: results.filter((item) => item.status === "permission_requested").length,
     permission_required: results.filter((item) => item.status === "permission_required" || item.status === "permission_pending").length,
     failed: results.filter((item) => item.status === "failed").length,
@@ -1149,7 +1164,7 @@ export async function runChromeDingTalkSync(options = {}) {
     results,
   };
   emitProgress(
-    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} skipped_recent=${summary.skipped_recent} skipped_short=${summary.skipped_short} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
+    `Done: processed=${summary.processed} downloaded=${summary.downloaded} skipped=${summary.skipped_existing} skipped_recent=${summary.skipped_recent} skipped_short=${summary.skipped_short} zero_transcript=${summary.zero_transcript} permission_requested=${summary.permission_requested} permission_required=${summary.permission_required} failed=${summary.failed} unexpected_page=${summary.unexpected_page}`,
   );
   return summary;
 }

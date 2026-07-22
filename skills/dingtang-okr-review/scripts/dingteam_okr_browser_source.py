@@ -41,13 +41,16 @@ _spec.loader.exec_module(direct)
 CORP_ID = os.getenv("CEO_OKR_DINGTEAM_CORPID", "ding8ffc70a4ef94915f35c2f4657eb6378f")
 APP_ID = os.getenv("CEO_OKR_DINGTEAM_APPID", "40707")
 SUITE_ID = os.getenv("CEO_OKR_DINGTEAM_SUITEID", "9242001")
-ENTRY_URL = (
-    "https://dingokr.dingteam.com/web/okr/pc/index.html"
-    f"?corpid={CORP_ID}&appid={APP_ID}&suiteid={SUITE_ID}"
+ENTRY_URL = os.getenv(
+    "CEO_OKR_DINGTEAM_ENTRY_URL",
+    "https://dingokr.dingteam.com/web/okr/pc/index.html#/okr/cycle",
 )
 
 PROFILE_DIR = Path(
-    os.getenv("CEO_OKR_BROWSER_PROFILE", str(Path.home() / ".dingteam-okr-profile"))
+    os.getenv(
+        "CEO_OKR_BROWSER_PROFILE",
+        str(Path.home() / ".agents/runtime/dingteam-okr-chrome"),
+    )
 )
 CACHE_PATH = PROFILE_DIR / "token_cache.json"
 AUTH_HEADER_KEYS = {
@@ -125,7 +128,10 @@ def _capture_headers(headless: bool, wait_seconds: float) -> dict[str, str]:
             def on_request(request):
                 if "/data/okr/" in request.url and not captured:
                     try:
-                        for k, v in request.all_headers().items():
+                        headers = request.headers
+                        if not headers:
+                            headers = request.all_headers()
+                        for k, v in headers.items():
                             if k.lower() in AUTH_HEADER_KEYS:
                                 # preserve canonical-ish casing the API expects
                                 captured[_canonical(k)] = v

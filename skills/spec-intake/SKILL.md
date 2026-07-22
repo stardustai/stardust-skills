@@ -20,15 +20,17 @@ The goal is not to write code. The goal is to make the requirement clear enough 
 7. If Domain Pack is involved, model Friday objects explicitly: Workspace Memory, Task, Artifact, Recipe, Feedback/Comment, and Room.
 8. Treat engineering gap review as different from engineering delivery. A spec can be ready for technical gap review while still blocked for implementation.
 9. Market validation includes competitor research. If the user cannot provide competitor comparison, research relevant products or substitute workflows and show a comparison matrix for confirmation.
-10. Product validation includes technical leadership and uniqueness. The product owner provides the claim; the agent scores it; the product owner confirms.
-11. Technical design includes source-code reading and AI scoring. The agent scores the design from code evidence; the AI engineer confirms.
-12. At the start of a new intake, show the user the complete process as a Mermaid flowchart and start a progress tracker. In Codex, this means calling `update_plan`.
-13. Do not move from one stage to the next without an explicit stage-exit summary and user confirmation.
-14. Use the schema stage names exactly. Do not invent a simplified five-stage process.
-15. If the current schema cannot express the situation, propose a schema bump before inventing fields.
-16. Business defines end-to-end success in `business_success_scenarios`. Product or the spec agent may structure the input, but only the business owner may confirm the expected business outcome. QA adds coverage and engineering adds automation through `validation_plan.scenario_coverage`; neither may silently rewrite the business outcome.
-17. Product defines `delivery_risk_profile` from six concrete dimensions before engineering. The tier is at least the highest dimension floor, and the decision owner must confirm it before `product_ready` or later.
-18. Product defines `product_context.product_goals`, `product_context.business_metrics`, `workflow.user_journeys`, and `workflow.user_operation_flows` before `product_ready` or later. Business defines the product/business goal first; product refines it into measurable product behavior and loop-engineering signals.
+10. Market validation includes market sizing. Do not use one vague TAM number; assess customer value, payment willingness, average contract value, addressable customer count, and competition intensity.
+11. Product validation includes technical leadership and uniqueness. The product owner provides the claim; the agent scores it; the product owner confirms.
+12. Technical design includes source-code reading and AI scoring. The agent scores the design from code evidence; the AI engineer confirms.
+13. At the start of a new intake, show the user the complete process as a Mermaid flowchart and start a progress tracker. In Codex, this means calling `update_plan`.
+14. Do not move from one stage to the next without an explicit stage-exit summary and user confirmation.
+15. Use the schema stage names exactly. Do not invent a simplified five-stage process.
+16. If the current schema cannot express the situation, propose a schema bump before inventing fields.
+17. Business defines end-to-end success in `business_success_scenarios`. Product or the spec agent may structure the input, but only the business owner may confirm the expected business outcome. QA adds coverage and engineering adds automation through `validation_plan.scenario_coverage`; neither may silently rewrite the business outcome.
+18. Product defines `delivery_risk_profile` from six concrete dimensions before engineering. The tier is at least the highest dimension floor, and the decision owner must confirm it before `product_ready` or later.
+19. Product defines `product_context.product_goals`, `product_context.business_metrics`, `workflow.user_journeys`, and `workflow.user_operation_flows` before `product_ready` or later. Business defines the product/business goal first; product refines it into measurable product behavior and loop-engineering signals.
+20. If the spec intake context becomes complex, multi-threaded, or long enough that earlier decisions may be forgotten, recommend using bounded subagents to advance evidence gathering, product shaping, code reading, or QA mapping. For design judgment, virtualize a multi-role review panel such as PM, algorithm, user, domain expert, researcher, owner, QA, compliance, sales, and engineering, let them challenge each other's assumptions, and record the result in `review_gates.virtual_review_panel`. The main agent must keep the stage gate, final judgment, and spec synthesis.
 
 ## Intake Modes
 
@@ -44,6 +46,7 @@ Do not force `guided_interview` when the user has already supplied a structured 
 - Target buyer and daily user.
 - Pain, current alternative, and buyer language.
 - Minimum paid artifact.
+- Market sizing: customer value, payment willingness, average contract value, customer count, and competition intensity.
 - Evidence and design partner status.
 - Competitors or substitute workflows.
 - Differentiation or technical leadership claim.
@@ -66,8 +69,8 @@ flowchart TD
   C["2. 产品形态"]
   D["3. 技术缺口评审"]
   E["4. 技术方案"]
-  F["5. PoC 设计"]
-  G["6. PoC 执行"]
+  F["5. 验证方案设计"]
+  G["6. 验证执行"]
   H["7. 工程交付"]
 
   A --> B --> C --> D --> E --> F --> G --> H
@@ -80,8 +83,8 @@ Then explain the chart in Chinese:
 - 产品形态：论证第一版工作流、范围、Artifact、UI 和对象模型。
 - 技术缺口评审：论证现有能力和缺口，不代表可以排期。
 - 技术方案：论证源码、架构方案、技术评分和交付风险，并由 AI 工程师确认。
-- PoC 设计：论证样本、指标、验收方式和时间盒。
-- PoC 执行：论证数据、owner、baseline 都齐了，才开始跑验证。
+- 验证方案设计：论证样本、指标、验收方式和时间盒；这是内部/产研验证方案，不等于客户 POC。
+- 验证执行：论证数据、owner、baseline 都齐了，才开始跑内部验证。
 - 工程交付：论证 spec、验证、责任人、排期和验收都确认后，才进入实现计划。
 
 Then state rollback rules as text, not as chart arrows:
@@ -97,8 +100,8 @@ Then state rollback rules as text, not as chart arrows:
    - Product shape.
    - Engineering gap review.
    - Technical spec.
-   - PoC design.
-   - PoC execution.
+   - Validation design.
+   - Validation execution.
    - Engineering delivery.
 4. In each user-facing answer, also include a short stage status line:
 
@@ -134,6 +137,34 @@ Bad behavior:
 
 Do not ask a question just because it appears in `references/question-bank.md`. The question bank is a menu. Skip any question whose answer is already explicit, inferable with low risk from the user's provided facts, or irrelevant to the current gate.
 
+## Context Management
+
+Spec intake can become long because business evidence, product shape, Domain Pack objects, Memory policy, wireframes, source-code review, and QA coverage may all appear in one conversation.
+
+When the context becomes complex, remind the user that subagents can help prevent forgotten decisions and context overload. Use bounded subagents when any of these are true:
+
+- The intake has multiple business scenarios, product forms, customer segments, or competing versions of the same requirement.
+- The spec depends on several evidence sources such as meeting transcripts, customer notes, market reports, competitor research, and internal docs.
+- The product shape requires UI, Domain Pack object modeling, Memory policy, user journeys, operation flows, and validation planning in one run.
+- Technical gap review requires reading multiple repositories, docs, or source-code paths.
+- The conversation is long enough that earlier confirmed facts, blockers, or stage-exit decisions may be easy to miss.
+
+Suggested split:
+
+- Evidence subagent: collect and summarize market, customer, competitor, and design-partner evidence with source links.
+- Product subagent: expand workflow, user journeys, operation flows, object model, wireframe needs, and open product questions.
+- Engineering subagent: inspect docs/code and return capability boundaries or implementation gaps.
+- QA subagent: map business success scenarios and operation flows into QA coverage, metrics, and evaluation assets.
+
+For design review, use a virtual review panel rather than a single generic "agent" perspective. The panel can include PM, algorithm/ML, real or representative user, domain expert, researcher, owner, QA, compliance, sales/GTM, and engineering roles. Choose only the roles that reduce real risk. Ask each role to state its review focus, challenge questions, findings, and decision impact. When views conflict, make the roles review each other's assumptions, then have the main agent synthesize the final decision and record it in `review_gates.virtual_review_panel`.
+
+Do not delegate final ownership. The main agent remains responsible for:
+
+- Preserving the stage gate and progress tracker.
+- Passing only bounded, factual tasks to subagents.
+- Verifying subagent evidence before writing it into the spec.
+- Resolving conflicts and producing the final spec.
+
 ## Stage Names
 
 Use only these `stage_gate.current_stage` names:
@@ -142,23 +173,25 @@ Use only these `stage_gate.current_stage` names:
 - `product_shape`
 - `engineering_gap_review`
 - `technical_spec`
-- `poc_design`
-- `poc_execution`
+- `validation_design`
+- `validation_execution`
 - `engineering_delivery`
 - `stop_archive`
 - `unknown`
 
 `intake_routing` is only the entry step for identifying product form and request type. It is not product validation and not a replacement for `business_feasibility`.
 
-Do not compress the flow into "market validation, product shape, PoC design, technical review, engineering delivery" because that hides the distinction between `engineering_gap_review`, `technical_spec`, `poc_design`, and `poc_execution`.
+Do not compress the flow into "market validation, product shape, validation design, technical review, engineering delivery" because that hides the distinction between `engineering_gap_review`, `technical_spec`, `validation_design`, and `validation_execution`.
+
+Use "customer POC" only for the business-side customer pilot: design partner, budget owner, customer reviewer, customer data, acceptance method, and paid or procurement signal. Do not use `validation_design` or `validation_execution` to mean a customer POC.
 
 ## Required References
 
 Read only as needed:
 
-- `references/spec-schema.json` - v1.6 JSON structure.
+- `references/spec-schema.json` - v1.10 JSON structure.
 - `references/question-bank.md` - question patterns by gate.
-- `references/business-success-scenarios.md` - required when collecting, confirming, reviewing, or mapping business success scenarios, or when setting `product_ready`, `poc_design_ready`, or `engineering_ready`.
+- `references/business-success-scenarios.md` - required when collecting, confirming, reviewing, or mapping business success scenarios, or when setting `product_ready`, `validation_design_ready`, or `engineering_ready`.
 - `references/delivery-risk-profile.md` - required when collecting, assessing, confirming, or changing delivery risk, and before setting `product_ready` or a later readiness label.
 - `scripts/validate_spec.py` - deterministic validator.
 
@@ -186,9 +219,30 @@ Ask for:
 6. Evidence registry: separate assumptions from customer interviews, customer data, paid signals, usage data, and artifacts.
 7. Design partner registry: name/status, budget owner, reviewer, committed resources, data availability.
 8. PMF four-factor scores: customer willingness, market clarity, technical value, GTM repeatability.
-9. Opportunity priority: `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`.
-10. Scope-reduction recommendation when scope expansion risk is high.
-11. Competitive research: user-provided competitor comparison, or agent-researched comparison matrix when the user has none.
+9. Market sizing: customer value, customer payment willingness, average contract value, addressable customer count, competition intensity, market size summary, attractiveness score, and evidence confidence.
+10. Opportunity priority: `机会优先级指数 = 商业价值 * 商业信号清晰度 / 产研投入量`.
+11. Scope-reduction recommendation when scope expansion risk is high.
+12. Competitive research: user-provided competitor comparison, or agent-researched comparison matrix when the user has none.
+
+Market sizing should stay concrete:
+
+- `customer_value`: how much value the customer gets if the problem is solved.
+- `customer_payment_willingness`: whether the buyer has budget, urgency, and willingness to pay.
+- `average_contract_value`: expected ACV, POC package size, seat revenue, or other pricing unit.
+- `addressable_customer_count`: how many reachable customers match the ICP.
+- `competition_intensity`: how crowded the market is and whether differentiation can defend the opportunity.
+- `market_attractiveness_score`: a 1-5 judgment of whether the opportunity is large and attractive enough for product attention.
+- `evidence_quality`: evidence mix and gaps behind the estimate.
+
+If exact market numbers are unavailable, record a range, assumption, evidence level, confidence, and the next action to make the estimate less speculative. Do not block business validation only because TAM is imprecise, but do not mark `business_ready` or later without a structured market sizing judgment.
+
+Market sizing evidence must be source-backed:
+
+- Prefer external market evidence: consulting reports, industry reports, market research, public market data, analyst notes, or credible industry datasets.
+- Require first-party customer evidence: customer interviews, customer data, paid signals, usage data, sales pipeline, budget owner feedback, or design partner feedback.
+- Treat internal estimates as supplementary only. A market sizing conclusion based only on internal judgment is still `unverified_estimate` and cannot justify `business_ready`.
+- For medium/high confidence, `top_8`, `supported`, `strongly_supported`, or `market_attractiveness_score >= 4`, require external market evidence plus first-party customer feedback.
+- If external reports are unavailable, record that as `evidence_quality.evidence_gaps`, keep confidence low or partially supported, and ask for the next evidence-gathering action.
 
 When showing PMF scores, include:
 
@@ -212,7 +266,7 @@ Use evidence levels:
 - `repeated`: repeated evidence across customers, flows, or channels.
 - `commercial_proof`: paid POC, signed commitment, expansion, or repeatable GTM proof.
 
-Do not approve PoC unless there is a confirmed design partner, budget owner or committed resources, available data, baseline, acceptance method, timebox, and minimum paid artifact.
+Do not approve customer POC unless there is a confirmed design partner, budget owner or committed resources, available data, baseline, acceptance method, timebox, and minimum paid artifact.
 
 ## Competitive Research Gate
 
@@ -255,8 +309,8 @@ Valid next gates include:
 - `continue_product_shape`
 - `request_engineering_gap_review`
 - `continue_technical_spec`
-- `mark_poc_design_ready`
-- `mark_poc_execution_ready`
+- `mark_validation_design_ready`
+- `mark_validation_execution_ready`
 - `ready_for_engineering`
 - `stop_archive`
 
@@ -266,7 +320,7 @@ Important distinctions:
 - `request_engineering_gap_review` means AI engineering may identify capability gaps, not commit to delivery.
 - `ready_for_engineering` means owners, scope, validation, implementation mapping, data policy, and gates are ready for implementation planning.
 
-If `opportunity_assessment.priority_decision.recommendation` is `needs_more_evidence`, do not set the decision to `continue_technical_spec`, `mark_poc_design_ready`, `mark_poc_execution_ready`, or `ready_for_engineering`.
+If `opportunity_assessment.priority_decision.recommendation` is `needs_more_evidence`, do not set the decision to `continue_technical_spec`, `mark_validation_design_ready`, `mark_validation_execution_ready`, or `ready_for_engineering`.
 
 ## Stage Exit Confirmation
 
@@ -277,8 +331,8 @@ Next-stage decisions are:
 - `handoff_to_product`
 - `request_engineering_gap_review`
 - `continue_technical_spec`
-- `mark_poc_design_ready`
-- `mark_poc_execution_ready`
+- `mark_validation_design_ready`
+- `mark_validation_execution_ready`
 - `ready_for_engineering`
 
 The stage-exit summary must include:
@@ -295,7 +349,7 @@ Record the answer in `stage_gate.stage_exit_check`.
 
 Use this wording pattern:
 
-> 我建议把当前阶段从 `business_feasibility` 切到 `product_shape`。已确认的是 X；还没确认的是 Y；因此只能交给产品收敛形态，不能进入 PoC 或工程。是否确认结束业务验证并进入产品形态？A. 确认进入；B. 继续业务验证。
+> 我建议把当前阶段从 `business_feasibility` 切到 `product_shape`。已确认的是 X；还没确认的是 Y；因此只能交给产品收敛形态，不能进入客户 POC、内部验证或工程。是否确认结束业务验证并进入产品形态？A. 确认进入；B. 继续业务验证。
 
 If the user does not confirm, keep the current stage and set the decision to `continue_business_validation` or `continue_product_shape`.
 
@@ -308,7 +362,7 @@ If the user invokes `finish_now`, do not fabricate a confirmed next-stage transi
 Do not say "business validation passed", "P0 成立", or "商业上已经成立" when material blockers remain. Use precise language:
 
 - "商业假设较强，但仍需补证据。"
-- "可以进入产品形态收敛，但不代表可以进入 PoC 或工程。"
+- "可以进入产品形态收敛，但不代表可以进入客户 POC、内部验证或工程。"
 - "建议列为 P0 市场验证候选，而不是 P0 交付项。"
 
 For `business_feasibility`, do not propose `handoff_to_product` until these have been summarized:
@@ -320,6 +374,7 @@ For `business_feasibility`, do not propose `handoff_to_product` until these have
 - Minimum paid artifact.
 - Evidence level and which items are assumptions.
 - PMF four-factor low score.
+- Market sizing and market attractiveness score.
 - Opportunity priority score and scope risk.
 - Competitive research status.
 - Blocked next actions.
@@ -388,7 +443,7 @@ Use `workflow.user_operation_flows` to seed downstream QA cases:
 - Cover create, view, edit, review, approve/reject, export/share, retry, permission failure, missing data, duplicate action, external-system failure, and rollback/update flows when relevant.
 - Product should aim for comprehensive operation coverage. The validator only enforces structural completeness; the agent must still challenge obvious missing flows during review.
 
-Before `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready`, product goals, business metrics, user journeys, and operation flows must be complete enough for QA to derive test cases and for engineering to know which loop signals to instrument.
+Before `product_ready`, `engineering_gap_review_ready`, `validation_design_ready`, `validation_execution_ready`, or `engineering_ready`, product goals, business metrics, user journeys, and operation flows must be complete enough for QA to derive test cases and for engineering to know which loop signals to instrument.
 
 ### Business Success Scenarios
 
@@ -486,10 +541,10 @@ If `write_allowed=true`, require human approval and rollback method. Customer pr
 If the feature has a UI, dashboard, workspace, editor, approval screen, or visual workflow:
 
 1. During `business_feasibility`, it is enough to mark `wireframe_required=true`, set `wireframe_status=needed`, and list the wireframe as a product-shape blocker.
-2. Before `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready`, produce a low-fidelity `.svg` wireframe.
+2. Before `product_ready`, `engineering_gap_review_ready`, `validation_design_ready`, `validation_execution_ready`, or `engineering_ready`, produce a low-fidelity `.svg` wireframe.
 3. Add the file path to `ui_requirements.wireframe_artifacts`.
 4. Set `wireframe_status` to `drafted` until the user confirms it.
-5. Do not mark `product_ready`, `engineering_gap_review_ready`, `poc_design_ready`, `poc_execution_ready`, or `engineering_ready` until `wireframe_status=reviewed`.
+5. Do not mark `product_ready`, `engineering_gap_review_ready`, `validation_design_ready`, `validation_execution_ready`, or `engineering_ready` until `wireframe_status=reviewed`.
 
 Markdown, Mermaid, or ASCII diagrams can explain the UI, but they do not satisfy the SVG requirement.
 
@@ -536,7 +591,7 @@ Overall `ai_score` should reflect the weakest major risk, not the average only. 
 
 Ask the AI engineer to confirm the score. Do not mark `engineering_ready` unless `source_code_review.status=completed`, required dimensions are scored, and `technical_design_assessment.ai_engineer_confirmation=confirmed`.
 
-## QA And PoC Gate
+## QA And Validation Gate
 
 Use `validation_plan`, not scattered acceptance/testing fields.
 
@@ -550,13 +605,13 @@ business_success_scenarios
   -> execution evidence
 ```
 
-Before `poc_design_ready`, every in-scope critical scenario needs QA coverage design and
+Before `validation_design_ready`, every in-scope critical scenario needs QA coverage design and
 QA cases or evaluation assets. Before `engineering_ready`, that coverage must be approved
 and required automation must be at least planned. Do not require passing tests before
 implementation. Read `references/business-success-scenarios.md` for the field contract,
 responsibility boundary, and exact gate rules.
 
-`poc_design_ready` requires:
+`validation_design_ready` requires:
 
 - scenario
 - golden cases or fixture plan
@@ -565,7 +620,7 @@ responsibility boundary, and exact gate rules.
 - acceptance method
 - metric definitions
 
-`poc_execution_ready` additionally requires:
+`validation_execution_ready` additionally requires:
 
 - available or approved assets
 - owners
@@ -643,19 +698,21 @@ Before returning or saving the final spec, check:
 4. `needs_more_evidence` does not move to engineering delivery.
 5. Evidence refs point to `evidence_registry`.
 6. PMF scores >= 3 have non-assumption evidence.
-7. `competitive_research` has a competitor/substitute matrix, differentiation score, and user confirmation when research is required.
-8. `product_context.technical_leadership` has a claim, proof or argument, agent score, and product owner confirmation before product-ready or later gates.
-9. Domain Pack specs declare the Friday object loop.
-10. Memory write rules have approval, target scope, redaction, and rollback.
-11. UI specs include a produced SVG and reviewed status before product-ready or later gates; business handoff specs may instead record `wireframe_status=needed`.
-12. `product_ready` or later specs have at least one in-scope critical `business_success_scenarios` item, and every in-scope scenario has a business-owner-confirmed expected outcome.
-13. `validation_plan.scenario_coverage` maps business scenarios to QA cases, required automation, evaluation assets, and owners without rewriting business outcomes.
-14. `delivery_risk_profile` resolves all six dimensions, uses at least the highest required R0-R3 floor, lists controls for R1-R3, and is confirmed by `owners.decision_owner` before product-ready or later gates.
-15. Product-ready or later specs include product goals, business-owned metrics refined by product, user journeys, operation flows, and loop-engineering signals.
-16. `validation_plan` separates PoC design readiness from execution readiness.
-17. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
-18. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
-19. `engineering_ready` has real owners, no missing fields, no missing or unknown implementation capabilities, and complete approved scenario coverage with required automation planned.
+7. `market_sizing` has customer value, payment willingness, average contract value, addressable customer count, competition intensity, market attractiveness, and evidence confidence before business-ready or later gates.
+8. `competitive_research` has a competitor/substitute matrix, differentiation score, and user confirmation when research is required.
+9. `product_context.technical_leadership` has a claim, proof or argument, agent score, and product owner confirmation before product-ready or later gates.
+10. Domain Pack specs declare the Friday object loop.
+11. Memory write rules have approval, target scope, redaction, and rollback.
+12. UI specs include a produced SVG and reviewed status before product-ready or later gates; business handoff specs may instead record `wireframe_status=needed`.
+13. `product_ready` or later specs have at least one in-scope critical `business_success_scenarios` item, and every in-scope scenario has a business-owner-confirmed expected outcome.
+14. `validation_plan.scenario_coverage` maps business scenarios to QA cases, required automation, evaluation assets, and owners without rewriting business outcomes.
+15. `delivery_risk_profile` resolves all six dimensions, uses at least the highest required R0-R3 floor, lists controls for R1-R3, and is confirmed by `owners.decision_owner` before product-ready or later gates.
+16. Product-ready or later specs include product goals, business-owned metrics refined by product, user journeys, operation flows, and loop-engineering signals.
+17. `validation_plan` separates validation design readiness from validation execution readiness.
+18. `implementation_mapping` distinguishes existing, partial, missing, external, and unknown capabilities.
+19. Technical design specs include completed source code review, scoring dimensions, and AI engineer confirmation.
+20. Complex product designs record virtual multi-role review in `review_gates.virtual_review_panel`, including PM or owner review plus at least one non-product challenger role.
+21. `engineering_ready` has real owners, no missing fields, no missing or unknown implementation capabilities, and complete approved scenario coverage with required automation planned.
 
 ## Style
 

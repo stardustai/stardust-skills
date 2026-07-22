@@ -317,3 +317,108 @@ LLM 数据领先性：
 3. 如果没有，只完成了哪些中间产物，这些中间产物还剩多少价值？
 
 这三个问题回答清楚，分数通常就不会偏。
+
+## 可复用审计脚本
+
+Skill 内置三类只读脚本，用于把“临时查接口、人工比 Excel、肉眼看在线表”变成可重复执行的验收流程。
+
+| 脚本 | 用途 | 是否写系统 |
+| --- | --- | --- |
+| `dingteam_okr_api.py` | 读取评分档案、评分批次和单个目标评分明细 | 否 |
+| `dingteam_okr_audit.py` | 保存基线、比较前后差异、扫描空分/零分/重复考核 | 否 |
+| `dingteam_okr_consistency_audit.py` | 对比系统、预期清单、Excel 和钉钉在线表 | 否 |
+
+### 1. 评分前保存基线
+
+```bash
+SKILL_DIR=/Users/derek/.agents/skills/dingtang-okr-review
+python3 "$SKILL_DIR/scripts/dingteam_okr_audit.py" snapshot \
+  --okr-id "$OKR_ID" \
+  --output baseline.json
+```
+
+输出会带采集时间、季度 ID、完整评分档案和文件 SHA-256。基线应在批量写入前立即生成，期间不能同时运行其他改分任务。
+
+### 2. 评分后检查意外变化
+
+```bash
+python3 "$SKILL_DIR/scripts/dingteam_okr_audit.py" compare \
+  --okr-id "$OKR_ID" \
+  --baseline baseline.json \
+  --output comparison.json
+```
+
+比较结果分为：
+
+- `added`：新增目标。
+- `removed`：目标被删除。
+- `changed`：分数、进度、目标名、人员或部门发生变化。
+- `hasDifferences`：是否存在任意差异。
+
+例子：计划只更新 Mina 的 7 个管理评价，但比较结果还出现 ET 的目标被删除，必须停止后续写入并调查，不能把删除当成正常清理。
+
+### 3. 扫描空分、零分和重复考核
+
+```bash
+python3 "$SKILL_DIR/scripts/dingteam_okr_audit.py" analyze \
+  --archive baseline.json \
+  --category leadership=领导力 \
+  --category culture=文化价值观
+```
+
+分类条件由命令行传入，不把“领导力、文化价值观”写死在程序里，因此也可以检查其他类型。`nullScores` 是没有评分，`zeroScores` 是明确打了 0 分，两者业务含义不同。`duplicates` 只表示同一人员同一类型有多个目标，需要人工判断，不允许脚本自动删除。
+
+### 4. 验证系统、Excel 和在线表一致
+
+```bash
+python3 "$SKILL_DIR/scripts/dingteam_okr_consistency_audit.py" \
+  --okr-id "$OKR_ID" \
+  --manifest final_manifest.json \
+  --workbook review.xlsx \
+  --online-node "$DINGTALK_SHEET_NODE" \
+  --output consistency.json
+```
+
+`manifest` 是本次评分的预期状态，每个人至少包含：
+
+```json
+{
+  "person": "Mina",
+  "systemEvaluators": ["Derek Zen"],
+  "rows": [
+    {
+      "objectiveId": "objective-id",
+      "krId": "kr-id",
+      "kr": "战略能力",
+      "score": 75,
+      "scoreDesc": "系统中应保存的完整评价文本"
+    }
+  ]
+}
+```
+
+脚本逐项检查：
+
+1. 实时系统中目标和 KR 存在。
+2. 完成人必须与 `systemEvaluators` 一致，状态必须是 `complete`。
+3. 系统 0-1 分值换算为 0-100 后与 manifest 一致。
+4. 系统评价文本与 `scoreDesc` 完全一致，避免只写入半段评论。
+5. Excel 对应人员 tab 和 KR 行存在，分数一致。
+6. 如果提供 `--online-node`，钉钉在线表回读值与 Excel 一致。
+
+任一项不一致，程序返回非零退出码并在 `errors` 中给出人员、KR、位置和差异。只有 `errorCount: 0` 才能对外宣称评分、Excel 和在线文档已经同步完成。
+
+### 安全边界
+
+- 脚本只允许白名单读取接口，不含改分和删除接口。
+- 认证复用 Skill 的专用 headless profile，不读取用户普通 Chrome 的 cookie，不打印 token 或请求头。
+- 删除重复目标、重打分和覆盖评价属于写操作，必须另行获得明确授权。
+- 线上验收必须实时读取系统，不用历史 JSON 冒充当前状态。
+
+### 运行测试
+
+```bash
+python3 -m unittest discover \
+  -s /Users/derek/.agents/skills/dingtang-okr-review/scripts \
+  -p 'test_dingteam_okr_*.py' -v
+```

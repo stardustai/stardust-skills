@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.6",
+  "spec_version": "1.10",
   "spec_id": "SPEC-INS-BROKER-PROPOSAL-001",
   "title": "保险经纪人客户报销组合方案生成 Domain Pack",
   "status": "spec_review",
@@ -15,7 +15,7 @@
     ],
     "blocked_next_actions": [
       "进入工程排期",
-      "进入 PoC 执行",
+      "进入验证执行",
       "承诺正式报价、核保或 CRM 写回"
     ],
     "blockers": [
@@ -27,8 +27,8 @@
     "required_owner": "产品 owner + AI 工程 owner",
     "stage_exit_check": {
       "status": "confirmed",
-      "exit_summary": "Current stage product_shape is complete enough for engineering_gap_review only. Confirmed facts: product basis is Domain Pack; target buyer is insurance brokerage sales or company owner; acceptance reviewer is senior broker/compliance reviewer; current alternative is manual product lookup plus generic LLM drafting; minimum paid artifact is a reviewable insurance reimbursement proposal draft; evidence is single_case/anecdotal and design partner remains unconfirmed; PMF low score is customer_willingness/GTM repeatability; opportunity priority is medium because commercial signal is plausible but not paid; competitive research is confirmed; blocked next actions include engineering delivery, PoC execution, formal quote, underwriting, and CRM writeback.",
-      "confirmation_question": "是否确认结束产品形态收敛，只进入 engineering_gap_review，而不进入 PoC 执行或工程交付？",
+      "exit_summary": "Current stage product_shape is complete enough for engineering_gap_review only. Confirmed facts: product basis is Domain Pack; target buyer is insurance brokerage sales or company owner; acceptance reviewer is senior broker/compliance reviewer; current alternative is manual product lookup plus generic LLM drafting; minimum paid artifact is a reviewable insurance reimbursement proposal draft; evidence is single_case/anecdotal and design partner remains unconfirmed; PMF low score is customer_willingness/GTM repeatability; opportunity priority is medium because commercial signal is plausible but not paid; competitive research is confirmed; blocked next actions include engineering delivery, validation execution, formal quote, underwriting, and CRM writeback.",
+      "confirmation_question": "是否确认结束产品形态收敛，只进入 engineering_gap_review，而不进入验证执行或工程交付？",
       "confirmed_by": "Derek",
       "confirmed_at": "2026-07-10",
       "next_stage": "engineering_gap_review"
@@ -49,6 +49,55 @@
       "biggest_delivery_risk": "客户资料敏感、保险产品条款更新频繁、合规边界容易被误解为正式报价或购买建议",
       "next_sales_action": "约设计伙伴确认样例资料、预算 owner、合规 review 人和 4 周 POC 验收方式",
       "pmf_confidence": "medium"
+    },
+    "market_sizing": {
+      "customer_value": {
+        "score": 4,
+        "evidence_refs": ["EV-001", "EV-002"],
+        "notes": "客户价值来自经纪人方案准备时间下降、资深经纪人重复 review 压力下降，以及方案口径一致性提升"
+      },
+      "customer_payment_willingness": {
+        "score": 3,
+        "evidence_refs": ["EV-001", "EV-004"],
+        "notes": "客户访谈显示痛点明确，但预算 owner 和付费 POC 承诺仍未确认，所以只能给中等分"
+      },
+      "average_contract_value": {
+        "estimate": "付费 POC 包 + 后续私有 Domain Pack/席位订阅，金额待销售确认",
+        "range": "待确认",
+        "unit": "人民币/客户/年或 POC 包",
+        "evidence_refs": ["EV-001", "EV-004"],
+        "notes": "第一版不能假设高客单价，必须通过设计伙伴确认 POC 预算和后续订阅意愿"
+      },
+      "addressable_customer_count": {
+        "estimate": "中大型保险经纪公司、企业员工福利顾问团队和高频方案生成团队，数量待市场调研确认",
+        "range": "待确认",
+        "unit": "目标企业客户数",
+        "evidence_refs": ["EV-001"],
+        "notes": "当前只能确认目标客户类型，尚未有可复用名单、渠道规模或行业渗透率数据"
+      },
+      "competition_intensity": {
+        "score": 3,
+        "evidence_refs": ["EV-001", "EV-002"],
+        "notes": "通用 LLM 和传统保险经纪 CRM/AMS 都能解决部分问题，竞争不低；Friday 的差异在私有资料、证据追溯和 Recipe/Memory 闭环"
+      },
+      "market_size_summary": "市场体量初步看中等偏上：客户价值和技术差异较强，但客单价、客户数量和付费意愿还缺真实销售证据。",
+      "market_attractiveness_score": 3,
+      "calculation_note": "当前不做 TAM 精确测算；先用客户价值、支付意愿、客单价、客户数量和竞争强度给出 1-5 的机会吸引力判断，待设计伙伴和销售名单确认后再更新。",
+      "evidence_refs": ["EV-001", "EV-002", "EV-004"],
+      "evidence_quality": {
+        "validation_status": "partially_supported",
+        "primary_evidence_refs": ["EV-001", "EV-004"],
+        "external_market_evidence_refs": ["EV-004"],
+        "first_party_customer_feedback_refs": ["EV-001"],
+        "internal_estimate_refs": ["EV-002"],
+        "evidence_gaps": [
+          "缺少真实设计伙伴预算区间",
+          "缺少目标客户名单规模",
+          "缺少同类产品真实成交客单价"
+        ],
+        "confidence_rationale": "市场体量由一手客户访谈和外部行业研究共同支撑，但客单价和可触达客户数量仍需销售进一步验证。"
+      },
+      "confidence": "medium"
     },
     "pmf_validation": {
       "use_case_id": "UC-INS-001",
@@ -237,6 +286,22 @@
         "is_assumption": true,
         "linked_fields": [
           "opportunity_assessment.pmf_validation.four_factor_scores.gtm_repeatability"
+        ]
+      },
+      {
+        "id": "EV-004",
+        "type": "market_research",
+        "level": "single_case",
+        "summary": "外部保险经纪数字化和保险分销技术市场研究，用于支撑目标客户池、竞争格局和潜在客单价区间判断",
+        "source": "https://example.com/insurance-broker-digital-tools-market-research",
+        "collected_at": "2026-07-21",
+        "verified_by": "PMF owner 待确认",
+        "is_assumption": false,
+        "linked_fields": [
+          "opportunity_assessment.market_sizing.average_contract_value",
+          "opportunity_assessment.market_sizing.addressable_customer_count",
+          "opportunity_assessment.market_sizing.competition_intensity",
+          "opportunity_assessment.market_sizing.evidence_quality"
         ]
       }
     ],
@@ -632,7 +697,7 @@
         "confirmer_role": "business_owner",
         "confirmed_by": "示例业务 owner",
         "confirmed_at": "2026-07-20",
-        "confirmed_version": "1.6"
+        "confirmed_version": "1.10"
       }
     }
   ],
@@ -910,7 +975,7 @@
         "owner": "QA owner / Engineering owner 待确认"
       }
     ],
-    "poc_design_ready": {
+    "validation_design_ready": {
       "status": "blocked",
       "requirements": [
         "10 个脱敏客户样例",
@@ -925,7 +990,7 @@
         "评分规则未确认"
       ]
     },
-    "poc_execution_ready": {
+    "validation_execution_ready": {
       "status": "not_ready",
       "requirements": [
         "可用测试环境",
@@ -936,7 +1001,7 @@
       ],
       "owner": "QA owner / DevOps owner 待确认",
       "blockers": [
-        "尚未进入 PoC 设计 ready"
+        "尚未进入验证方案设计 ready"
       ]
     },
     "metrics": [
@@ -1121,7 +1186,7 @@
     ],
     "qa_review": [
       "定义黄金样例、失败样例、rubric、metric 和 pass/fail rule",
-      "确认 poc_design_ready 与 poc_execution_ready"
+      "确认 validation_design_ready 与 validation_execution_ready"
     ],
     "compliance_review": [
       "定义不可接受错误",
@@ -1132,6 +1197,108 @@
       "不得在 engineering_gap_review 后直接开工",
       "必须先补齐真实样例、Artifact 合约、Memory 写入规则、QA owner 和工程 owner",
       "stage_gate.readiness_label 必须变为 engineering_ready"
+    ],
+    "virtual_review_panel": [
+      {
+        "role_id": "VR-PM-001",
+        "role_name": "虚拟 PM reviewer",
+        "role_type": "pm",
+        "review_focus": [
+          "第一版范围",
+          "Artifact 和工作台闭环",
+          "stage gate 是否正确"
+        ],
+        "challenge_questions": [
+          "最小可付费 Artifact 是否足够窄？",
+          "哪些 UI 和编辑能力必须留到 engineering gap review 后再定？"
+        ],
+        "review_findings": [
+          "当前只能进入 engineering_gap_review，不应承诺工程排期",
+          "Artifact 编辑、评论和导出仍是第一版关键缺口"
+        ],
+        "decision_impact": "保留 Artifact 编辑、评论和导出为技术缺口；第一版不扩展到报价、核保或 CRM 写回。",
+        "status": "completed"
+      },
+      {
+        "role_id": "VR-ALG-001",
+        "role_name": "虚拟算法 reviewer",
+        "role_type": "algorithm",
+        "review_focus": [
+          "资料召回质量",
+          "方案生成稳定性",
+          "不可接受错误"
+        ],
+        "challenge_questions": [
+          "10 个黄金样例是否足以覆盖主险种和常见客户画像？",
+          "AI 生成方案如何避免编造保障条款或产品限制？"
+        ],
+        "review_findings": [
+          "需要黄金样例、失败样例和专家参考答案，否则不能进入验证执行",
+          "Memory 召回证据必须在 Artifact 中可追溯展示"
+        ],
+        "decision_impact": "验证方案设计前必须补齐样例集、rubric、证据引用和失败判定规则。",
+        "status": "completed"
+      },
+      {
+        "role_id": "VR-USER-001",
+        "role_name": "虚拟保险经纪人用户 reviewer",
+        "role_type": "user",
+        "review_focus": [
+          "日常使用入口",
+          "客户资料上传",
+          "方案草稿可审阅性"
+        ],
+        "challenge_questions": [
+          "经纪人是否愿意在 Friday 工作台内完成资料整理和方案 review？",
+          "生成结果如果不能直接发给客户，是否仍有足够价值？"
+        ],
+        "review_findings": [
+          "第一版价值应定位为可审阅方案草稿，而不是自动成单",
+          "需要清楚标记 AI 生成内容、证据来源和人工确认状态"
+        ],
+        "decision_impact": "UI wireframe 必须突出资料、证据、草稿、review 状态和导出前阻断规则。",
+        "status": "completed"
+      },
+      {
+        "role_id": "VR-EXPERT-001",
+        "role_name": "虚拟保险领域专家 reviewer",
+        "role_type": "domain_expert",
+        "review_focus": [
+          "保险建议合规边界",
+          "领域知识沉淀",
+          "失败案例复盘"
+        ],
+        "challenge_questions": [
+          "哪些客户信息缺失时必须阻止生成结论？",
+          "哪些优秀或失败方案可以脱敏沉淀为 Domain Pack Memory？"
+        ],
+        "review_findings": [
+          "必须把个人隐私和无关信息排除在长期 Memory 外",
+          "脱敏优秀/失败案例可以沉淀为 Domain Pack Memory，用于 recipe 迭代"
+        ],
+        "decision_impact": "Memory 写入规则需要人工确认、脱敏和回滚；未经确认内容不能进入长期知识。",
+        "status": "completed"
+      },
+      {
+        "role_id": "VR-OWNER-001",
+        "role_name": "虚拟业务 owner reviewer",
+        "role_type": "owner",
+        "review_focus": [
+          "商业验证充分性",
+          "设计伙伴承诺",
+          "投入优先级"
+        ],
+        "challenge_questions": [
+          "是否已有愿意投入真实资料和 reviewer 的设计伙伴？",
+          "在缺少预算 owner 时，是否只能作为继续取证机会？"
+        ],
+        "review_findings": [
+          "预算 owner 仍缺失，所以不能标记为 engineering_ready",
+          "当前机会可以进入技术缺口评审，但需要继续补商业证据"
+        ],
+        "decision_impact": "保持当前 readiness_label=engineering_gap_review_ready；business owner 继续补设计伙伴和预算证据。",
+        "status": "completed"
+      }
     ]
   },
   "missing_fields": [
@@ -1159,6 +1326,10 @@
   "change_log": [
     "2026-07-10: 升级为 spec-intake schema v1.4",
     "2026-07-20: 升级为 v1.5，新增业务成功场景与 QA/工程覆盖映射",
-    "2026-07-20: 升级为 v1.6，新增产品目标、业务指标、用户旅程和用户操作流"
+    "2026-07-20: 升级为 v1.6，新增产品目标、业务指标、用户旅程和用户操作流",
+    "2026-07-21: 升级为 v1.7，新增 business 阶段市场体量评估",
+    "2026-07-21: 升级为 v1.8，新增市场体量证据质量和来源组合要求",
+    "2026-07-22: 升级为 v1.9，新增虚拟多角色评审团，支持 PM、算法、用户、专家、researcher、owner 等互相挑战设计假设",
+    "2026-07-22: 升级为 v1.10，将内部 PoC 阶段改名为 validation_design / validation_execution，并把客户 POC 保留为 business 阶段概念"
   ]
 }

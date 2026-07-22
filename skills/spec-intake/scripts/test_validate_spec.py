@@ -199,7 +199,7 @@ class ValidateBusinessSuccessScenarioTests(unittest.TestCase):
                     "confirmer_role": "business_owner",
                     "confirmed_by": "业务 owner",
                     "confirmed_at": "2026-07-20",
-                    "confirmed_version": "1.6",
+                    "confirmed_version": "1.10",
                 },
             }
         ]
@@ -290,7 +290,7 @@ class ValidateBusinessSuccessScenarioTests(unittest.TestCase):
             errors,
         )
         self.assertIn(
-            "engineering_ready requires confirmation version 1.6 for business success scenario: BIZ-E2E-001",
+            "engineering_ready requires confirmation version 1.10 for business success scenario: BIZ-E2E-001",
             errors,
         )
 
@@ -420,6 +420,160 @@ class ValidateProductShapeCoverageTests(unittest.TestCase):
         )
         self.assertIn(
             "product_context.product_goals[0].product_metric_refs references unknown validation metric: M-UNKNOWN",
+            errors,
+        )
+
+
+class ValidateVirtualReviewPanelTests(unittest.TestCase):
+    def test_complex_product_ready_requires_virtual_review_panel(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "product_shape"
+        spec_data["stage_gate"]["readiness_label"] = "product_ready"
+        spec_data["review_gates"]["virtual_review_panel"] = []
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "product_ready requires review_gates.virtual_review_panel for complex product design",
+            errors,
+        )
+
+    def test_virtual_review_panel_needs_multiple_role_types(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "product_shape"
+        spec_data["stage_gate"]["readiness_label"] = "product_ready"
+        spec_data["review_gates"]["virtual_review_panel"] = [
+            {
+                "role_id": "VR-PM-ONLY",
+                "role_name": "虚拟 PM reviewer",
+                "role_type": "pm",
+                "review_focus": ["第一版范围"],
+                "challenge_questions": ["是否已经收敛到最小可验证范围？"],
+                "review_findings": ["当前仍需要非产品角色挑战技术和用户假设"],
+                "decision_impact": "不能仅凭 PM 视角进入 product_ready。",
+                "status": "completed",
+            }
+        ]
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn("product_ready requires at least two virtual review role types", errors)
+        self.assertIn("product_ready requires a non-product virtual challenger role", errors)
+        self.assertIn("product_ready requires at least two completed virtual review roles", errors)
+
+    def test_completed_virtual_review_role_requires_findings(self) -> None:
+        spec_data = _load_example()
+        role = spec_data["review_gates"]["virtual_review_panel"][0]
+        role["review_findings"] = []
+        role["decision_impact"] = None
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "review_gates.virtual_review_panel[0].review_findings is required for completed virtual review role",
+            errors,
+        )
+        self.assertIn(
+            "review_gates.virtual_review_panel[0].decision_impact is required for completed virtual review role",
+            errors,
+        )
+
+
+class ValidateMarketSizingTests(unittest.TestCase):
+    def test_business_ready_requires_market_sizing(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "business_feasibility"
+        spec_data["stage_gate"]["readiness_label"] = "business_ready"
+        spec_data["stage_gate"]["decision"] = "handoff_to_product"
+        spec_data["stage_gate"]["stage_exit_check"]["next_stage"] = "product_shape"
+        spec_data.pop("business_success_scenarios", None)
+        spec_data["validation_plan"]["scenario_coverage"] = []
+        spec_data["opportunity_assessment"].pop("market_sizing", None)
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn("opportunity_assessment.market_sizing must be an object", errors)
+        self.assertTrue(
+            any("handoff_to_product requires structured business handoff fields" in error for error in errors),
+            errors,
+        )
+
+    def test_business_ready_requires_complete_market_sizing_dimensions(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "business_feasibility"
+        spec_data["stage_gate"]["readiness_label"] = "business_ready"
+        spec_data["stage_gate"]["decision"] = "handoff_to_product"
+        spec_data["stage_gate"]["stage_exit_check"]["next_stage"] = "product_shape"
+        spec_data["opportunity_assessment"]["market_sizing"]["average_contract_value"]["estimate"] = None
+        spec_data["opportunity_assessment"]["market_sizing"]["customer_value"]["evidence_refs"] = ["EV-003"]
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "business_ready requires opportunity_assessment.market_sizing.average_contract_value.estimate",
+            errors,
+        )
+        self.assertIn(
+            "business_ready requires non-assumption evidence for opportunity_assessment.market_sizing.customer_value",
+            errors,
+        )
+
+    def test_market_sizing_scores_must_be_in_range(self) -> None:
+        spec_data = _load_example()
+        spec_data["opportunity_assessment"]["market_sizing"]["market_attractiveness_score"] = 6
+        spec_data["opportunity_assessment"]["market_sizing"]["competition_intensity"]["score"] = 0
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "opportunity_assessment.market_sizing.market_attractiveness_score must be between 1 and 5",
+            errors,
+        )
+        self.assertIn(
+            "opportunity_assessment.market_sizing.competition_intensity.score must be between 1 and 5",
+            errors,
+        )
+
+    def test_business_ready_rejects_unverified_market_estimate(self) -> None:
+        spec_data = _load_example()
+        spec_data["stage_gate"]["current_stage"] = "business_feasibility"
+        spec_data["stage_gate"]["readiness_label"] = "business_ready"
+        spec_data["stage_gate"]["decision"] = "handoff_to_product"
+        spec_data["stage_gate"]["stage_exit_check"]["next_stage"] = "product_shape"
+        quality = spec_data["opportunity_assessment"]["market_sizing"]["evidence_quality"]
+        quality["validation_status"] = "unverified_estimate"
+        quality["first_party_customer_feedback_refs"] = []
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "business_ready requires opportunity_assessment.market_sizing.evidence_quality.validation_status=partially_supported, supported, or strongly_supported",
+            errors,
+        )
+        self.assertIn(
+            "business_ready requires first-party customer feedback evidence for market sizing",
+            errors,
+        )
+
+    def test_medium_confidence_market_sizing_requires_external_market_evidence(self) -> None:
+        spec_data = _load_example()
+        spec_data["opportunity_assessment"]["market_sizing"]["evidence_quality"]["external_market_evidence_refs"] = []
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "supported market sizing, medium/high confidence, top_8 priority, or attractiveness >= 4 requires external market evidence such as consulting_report, industry_report, or market_research",
+            errors,
+        )
+
+    def test_market_evidence_quality_references_must_exist(self) -> None:
+        spec_data = _load_example()
+        spec_data["opportunity_assessment"]["market_sizing"]["evidence_quality"]["primary_evidence_refs"].append("EV-UNKNOWN")
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "opportunity_assessment.market_sizing.evidence_quality.primary_evidence_refs references unknown evidence item: EV-UNKNOWN",
             errors,
         )
 

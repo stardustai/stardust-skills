@@ -26,7 +26,7 @@ import time
 import uuid
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 BASE = "https://dingokr.dingteam.com"
 
@@ -157,13 +157,19 @@ def _post(path: str, body: dict, headers: dict[str, str]) -> dict:
     req_headers = dict(headers)
     req_headers["Content-Type"] = "application/json"
     data = json.dumps(body, ensure_ascii=False).encode("utf-8")
-    request = Request(BASE + path, data=data, method="POST", headers=req_headers)
-    try:
-        with urlopen(request, timeout=30) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except HTTPError as exc:
-        detail = exc.read().decode("utf-8", errors="replace")[:300]
-        raise RuntimeError(f"Dingteam API {path} failed: HTTP {exc.code} {detail}") from exc
+    for attempt in range(3):
+        request = Request(BASE + path, data=data, method="POST", headers=req_headers)
+        try:
+            with urlopen(request, timeout=30) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            detail = exc.read().decode("utf-8", errors="replace")[:300]
+            raise RuntimeError(f"Dingteam API {path} failed: HTTP {exc.code} {detail}") from exc
+        except (TimeoutError, URLError) as exc:
+            if attempt == 2:
+                raise RuntimeError(f"Dingteam API {path} failed after 3 attempts: {exc}") from exc
+            time.sleep(1.5 * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 def _unwrap(payload):

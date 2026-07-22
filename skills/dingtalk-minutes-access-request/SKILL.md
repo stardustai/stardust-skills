@@ -20,6 +20,21 @@ Do not use this skill to extract, summarize, or save meeting transcript content.
 
 If permission is granted after a recheck, stop and switch to `dws minutes` for the actual read.
 
+## Missing Summary vs Empty Transcript
+
+When a user reports that a minutes item may not have generated an AI summary, verify the two DWS surfaces separately before clicking the page:
+
+```bash
+dws minutes get summary --id <row_key> --format json
+dws minutes get transcription --id <row_key> --format json
+```
+
+- If `get summary` returns non-empty `fullSummary` but `get transcription` returns no paragraphs, this is not a missing-summary case. Do not click `重新生成纪要`; that regenerates the AI summary and does not create transcript paragraphs. Treat the item as `zero_transcript`, do not save a transcript, and report the DWS transcript metadata.
+- If the summary is empty and the page is accessible, open `https://shanji.dingtalk.com/app/transcribes/<row_key>`, switch to `AI纪要` / `AI Summary`, click the visible `重新生成纪要` / `Regenerate summary` or equivalent generate-summary primary action, wait for generation to finish, then re-read with `dws minutes get summary`.
+- If transcript paragraphs are missing, look for a visible `转文字` / `Transcribe text` control on the page. Only click it when the page clearly shows no transcript and offers transcription generation. After clicking, wait and recheck with `dws minutes get transcription`; save only after paragraphs are non-zero and pagination completes.
+
+Static bundle evidence from the Shanji minutes app includes `fullTextSummary.regenerateSummary` (`重新生成纪要`) and `detail.convertText` (`转文字`), so keep summary regeneration and transcript generation as separate page actions.
+
 ## Prerequisites
 
 - macOS with Google Chrome installed.

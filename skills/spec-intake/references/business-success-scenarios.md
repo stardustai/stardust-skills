@@ -1,8 +1,8 @@
 # Business Success Scenarios
 
 Use this reference whenever `spec-intake` collects, confirms, reviews, or maps
-`business_success_scenarios`, and before setting `product_ready`, `poc_design_ready`,
-`poc_execution_ready`, or `engineering_ready`.
+`business_success_scenarios`, and before setting `product_ready`, `validation_design_ready`,
+`validation_execution_ready`, or `engineering_ready`.
 
 ## Purpose
 
@@ -112,7 +112,7 @@ business_success_scenarios
   `confirmed_by` must match both the scenario `business_owner` and
   `owners.business_owner`; `confirmed_version` must match the top-level `spec_version`;
   `confirmed_at` must be a valid ISO date such as `2026-07-20`.
-- `poc_design_ready` and `poc_execution_ready`: every in-scope critical scenario requires
+- `validation_design_ready` and `validation_execution_ready`: every in-scope critical scenario requires
   a coverage item, QA coverage at least `drafted`, and QA cases or evaluation assets.
 - `engineering_ready`: every in-scope critical scenario requires `qa_status=approved`.
   When automation is `required`, `automation_plan_status` must be `planned`,

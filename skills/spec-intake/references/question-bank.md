@@ -13,7 +13,7 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 
 ## Opening And Progress
 
-- 开场是否已经展示完整流程图：intake_routing -> business_feasibility -> product_shape -> engineering_gap_review -> technical_spec -> poc_design -> poc_execution -> engineering_delivery？
+- 开场是否已经展示完整流程图：intake_routing -> business_feasibility -> product_shape -> engineering_gap_review -> technical_spec -> validation_design -> validation_execution -> engineering_delivery？
 - 是否已经说明当前只在 `business_feasibility`，还没有进入 `product_shape`、PoC 或工程？
 - 在 Codex 环境里是否已经调用 `update_plan`？仅在工具不可用时，文本进度提示才可以作为 fallback。
 - 用户是否知道每次阶段切换都需要确认？
@@ -33,7 +33,7 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 第一版最小可付费交付物是什么？客户愿意为哪一个具体 Artifact 付钱或投入资源验证？
 - 客户为什么愿意付钱？是省人、省时间、提转化、降风险、增加收入，还是满足刚性合规/交付要求？
 - 目标客户池在哪里？有没有已知设计伙伴或种子客户？
-- POC 怎么跑通？谁参与，跑多久，用什么数据，什么结果算继续推进？
+- 客户 POC 怎么跑通？谁参与，跑多久，用什么数据，什么结果算继续推进？
 - 最大交付风险是什么：数据拿不到、效果不可验证、集成太重、预算不确定、owner 不明确，还是合规风险？
 - 下一步销售动作是什么：约客户确认、拿样例数据、确认预算、定 POC 范围、找设计伙伴，还是先内部评审？
 
@@ -63,7 +63,25 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 决策链是什么：谁感知痛点，谁评估，谁审批，谁付费，谁阻塞？
 - 付费信号是什么：预算金额或区间、付费 POC、采购阶段、商业 deadline，还是客户愿意投入数据和人力？
 - 四因子里当前最低分是哪一项：客户愿意买、市场讲得清、技术价值，还是 GTM 可复制？
-- 如果要批准 PoC，是否已经有 confirmed design partner、预算 owner、可用数据、baseline、验收方式和时间盒？
+- 如果要批准客户 PoC，是否已经有 confirmed design partner、预算 owner、可用数据、baseline、验收方式和时间盒？
+
+## Market Sizing
+
+Market sizing belongs to `business_feasibility`. It is not a single TAM number. First extract what the user already provided, then ask for the missing dimension that most changes the business gate or priority score.
+
+- 客户价值有多大？如果这个问题被解决，客户具体获得什么：省钱、省人、省时间、增加收入、降低风险、提高成交率，还是满足刚性合规？
+- 客户支付意愿有多强？是否有预算 owner、预算区间、付费 POC、采购 deadline、已批准项目或明确的人力/数据投入？
+- 预计客单价是多少？是 POC 包、年费、席位费、按项目收费，还是私有 Pack 交付费？如果不确定，先给区间和依据。
+- 可触达客户数量有多少？目标 ICP 下有多少已知客户、销售名单、渠道客户、行业客户池或可复用线索？
+- 市场竞争程度如何？客户会拿我们和通用 LLM、已有 SaaS、传统系统、外包服务还是人工流程比较？
+- 竞争越强时，是否有足够差异化支撑客单价和客户转化？如果没有，市场吸引力不能高分。
+- 当前市场体量判断的证据是什么？哪些是客户事实，哪些只是内部估算？
+- 有没有咨询公司报告、行业报告、市场研究、公开行业数据或分析师报告可以支撑客户数量、客单价、竞争格局？
+- 有没有一手客户反馈可以支撑客户价值和支付意愿：客户访谈、预算 owner 反馈、付费 POC、客户数据、使用数据、销售 pipeline 或设计伙伴反馈？
+- 哪些字段只是内部估算？内部估算只能作为补充，不能单独支撑 `business_ready`。
+- 当前证据质量是 unverified_estimate、partially_supported、supported，还是 strongly_supported？
+- `market_attractiveness_score` 打几分？1 表示小众且难付费，5 表示客户价值高、愿付费、客单价高、客户数量多且竞争可防守。
+- 如果市场体量证据不足，下一步要补什么：客户名单、预算访谈、客单价验证、竞品价格、渠道规模，还是行业数据？
 
 ## Opportunity Priority
 
@@ -92,7 +110,7 @@ If a user gives a paragraph, meeting note, transcript excerpt, or partially stru
 - 现在只能继续取证，还是已经可以交给产品？
 - 产品形态是否足够清楚，可以让 AI 工程做技术缺口评审？
 - 这是请求技术缺口评审，还是请求工程排期？两者不能混用。
-- 当前是否具备 PoC 设计 ready？是否具备 PoC 执行 ready？
+- 当前是否具备验证方案设计 ready？是否具备验证执行 ready？
 - 如果现在交接，接收方下一步最需要回答哪个问题？
 - 当前哪些 next actions 应该被 blocked，避免被误解为可以开工？
 - 如果准备切换阶段，退出总结是否覆盖：当前阶段、下一阶段、已确认事实、剩余假设或 blocker、为什么允许下一阶段、什么仍然禁止？
@@ -238,7 +256,7 @@ risk floor.
 - QA 为每个业务场景补充了哪些边界、负向、权限、重复、外部失败和恢复用例？这些补充是否保持原业务成功终态不变？
 - 哪些场景必须自动化，哪些允许人工验证，哪些不适用？理由和 owner 是什么？
 - 要进入 `engineering_ready` 的场景是否已经 QA approved，且所有 required automation 至少为 planned？
-- 现在只是 PoC 设计 ready，还是 PoC 执行 ready？
+- 现在只是验证方案设计 ready，还是验证执行 ready？
 - 有没有黄金样例：客户画像 + 产品资料 + 标准答案？
 - 失败样例有哪些：信息缺失、客户预算不匹配、产品互斥、地区限制、资料过期？
 - 每个指标的 metric_id、definition、baseline、target、measurement_method、fixture_id、owner、pass_fail_rule 是什么？
@@ -276,3 +294,12 @@ risk floor.
 - QA 必须确认哪些样例、rubric、指标和阻断错误？
 - 是否需要合规/法务审查？
 - 工程启动前还有哪些条件必须满足？
+
+## Virtual Review Panel
+
+- 这个 spec 是否复杂到需要虚拟多角色评审，而不是只让一个 agent 总结？
+- 哪些角色最可能指出盲点：PM、算法/ML、真实或代表性用户、领域专家、researcher、owner、QA、合规、销售/GTM、工程？
+- 每个虚拟角色应该评审什么：商业证据、产品范围、算法可行性、用户操作流、领域正确性、合规边界、测试覆盖，还是工程落点？
+- 哪个角色应该挑战哪个角色的假设？例如用户挑战 PM 的范围假设，算法挑战 owner 的效果预期，专家挑战 AI 生成内容的领域边界。
+- 多角色互评后，哪些设计结论被保留、收窄、推迟或否决？
+- 哪些虚拟评审结论必须写入 `review_gates.virtual_review_panel[].decision_impact`，并影响 `stage_gate`？

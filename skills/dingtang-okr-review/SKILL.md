@@ -17,7 +17,7 @@ This skill is for 叮当OKR (`https://dingokr.dingteam.com/...`), not DingTalk O
 - For automated CEO OKR review runners, use a live 叮当OKR Web/API source for the `dingokr.dingteam.com` product. Do not default to Agoal just because the word OKR appears; this tenant has previously exported live OKR data from the Dingteam Web product while Agoal rule APIs returned no objective rule. Re-confirmed: even with all 10 Agoal permissions granted on the DingTalk app, `GET /v1.0/agoal/objectiveRuleLists/query` returns `success:true` with `totalCount:0` — the org uses 叮当OKR (蓝凌), not DingTalk-native Agoal, so the DingTalk Agoal API never has this data.
 - Configure the service with `CEO_OKR_SOURCE_KIND=dingteam_web` and `CEO_OKR_LIVE_SOURCE_COMMAND`. The command must accept `{user_id}` and `{period_label}` placeholders and return live JSON containing `processed.objectives` and `processed.okrRows`.
 - Three live-source commands are available (all return the same `processed.objectives` / `processed.okrRows`). Prefer the headless-browser source — it does NOT need an always-open Chrome tab:
-  - **Preferred — headless browser + token cache** (`dingteam_okr_browser_source.py`): a dedicated, persistent browser profile (default `~/.dingteam-okr-profile`) holds the DingTalk SSO session. One-time interactive login, then the service drives a headless Chromium itself to mint/refresh the session JWT; the JWT is cached (`<profile>/token_cache.json`, mode 600) and reused until ~5 min before its `exp` (~6h), so most fetches launch no browser at all.
+  - **Preferred — headless browser + token cache** (`dingteam_okr_browser_source.py`): a dedicated, persistent browser profile (default `~/.agents/runtime/dingteam-okr-chrome`) holds the DingTalk SSO session. One-time interactive login, then the service drives a headless Chromium itself to mint/refresh the session JWT; the JWT is cached (`<profile>/token_cache.json`, mode 600) and reused until ~5 min before its `exp` (~6h), so most fetches launch no browser at all.
     - One-time (or when the DingTalk session expires): `python3 /Users/derek/.agents/skills/dingtang-okr-review/scripts/dingteam_okr_browser_source.py login` (opens a window; scan the DingTalk QR once).
     - `CEO_OKR_LIVE_SOURCE_COMMAND=/Users/derek/.agents/skills/dingtang-okr-review/scripts/dingteam_okr_browser_source.py fetch --user-id {user_id} --period-label {period_label}`
     - Requires `pip install playwright` (uses system Chrome via `channel="chrome"`). The dedicated profile is the source's OWN session store, not the user's Chrome profile; it never reads the user's Chrome cookie store and never prints the token.
@@ -42,7 +42,7 @@ For an automated OKR review request in this Dingteam Web tenant, collect live da
 3. Each KR row must include parent O, O weight/progress, KR title, KR weight/progress, and `krDetailsUpdatesAggregated`.
 4. Pass the processed live JSON into the OKR review runner. If the command or API call fails, report that live OKR data is unavailable; do not silently fall back to old local exports.
 
-The preferred `dingteam_okr_direct_source.py` calls these private 叮当OKR endpoints (base `https://dingokr.dingteam.com`, all `POST`, reusing the captured session headers — `Authorization`, `X-Dingteam-Auth-App-Id`, `X-Space-Id`, etc.):
+The preferred `dingteam_okr_browser_source.py` reuses the processing in `dingteam_okr_direct_source.py` and calls these private 叮当OKR endpoints (base `https://dingokr.dingteam.com`, all `POST`, reusing the captured session headers — `Authorization`, `X-Dingteam-Auth-App-Id`, `X-Space-Id`, etc.):
 
 | Step | Endpoint | Body |
 | --- | --- | --- |
@@ -51,6 +51,55 @@ The preferred `dingteam_okr_direct_source.py` calls these private 叮当OKR endp
 | KR detail | `/data/okr/objective/findKrDetail` | `{"objId","krId"}` |
 | KR progress history | `/data/okr/objective/log/progressHistory` | `{"objectiveId","krId"}` |
 | 评论/进展 comments | `/data/okr/objective/findCommentList/v2` | `{"objectiveId","pageNo","pageSize","sort":false,"logTypeCells":[],"krId":"","commentId":""}` |
+
+### Headless Scoring Writes
+
+- Scoring must reuse `dingteam_okr_browser_source.py:get_headers()`. Do not capture auth by clicking or switching the user's normal Chrome tabs when the dedicated headless profile is available.
+- Before writing, call `POST /data/okr/objective/getScoreDetail` with `{"objectiveId","batchId"}` and verify that the intended evaluator appears in `krScoreDetails[].roleUsers[].users[]`. Never overwrite a score owned by another formal evaluator.
+- Submit with `POST /data/okr/objective/makeScore`. The body is `{"objectiveId","records":[{"mainId":"<krId>","score":0.8,"scoreDesc":"<evidence-based review>","type":2}]}`. Scores use the 0-1 API scale, not 0-100.
+- A successful response is insufficient. Immediately call `getScoreDetail` again and verify every KR's evaluator, `score`, exact `info` text, and `status == "complete"`.
+- Example: if ET's seven leadership/culture KRs are submitted headlessly, success means all seven read back under `Derek Zen`, with exact score and description matches. If Xingzu's records read back under `Shawn Hou`, Derek must not submit or claim those scores were updated.
+- Network timeouts may be retried up to three times. Reuse the same payload, then perform the full readback verification; never create a second, divergent payload during retry.
+
+### Rating Archive And Consistency Audit
+
+Use the reusable read-only tools before and after bulk scoring, HR review, or an external automation run. They reuse the dedicated headless profile, never print authorization headers, and contain no mutation or deletion endpoint.
+
+```bash
+SKILL_DIR=/Users/derek/.agents/skills/dingtang-okr-review
+
+# Capture a baseline before any mutation.
+python3 "$SKILL_DIR/scripts/dingteam_okr_audit.py" snapshot \
+  --okr-id "$OKR_ID" --output baseline.json
+
+# Detect unexpected additions, removals, score changes, or progress changes.
+python3 "$SKILL_DIR/scripts/dingteam_okr_audit.py" compare \
+  --okr-id "$OKR_ID" --baseline baseline.json --output comparison.json
+
+# Scan missing scores, real zero scores, and duplicate assessment objectives.
+python3 "$SKILL_DIR/scripts/dingteam_okr_audit.py" analyze \
+  --archive baseline.json \
+  --category leadership=领导力 \
+  --category culture=文化价值观
+
+# Verify live system records, local workbook, and optional DingTalk online sheet.
+python3 "$SKILL_DIR/scripts/dingteam_okr_consistency_audit.py" \
+  --okr-id "$OKR_ID" \
+  --manifest final_manifest.json \
+  --workbook review.xlsx \
+  --online-node "$DINGTALK_SHEET_NODE" \
+  --output consistency.json
+```
+
+Audit rules:
+
+- Capture the baseline immediately before a controlled write run. Do not run another scoring writer concurrently.
+- After any external or automated run, compare live state with the baseline before making further changes.
+- `null` means not scored; numeric `0` means an explicit zero score. Never collapse them.
+- A duplicate objective is evidence for manual investigation, not authorization to delete it. Deletion is irreversible and requires explicit user confirmation plus a fresh readback.
+- The consistency manifest is the expected-state contract. Each row must contain `objectiveId`, `krId`, `kr`, `score`, and exact `scoreDesc`; each person may declare `systemEvaluators`.
+- A successful consistency audit requires exact live evaluator, `status == complete`, 0-1 API score converted to 0-100, exact comment text, workbook score, and online-sheet readback. Any mismatch exits non-zero.
+- The audit reads every objective from the live API. Do not replace it with old score-detail JSON files when certifying completion.
 
 CRITICAL for scoring: the numeric KR progress is often 0 even when there is real progress, because people write their progress as **comments/进展 (评论)** rather than moving the % slider. `findCommentList/v2` returns those records (`type==5` = 评论; each item has `richTextContent`, `creator`, `createAt`, and `krInfo.krId`/`krInfo.name` to map to a KR). The source fetches them per objective, maps each to its KR (by `krInfo.krId`, then by matching `krInfo.name` to the KR title), and merges them into `krDetailsUpdatesAggregated` (KR-level) and `objectiveCommentsAggregated` (objective-level). Do NOT score from the numeric progress alone — use these comment records as the primary progress evidence.
 
