@@ -99,7 +99,7 @@ export const GET_DINGTALK_HISTORY_GATE_STATE_JS = ({ targetOrgName = "" } = {}) 
   const title = document.title || "";
   const url = location.href;
   const targetOrg = normalize(targetOrgName);
-  const targetOrgVisible = !!targetOrg && visibleTexts.includes(targetOrg);
+  const targetOrgVisible = !!targetOrg && visibleTexts.some((text) => text === targetOrg || text.includes(targetOrg));
   const staleRefreshVisible = visibleTexts.includes("立即刷新") || visibleTexts.includes("Refresh Now");
   const hasHistoryRows = !!document.querySelector('tr[data-row-key]');
   const hasNoContent = body.includes("No content") || body.includes("暂无数据") || body.includes("暂无内容");
