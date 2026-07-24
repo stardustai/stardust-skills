@@ -1,10 +1,10 @@
 # Vibe Coding
 
-`vibe-coding` is Stardust's company-level engineering orchestration Skill. It consumes an approved `spec-intake` v1.5 Spec and drives the repository through initialization, risk-adaptive architecture and technical-debt controls, planning, TDD, business-scenario E2E/Eval traceability, independent review, Git delivery, and optional SRE deployment.
+`vibe-coding` is Stardust's company-level engineering orchestration Skill. It consumes an approved Spec that passes the installed authoritative `spec-intake` validator and drives the repository through initialization, risk-adaptive architecture and technical-debt controls, planning, TDD, business-scenario E2E/Eval traceability, independent review, Git delivery, and optional SRE deployment.
 
 ## Input
 
-- A `spec-intake` v1.5 JSON document with `engineering_ready` / `ready_for_engineering` stage gate.
+- A JSON document accepted by the installed authoritative `spec-intake` validator with an `engineering_ready` / `ready_for_engineering` stage gate.
 - Business-owner-confirmed `business_success_scenarios`.
 - QA-approved scenario coverage and a confirmed delivery risk profile.
 - A local repository plus an approved remote repository URL.

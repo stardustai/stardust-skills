@@ -1,6 +1,6 @@
 ---
 name: vibe-coding
-description: "Use this when an approved spec-intake v1.5 Spec must be turned into stable code, or when an existing AI-built project must be initialized, repaired, tested, evaluated, reviewed, pushed, or prepared for deployment. This company orchestration skill automatically applies repository inspection, risk-adaptive architecture and technical-debt controls, planning, subagent development, TDD, business-scenario traceability, loop engineering, independent review, Git delivery, and optional SRE deployment while pausing for user choices only when product, business, architecture, data, permission, risk, or plan scope would change."
+description: "Use this when an approved Spec that passes the installed authoritative spec-intake validator must be turned into stable code, or when an existing AI-built project must be initialized, repaired, tested, evaluated, reviewed, pushed, or prepared for deployment. This company orchestration skill automatically applies repository inspection, risk-adaptive architecture and technical-debt controls, planning, subagent development, TDD, business-scenario traceability, loop engineering, independent review, Git delivery, and optional SRE deployment while pausing for user choices only when product, business, architecture, data, permission, risk, or plan scope would change."
 ---
 
 # Vibe Coding
@@ -9,7 +9,7 @@ Convert an approved business Spec into stable, observable, maintainable, and tra
 
 ## Non-negotiable contract
 
-Formal coding starts only when the input Spec passes the repository's `spec-intake` v1.5 validator and contains:
+Formal coding starts only when the input Spec passes the installed authoritative `spec-intake` schema and validator and contains:
 
 - `stage_gate.readiness_label = engineering_ready`;
 - `stage_gate.decision = ready_for_engineering`;

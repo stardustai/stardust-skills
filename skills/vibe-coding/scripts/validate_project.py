@@ -338,8 +338,8 @@ def validate_spec_with_authority(spec_path: Path, errors: list[str]) -> dict[str
 
 
 def validate_spec_alignment(project: dict[str, Any], spec: dict[str, Any], errors: list[str]) -> None:
-    if spec.get("spec_version") != "1.5":
-        errors.append("spec.spec_version must be 1.5")
+    # The authoritative spec-intake validator above owns schema-version support.
+    # Do not duplicate that authority with a stale hard-coded version here.
     stage = spec.get("stage_gate") if isinstance(spec.get("stage_gate"), dict) else {}
     if stage.get("readiness_label") != "engineering_ready" or stage.get("decision") != "ready_for_engineering":
         errors.append("spec must be engineering_ready with decision ready_for_engineering")

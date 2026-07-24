@@ -4,11 +4,11 @@
     {
       "id": 1,
       "name": "new-project-engineering-ready",
-      "prompt": "请用 vibe-coding 从零实现这个新项目。当前 spec 位于 docs/superpowers/specs/2026-07-20-expense-spec.json，spec_version=1.5，stage_gate.readiness_label=engineering_ready，stage_gate.decision=ready_for_engineering；business_success_scenarios 已由 Business Owner 确认，delivery_risk_profile=R1。Remote 是 https://github.com/example/expense-tool.git，目前仓库只有 spec。我要稳定可用的代码，不需要部署。",
+      "prompt": "请用 vibe-coding 从零实现这个新项目。当前 spec 位于 docs/superpowers/specs/2026-07-20-expense-spec.json，且已通过本机安装的权威 spec-intake validator；stage_gate.readiness_label=engineering_ready，stage_gate.decision=ready_for_engineering；business_success_scenarios 已由 Business Owner 确认，delivery_risk_profile=R1。Remote 是 https://github.com/example/expense-tool.git，目前仓库只有 spec。我要稳定可用的代码，不需要部署。",
       "expected_output": "The Skill should automatically establish the project contract and documentation, preserve the business-owned success outcomes, create a reviewed design and implementation plan, bind each task to observable feedback, implement with TDD, produce traceable QA/E2E/Eval/runtime evidence, independently review, and deliver to the remote while accurately stating that deployment was not performed.",
       "files": [],
       "assertions": [
-        "Verifies the exact spec-intake v1.5 stage gate, business-owner confirmations, scenario coverage, risk profile, and repository remote before formal coding.",
+        "Verifies the Spec with the installed authoritative spec-intake validator, then checks the exact engineering stage gate, business-owner confirmations, scenario coverage, risk profile, and repository remote before formal coding.",
         "Creates README.md, JSON-compatible PROJECT.yaml, the current Superpowers design and plan paths, and all mandatory applicable project documents before implementation.",
         "Treats business success scenarios as the Business Owner's product contract: the Skill structures and gates them, QA expands coverage, and engineering automates evidence without rewriting the success outcome.",
         "Uses writing-plans before implementation and creates small independently verifiable tasks with a task feedback contract, baseline, observable signals, pass/fail rules, commands, evidence paths, and rollback method.",

@@ -53,8 +53,8 @@ def engineering_spec(risk_tier: str = "R1") -> dict:
     spec["ui_requirements"]["wireframe_status"] = "reviewed"
     for asset in spec["validation_plan"]["evaluation_assets"]:
         asset.update(status="available", path_or_link=f"fixtures/{asset['asset_id']}.json", version="1.0")
-    spec["validation_plan"]["poc_design_ready"].update(status="ready", blockers=[])
-    spec["validation_plan"]["poc_execution_ready"].update(status="ready", blockers=[])
+    spec["validation_plan"]["validation_design_ready"].update(status="ready", blockers=[])
+    spec["validation_plan"]["validation_execution_ready"].update(status="ready", blockers=[])
     coverage = spec["validation_plan"]["scenario_coverage"][0]
     coverage.update(qa_status="approved", automation_plan_status="planned")
     implementation = spec["implementation_mapping"]
@@ -277,6 +277,16 @@ class ProjectFixture:
 
 
 class ValidateProjectTests(unittest.TestCase):
+    def test_accepts_version_approved_by_authoritative_spec_validator_without_legacy_pin(self):
+        with ProjectFixture() as fx:
+            spec_path = fx.root / "docs/superpowers/specs/current-spec.json"
+            spec = json.loads(spec_path.read_text(encoding="utf-8"))
+            self.assertNotEqual(spec["spec_version"], "1.5")
+
+            result = fx.run()
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_accepts_valid_engineering_ready_project_and_git_state(self):
         with ProjectFixture() as fx:
             self.assertEqual(fx.run().returncode, 0, fx.run().stderr)
