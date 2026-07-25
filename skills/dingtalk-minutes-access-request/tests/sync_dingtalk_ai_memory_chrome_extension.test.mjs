@@ -5,6 +5,7 @@ import {
   clickSendRequest,
   GET_DINGTALK_HISTORY_GATE_STATE_JS,
   GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS,
+  getHistoryPageWithEmptyRowGrace,
   resolveDingTalkHistoryGate,
   waitForPermissionState,
 } from "../scripts/sync_dingtalk_ai_memory_chrome_extension.mjs";
@@ -277,4 +278,35 @@ test("DingTalk gate state ignores hidden secret text when target org is visible"
     globalThis.window = originalWindow;
     globalThis.location = originalLocation;
   }
+});
+
+test("getHistoryPageWithEmptyRowGrace waits through transient empty history rows", async () => {
+  const states = [
+    { current_page: 1, total_pages: 1, next_enabled: false, rows: [] },
+    { current_page: 1, total_pages: 1, next_enabled: false, rows: [] },
+    {
+      current_page: 1,
+      total_pages: 1,
+      next_enabled: false,
+      rows: [{ row_key: "row-1", masked_title: "产品周会" }],
+    },
+  ];
+  let evaluateCalls = 0;
+  let waitCalls = 0;
+  const tab = {
+    playwright: {
+      evaluate: async () => states[Math.min(evaluateCalls++, states.length - 1)],
+      waitForTimeout: async (ms) => {
+        assert.equal(ms, 1);
+        waitCalls += 1;
+      },
+    },
+  };
+
+  const pageState = await getHistoryPageWithEmptyRowGrace(tab, { timeoutMs: 50, pollMs: 1 });
+
+  assert.equal(pageState.rows.length, 1);
+  assert.equal(pageState.rows[0].row_key, "row-1");
+  assert.equal(evaluateCalls, 3);
+  assert.equal(waitCalls, 2);
 });

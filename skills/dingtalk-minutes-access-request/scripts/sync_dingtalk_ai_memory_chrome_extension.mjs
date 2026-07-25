@@ -712,6 +712,16 @@ async function goToNextPage(tab, expectedNextPage, previousFirstRowKey = "") {
   return false;
 }
 
+export async function getHistoryPageWithEmptyRowGrace(tab, { timeoutMs = 12000, pollMs = 1000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  let pageState = await getHistoryPage(tab);
+  while ((!pageState.rows || pageState.rows.length === 0) && Date.now() < deadline) {
+    await tab.playwright.waitForTimeout(pollMs);
+    pageState = await getHistoryPage(tab);
+  }
+  return pageState;
+}
+
 async function waitForDetailReady(tab, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -1073,7 +1083,7 @@ export async function runChromeDingTalkSync(options = {}) {
     emitProgress(`History ready; scratch tab opened`);
 
     while (true) {
-      const pageState = await getHistoryPage(historyTab);
+      const pageState = await getHistoryPageWithEmptyRowGrace(historyTab);
       const currentPage = Number(pageState.current_page || 1);
       const rows = pageState.rows || [];
       emitProgress(`History page ${currentPage}: ${rows.length} rows`);
