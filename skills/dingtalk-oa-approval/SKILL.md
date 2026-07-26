@@ -313,6 +313,17 @@ dws sheet info --node "<nodeId>" --sheet-id "<sheetId>" --format json
 dws sheet range read --node "<nodeId>" --sheet-id "<sheetId>" --range "A1:Z80" --format json
 ```
 
+钉盘预览链接和只读权限：
+
+- 审批表单或评论里的 `https://qr.dingtalk.com/page/yunpan?route=previewDentry&spaceId=<spaceId>&fileId=<dentryId>&type=file` 是钉盘预览入口。先解析 `spaceId` 和 `fileId`，再用 `dws drive info --node "<fileId>" --space-id "<spaceId>" --format json` 获取真实文件名、扩展名、路径、`dentryId`、32 位 `fileId/nodeId` 和 `docUrl`。
+- 对 `docx`、`pptx`、`xlsx`、`pdf`、图片等二进制文件，优先尝试 `dws drive download --node "<dentryId>" --space-id "<spaceId>" --output "<local-dir-or-file>" --format json`。下载成功后再按文件类型抽取正文或走 OCR。
+- 如果 `drive info` 成功但 `drive download` 报“没有权限访问该钉盘空间”“无文件读取权限”等，不要说文件不存在；这是“可预览/可见元数据，但无下载读取权限”。必须继续用 `dws doc permission list --node "<32位nodeId>" --format json` 或相应 `drive permission list` 查看权限角色。
+- 若权限列表显示 Derek 只通过部门、群或个人获得 `READER`，说明通常只能网页/客户端预览，不能下载解析正文。不要把 `READER` 直接等同于材料不可读；如果 `docUrl`、钉盘预览页或审批详情里的预览按钮能打开，必须进入网页或钉钉客户端预览页逐页读取全文，必要时使用页面复制、浏览器导出、截图 OCR 或人工逐页摘录完成审阅。
+- 只有在 DWS 不能下载、网页/客户端预览也打不开，或预览页无法读完正文时，才把材料标记为“只读预览仍无法读取全文”。此时不得建议通过。
+- 用户明确要求修复时，可以尝试给 Derek 或当前审批执行账号补 `DOWNLOADER` 权限，例如 `dws doc permission add --node "<32位nodeId>" --users "<derekUserId>" --role DOWNLOADER --format json`。如果返回 `forbidden.accessDenied` 或提示需要 `OWNER / MANAGER / EDITOR`，说明当前账号没有权限管理权，不要重复尝试，也不要改用猜测路径。
+- 权限修复失败后的处理：若网页/客户端预览可读，继续通过预览完成审阅，并在材料记录中说明“通过网页/客户端预览读取，不能下载”；若预览也无法读完，再评论要求申请人、文件所有者或管理员将 Derek 授权为 `DOWNLOADER`/`EDITOR`，或把文件移动/复制到对应知识库项目文件夹并提供 Derek 可下载读取的链接。评论里要写清文件名、节点 ID、当前只读角色、需要补的权限和“未读完前不得通过”。
+- 对这类问题，最终报告要区分四种状态：`文件缺失`、`文件存在但只能预览不能下载`、`已通过网页/客户端预览读取完成`、`预览和下载均无法读取全文`。不要把权限不足归为普通附件解析失败。
+
 面试系统：
 
 - 录用审批里的 `https://interview.hr.startask.net/candidates/<candidateId>` 直连通常会跳到登录页。
