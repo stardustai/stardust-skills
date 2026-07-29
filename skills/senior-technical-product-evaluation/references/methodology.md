@@ -223,7 +223,7 @@ For L4/L5 core product R&D, AI engineering, architecture, technical-director, an
 | 3-7 years ago | At most 20% | Still-relevant depth and transferable mechanisms, with explicit staleness checks |
 | More than 7 years ago | At most 10% | Historical foundations only; normally not current leadership, AI understanding, or technical direction |
 
-Use these limits for personal technical depth, technical taste, product-line fit, and the candidate-facing career-portfolio product signal. A product fact card may retain the product's intrinsic historical score, because a strong product should be assessed against its contemporaneous alternatives. The candidate's current score must discount that old product separately.
+Use these limits for personal technical depth, technical taste, product-line fit, technical-team environment, and the candidate-facing career-portfolio product signal. A product fact card may retain the product's intrinsic historical score, because a strong product should be assessed against its contemporaneous alternatives. The candidate's current score must discount that old product separately.
 
 Do not reallocate an absent recent-evidence share to old work just to make the weights sum to a flattering portfolio. Show the missing recent share as missing current evidence. Do not double-count an old flagship project as both product prestige and current personal depth.
 
@@ -254,12 +254,14 @@ When team environment is requested, research it independently and add it as a 15
 | Product-led technical startup with disclosed Series A-C financing | 85-100 | Financing round/date/investors plus identifiable product and technical team |
 | Excellent B2B product team at a top-tier technology company | 75-89 | Named B2B product, product ownership, engineering or market evidence |
 | Product-led B2C technology company | 65-79 | Real consumer product, scale/operations, identifiable technical work |
-| Large-enterprise technology subsidiary or product technology team | 50-69 | Product boundary and technical team exist, but environment is more organizationally constrained |
-| No clear product; project/outsourcing-led B2B; state/central enterprise; public institution | 20-49 | Default low-priority environment unless strong contrary product-team evidence exists |
+| Independent large-enterprise technology subsidiary or externally competitive product technology team | 50-69 | Standardized product, independent ownership, sustained R&D, external customers or market competition, and verifiable technical output |
+| Consulting/custom-delivery or project/outsourcing-led B2B; non-technology enterprise internal digitalization; no clear product; state/central enterprise; public institution | 20-49 | Default low-priority environment; ordinary internal platforms, AI labels, project names, and titles are insufficient |
 
 Adjust within the band using technical founder/leader quality, R&D/product evidence, open-source or engineering output, customer/product traction, and whether the candidate sat in the core product team. Record exact sources and dates. Do not let financing alone prove technical excellence.
 
-For a standalone B2B product company that has a real standardized product but lacks both disclosed Series A-C financing and top-tier technology-company status, use the `50-69` band conservatively rather than inventing a sixth high-priority category. This preserves the requested ordering: clear product evidence keeps it above project/outsourcing environments, while missing financing and company-quality evidence keeps it below the first two tiers.
+Within the lowest band, use `20-39` by default for consulting companies, custom-delivery teams, outsourcing/project companies, and internal digitalization teams inside real-estate, manufacturing, retail, finance, or other non-technology enterprises. A team may reach `40-49` only when evidence proves an externally used standardized product, independent product ownership, sustained R&D, difficult technical mechanisms, and meaningful engineering output. Scores of `50-69` require an independent technology subsidiary or a genuinely product-led technical team with external customers or market competition; ordinary internal IT or digitalization teams do not qualify.
+
+For a standalone B2B product company that has a real standardized product but lacks both disclosed Series A-C financing and top-tier technology-company status, use the `50-69` band conservatively rather than inventing a sixth high-priority category. This preserves the requested ordering: clear product evidence keeps it above project/outsourcing environments, while missing financing and company-quality evidence keeps it below the first two tiers. Apply the `70% / 20% / 10%` recency weights from 9.0.1 to the technical-team environment score; a strong employer from more than seven years ago cannot raise a candidate whose recent environments are weak.
 
 The resume-only final formulas are:
 

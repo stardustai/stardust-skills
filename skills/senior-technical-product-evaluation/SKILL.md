@@ -76,7 +76,7 @@ For L4/L5 core product R&D, AI engineering, architecture, technical-director, an
 - Work from 3-7 years ago: at most 20%.
 - Work more than 7 years ago: at most 10%.
 
-Apply this rule to personal technical depth, technical taste, product-line transferability, and the career-portfolio interpretation of product technology. Keep a historical product's intrinsic technology score when describing that product in its own time, but discount its contribution to the candidate's current score. If a time window has no relevant evidence, do not silently reallocate its weight to old projects merely to preserve a high total.
+Apply this rule to personal technical depth, technical taste, product-line transferability, technical-team environment, and the career-portfolio interpretation of product technology. Keep a historical product's intrinsic technology score when describing that product in its own time, but discount its contribution to the candidate's current score. If a time window has no relevant evidence, do not silently reallocate its weight to old projects merely to preserve a high total.
 
 Historical work can prove foundations such as distributed-systems experience, engineering discipline, or prior exposure to scale. It cannot by itself prove current hands-on depth, current AI understanding, current product judgment, or readiness to lead today's technical direction. Do not count the same old project once as product prestige and again as personal depth to rescue weak recent evidence.
 
@@ -138,12 +138,14 @@ Include a technical-team environment fact card when requested. Use this preferen
 1. Product-led technical team with disclosed Series A-C financing.
 2. Excellent B2B product team inside a top-tier technology company.
 3. Product-led B2C technology company.
-4. Technology subsidiary or product technology team inside a large enterprise.
-5. No clear product, project/outsourcing-led B2B company, state-owned or central enterprise, or public institution.
+4. Independent technology subsidiary or externally competitive product technology team inside a large enterprise, with a standardized product, clear product ownership, sustained R&D, and verifiable technical output.
+5. No clear product; consulting/custom-delivery or project/outsourcing-led B2B company; internal digitalization team inside a non-technology company; state-owned or central enterprise; or public institution.
 
 Financing news alone is insufficient: verify the round, date, investors, product, and technical-team signals. State-owned status does not erase a concrete leading product team, but absent contrary product/technical evidence it belongs in the lowest band.
 
-If a standalone B2B company has a clear product but neither disclosed Series A-C financing nor evidence that it is a top-tier technology company, do not create an extra high-scoring category for it. Evaluate it conservatively alongside the fourth band and cap the team score at 69. A real standardized product, core-team position, sustained R&D, and strong engineering output can move it toward the top of that band; project revenue, implementation-heavy delivery, unstable operations, or unclear ownership move it toward the lowest band.
+Use `20-39` by default for consulting companies, custom-delivery teams, outsourcing/project companies, and internal digitalization teams inside real-estate, manufacturing, retail, finance, or other non-technology enterprises. An internal platform, AI label, technical-director title, or named project does not raise the environment score. Move such a team to `40-49` only when evidence proves an externally used standardized product, independent product ownership, sustained R&D, difficult technical mechanisms, and meaningful engineering output. Scores of `50-69` require an independent technology subsidiary or a genuinely product-led technical team with external customers or market competition; ordinary internal IT or digitalization teams do not qualify.
+
+If a standalone B2B company has a clear product but neither disclosed Series A-C financing nor evidence that it is a top-tier technology company, do not create an extra high-scoring category for it. Evaluate it conservatively alongside the fourth band and cap the team score at 69. A real standardized product, core-team position, sustained R&D, and strong engineering output can move it toward the top of that band; project revenue, implementation-heavy delivery, unstable operations, or unclear ownership move it toward the lowest band. Apply the same `70% / 20% / 10%` recency weighting to technical-team environment, so a strong employer from more than seven years ago cannot rescue weak recent environments.
 
 The report must be auditable by a human reviewer. Include enough original product and candidate text to evaluate whether the interpretation is faithful, plus a research ledger with `source / fact / supports / does not support`. If the reviewer cannot trace a score back to original text and a named evidence item, the report is incomplete. Add a short feedback table for disputed assumptions and judgment calls.
 
