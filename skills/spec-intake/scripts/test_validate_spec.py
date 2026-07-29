@@ -199,7 +199,7 @@ class ValidateBusinessSuccessScenarioTests(unittest.TestCase):
                     "confirmer_role": "business_owner",
                     "confirmed_by": "业务 owner",
                     "confirmed_at": "2026-07-20",
-                    "confirmed_version": "1.10",
+                    "confirmed_version": "1.11",
                 },
             }
         ]
@@ -290,7 +290,7 @@ class ValidateBusinessSuccessScenarioTests(unittest.TestCase):
             errors,
         )
         self.assertIn(
-            "engineering_ready requires confirmation version 1.10 for business success scenario: BIZ-E2E-001",
+            "engineering_ready requires confirmation version 1.11 for business success scenario: BIZ-E2E-001",
             errors,
         )
 
@@ -574,6 +574,99 @@ class ValidateMarketSizingTests(unittest.TestCase):
 
         self.assertIn(
             "opportunity_assessment.market_sizing.evidence_quality.primary_evidence_refs references unknown evidence item: EV-UNKNOWN",
+            errors,
+        )
+
+
+class ValidateStageArtifactCeilingTests(unittest.TestCase):
+    def test_v111_business_feasibility_rejects_technical_design_content(self) -> None:
+        spec_data = _load_example()
+        spec_data["spec_version"] = "1.11"
+        spec_data["stage_gate"]["current_stage"] = "business_feasibility"
+        spec_data["stage_gate"]["readiness_label"] = "not_ready"
+        spec_data["stage_gate"]["decision"] = "continue_business_validation"
+        spec_data["stage_gate"]["stage_exit_check"] = {
+            "status": "not_started",
+            "exit_summary": None,
+            "confirmation_question": None,
+            "confirmed_by": None,
+            "confirmed_by_role": None,
+            "confirmed_at": None,
+            "next_stage": None,
+        }
+        implementation = spec_data["implementation_mapping"]
+        implementation["engineering_review_type"] = "technical_design"
+        implementation["technical_design_assessment"]["ai_score"] = 4
+        implementation["technical_design_assessment"]["scoring_dimensions"] = [
+            {
+                "dimension": "architecture_fit",
+                "score": 4,
+                "rationale": "Premature architecture score",
+            }
+        ]
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "business_feasibility artifact ceiling requires implementation_mapping.engineering_review_type=not_started",
+            errors,
+        )
+        self.assertIn(
+            "business_feasibility artifact ceiling prohibits implementation_mapping.capabilities",
+            errors,
+        )
+        self.assertIn(
+            "business_feasibility artifact ceiling prohibits technical design scoring",
+            errors,
+        )
+
+    def test_v111_business_feasibility_accepts_empty_technical_placeholders(self) -> None:
+        spec_data = _load_example()
+        spec_data["spec_version"] = "1.11"
+        spec_data["stage_gate"]["current_stage"] = "business_feasibility"
+        spec_data["stage_gate"]["readiness_label"] = "not_ready"
+        spec_data["stage_gate"]["decision"] = "continue_business_validation"
+        spec_data["stage_gate"]["stage_exit_check"] = {
+            "status": "not_started",
+            "exit_summary": None,
+            "confirmation_question": None,
+            "confirmed_by": None,
+            "confirmed_by_role": None,
+            "confirmed_at": None,
+            "next_stage": None,
+        }
+        spec_data["implementation_mapping"] = {
+            "engineering_review_type": "not_started",
+            "capabilities": [],
+            "source_code_review": {
+                "required": False,
+                "status": "not_required",
+                "paths_read": [],
+                "summary": None,
+                "unread_required_paths": [],
+            },
+            "technical_design_assessment": {
+                "design_summary": None,
+                "ai_score": None,
+                "scoring_dimensions": [],
+                "score_rationale": None,
+                "ai_engineer_confirmation": "not_required",
+            },
+        }
+
+        errors = _validate_temp(spec_data)
+
+        self.assertFalse(any("artifact ceiling" in error for error in errors), errors)
+
+    def test_v111_stage_exit_requires_confirmer_role(self) -> None:
+        spec_data = _load_example()
+        spec_data["spec_version"] = "1.11"
+        spec_data["stage_gate"]["stage_exit_check"]["confirmed_by_role"] = None
+
+        errors = _validate_temp(spec_data)
+
+        self.assertIn(
+            "request_engineering_gap_review requires stage_gate.stage_exit_check.confirmed_by_role=product_owner",
             errors,
         )
 

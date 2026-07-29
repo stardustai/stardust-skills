@@ -205,6 +205,15 @@ DECISION_NEXT_STAGE = {
     "ready_for_engineering": "engineering_delivery",
 }
 
+DECISION_CONFIRMER_ROLE = {
+    "handoff_to_product": "business_owner",
+    "request_engineering_gap_review": "product_owner",
+    "continue_technical_spec": "engineering_owner",
+    "mark_validation_design_ready": "engineering_owner",
+    "mark_validation_execution_ready": "qa_owner",
+    "ready_for_engineering": "decision_owner",
+}
+
 RISK_LEVEL = {"R0": 0, "R1": 1, "R2": 2, "R3": 3}
 
 RISK_DIMENSION_FLOORS = {
@@ -850,6 +859,13 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
                 errors.append(
                     f"{decision} requires stage_gate.stage_exit_check.next_stage={expected_next_stage}"
                 )
+            if spec.get("spec_version") == "1.11":
+                expected_confirmer_role = DECISION_CONFIRMER_ROLE.get(decision)
+                if exit_check.get("confirmed_by_role") != expected_confirmer_role:
+                    errors.append(
+                        f"{decision} requires stage_gate.stage_exit_check.confirmed_by_role="
+                        f"{expected_confirmer_role}"
+                    )
             if current_stage == "business_feasibility" and decision == "handoff_to_product":
                 missing_fields = _business_handoff_missing_fields(spec)
                 if missing_fields:
@@ -864,6 +880,70 @@ def _validate_stage_gate(spec: dict[str, Any]) -> list[str]:
         execution = _readiness_check(spec, "validation_execution_ready")
         if execution and execution.get("status") != "ready":
             errors.append("validation_execution_ready or engineering_ready requires validation_plan.validation_execution_ready.status=ready")
+
+    return errors
+
+
+def _validate_stage_artifact_ceiling(spec: dict[str, Any]) -> list[str]:
+    """Keep early-stage specs from becoming de facto technical delivery plans."""
+    if spec.get("spec_version") != "1.11":
+        return []
+
+    stage_gate = spec.get("stage_gate", {})
+    current_stage = stage_gate.get("current_stage") if isinstance(stage_gate, dict) else None
+    implementation = spec.get("implementation_mapping", {})
+    if not isinstance(implementation, dict):
+        return []
+
+    errors: list[str] = []
+    review_type = implementation.get("engineering_review_type")
+    capabilities = implementation.get("capabilities")
+    source_review = implementation.get("source_code_review", {})
+    assessment = implementation.get("technical_design_assessment", {})
+
+    if current_stage in {"business_feasibility", "product_shape"}:
+        if review_type != "not_started":
+            errors.append(
+                f"{current_stage} artifact ceiling requires "
+                "implementation_mapping.engineering_review_type=not_started"
+            )
+        if capabilities:
+            errors.append(
+                f"{current_stage} artifact ceiling prohibits implementation_mapping.capabilities"
+            )
+        if isinstance(source_review, dict):
+            has_source_review = (
+                source_review.get("required") is True
+                or source_review.get("status") not in {"not_required", "not_started"}
+                or bool(source_review.get("paths_read"))
+                or bool(source_review.get("summary"))
+                or bool(source_review.get("unread_required_paths"))
+            )
+            if has_source_review:
+                errors.append(f"{current_stage} artifact ceiling prohibits source-code review")
+        if isinstance(assessment, dict):
+            has_technical_scoring = (
+                assessment.get("ai_score") is not None
+                or bool(assessment.get("scoring_dimensions"))
+                or bool(assessment.get("design_summary"))
+                or bool(assessment.get("score_rationale"))
+                or assessment.get("ai_engineer_confirmation") == "confirmed"
+            )
+            if has_technical_scoring:
+                errors.append(f"{current_stage} artifact ceiling prohibits technical design scoring")
+
+    if current_stage == "engineering_gap_review":
+        if review_type != "engineering_gap_review":
+            errors.append(
+                "engineering_gap_review artifact ceiling requires "
+                "implementation_mapping.engineering_review_type=engineering_gap_review"
+            )
+        if isinstance(assessment, dict) and (
+            assessment.get("ai_score") is not None
+            or bool(assessment.get("scoring_dimensions"))
+            or assessment.get("ai_engineer_confirmation") == "confirmed"
+        ):
+            errors.append("engineering_gap_review artifact ceiling prohibits technical design scoring")
 
     return errors
 
@@ -1659,6 +1739,7 @@ def validate(spec_path: Path, schema_path: Path) -> list[str]:
         return errors or ["spec must be a JSON object"]
 
     errors.extend(_validate_stage_gate(spec))
+    errors.extend(_validate_stage_artifact_ceiling(spec))
     errors.extend(_validate_opportunity(spec))
     errors.extend(_validate_product_context(spec))
     errors.extend(_validate_workflow(spec))

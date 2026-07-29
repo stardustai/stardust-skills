@@ -31,6 +31,7 @@ The goal is not to write code. The goal is to make the requirement clear enough 
 18. Product defines `delivery_risk_profile` from six concrete dimensions before engineering. The tier is at least the highest dimension floor, and the decision owner must confirm it before `product_ready` or later.
 19. Product defines `product_context.product_goals`, `product_context.business_metrics`, `workflow.user_journeys`, and `workflow.user_operation_flows` before `product_ready` or later. Business defines the product/business goal first; product refines it into measurable product behavior and loop-engineering signals.
 20. If the spec intake context becomes complex, multi-threaded, or long enough that earlier decisions may be forgotten, recommend using bounded subagents to advance evidence gathering, product shaping, code reading, or QA mapping. For design judgment, virtualize a multi-role review panel such as PM, algorithm, user, domain expert, researcher, owner, QA, compliance, sales, and engineering, let them challenge each other's assumptions, and record the result in `review_gates.virtual_review_panel`. The main agent must keep the stage gate, final judgment, and spec synthesis.
+21. The current stage limits artifact depth, not only the readiness label. Read `references/stage-artifact-policy.md` before extending an existing research, product, architecture, or delivery document. Do not produce out-of-stage technical artifacts.
 
 ## Intake Modes
 
@@ -54,6 +55,13 @@ Do not force `guided_interview` when the user has already supplied a structured 
 - Desired stage and output.
 
 If required fields are still missing, return a concise missing-field list and ask only the next question that changes the gate.
+
+When `structured_brief` includes an existing report, PRD, architecture document, or implementation plan, run an existing-document audit before adding content:
+
+- Separate confirmed facts, traceable evidence, assumptions, AI/internal analysis, and proposed solutions.
+- Infer the actual stage from confirmed evidence instead of trusting the document's `P0`, `spec_review`, or readiness label.
+- Put customer, owner, baseline, data, acceptance, and scope gaps in `missing_fields` and `stage_gate.blockers`.
+- Apply the current-stage artifact ceiling. Preserve out-of-stage material only as non-authoritative reference; do not expand it.
 
 ## Opening Protocol
 
@@ -189,8 +197,9 @@ Use "customer POC" only for the business-side customer pilot: design partner, bu
 
 Read only as needed:
 
-- `references/spec-schema.json` - v1.10 JSON structure.
+- `references/spec-schema.json` - v1.11 JSON structure; the validator remains compatible with v1.10.
 - `references/question-bank.md` - question patterns by gate.
+- `references/stage-artifact-policy.md` - required when deciding output depth, auditing an existing document, or preventing premature technical design and delivery planning.
 - `references/business-success-scenarios.md` - required when collecting, confirming, reviewing, or mapping business success scenarios, or when setting `product_ready`, `validation_design_ready`, or `engineering_ready`.
 - `references/delivery-risk-profile.md` - required when collecting, assessing, confirming, or changing delivery risk, and before setting `product_ready` or a later readiness label.
 - `scripts/validate_spec.py` - deterministic validator.
@@ -265,6 +274,8 @@ Use evidence levels:
 - `single_case`: one traceable customer or workflow case.
 - `repeated`: repeated evidence across customers, flows, or channels.
 - `commercial_proof`: paid POC, signed commitment, expansion, or repeatable GTM proof.
+
+AI-generated industry analysis is `internal_judgment` or an assumption unless it cites a verifiable external source. A statement that customers are interested, the market is large, or the opportunity is urgent remains `anecdotal` without a traceable customer/task, reviewer, workflow, budget or committed resource, and artifact. Market evidence may support attractiveness, but it cannot replace first-party customer evidence.
 
 Do not approve customer POC unless there is a confirmed design partner, budget owner or committed resources, available data, baseline, acceptance method, timebox, and minimum paid artifact.
 
@@ -347,6 +358,8 @@ The stage-exit summary must include:
 
 Record the answer in `stage_gate.stage_exit_check`.
 
+For v1.11, also record `stage_gate.stage_exit_check.confirmed_by_role`. The required role is defined in `references/stage-artifact-policy.md`. The AI, the document authoring process, or the document itself cannot act as the human confirmer.
+
 Use this wording pattern:
 
 > 我建议把当前阶段从 `business_feasibility` 切到 `product_shape`。已确认的是 X；还没确认的是 Y；因此只能交给产品收敛形态，不能进入客户 POC、内部验证或工程。是否确认结束业务验证并进入产品形态？A. 确认进入；B. 继续业务验证。
@@ -398,6 +411,8 @@ After the commercial gate, define:
 - `capability_boundaries`
 
 Put `spec_type` inside `product_context.spec_type`; do not output a separate top-level `spec_type`.
+
+Before leaving `product_shape`, reduce the first version to exactly one daily user, one recurring task, one canonical workflow, one primary Artifact, one acceptance owner, and an explicit non-goal list. Split independent personas, Domain Packs, workflows, or primary artifacts into separate specs instead of calling a portfolio an MVP.
 
 The `workflow.canonical_workflow` is the one canonical business flow. Avoid repeating the same workflow in multiple sections with slightly different wording.
 
@@ -549,6 +564,13 @@ If the feature has a UI, dashboard, workspace, editor, approval screen, or visua
 Markdown, Mermaid, or ASCII diagrams can explain the UI, but they do not satisfy the SVG requirement.
 
 ## Technical Context Gate
+
+Apply the stage artifact ceiling before reading or writing technical content:
+
+- In `business_feasibility` and `product_shape`, keep `implementation_mapping` as an empty structural placeholder: `engineering_review_type=not_started`, no capabilities, source review, design summary, score, dimensions, or confirmation.
+- In `engineering_gap_review`, record existing, partial, missing, external, and unknown capabilities, but do not produce final architecture, API contracts, work packages, estimates, or implementation order.
+- Only `technical_spec` may produce detailed architecture and interfaces.
+- Only `engineering_delivery` may produce work packages, estimates, dependencies, sprint-ready tasks, and implementation order.
 
 If the requirement mentions an existing product, repo, API, MCP tool, Memory, Friday, Agent, Recipe, Domain Pack, Workspace, document upload, CRM, policy database, or customer system, inspect local docs/code before filling `implementation_mapping`.
 

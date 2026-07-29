@@ -4,7 +4,7 @@
     {
       "id": 0,
       "prompt": "我是一个保险经纪人，我要给客户销售报销组合，我手里有一堆公司给的保险产品资料，如何快速给客户定制化方案？请用 spec-intake 引导我。我是业务人员，不懂技术，只知道客户经常问怎么组合最划算。",
-      "expected_output": "The assistant should not immediately dump a final JSON. It should show the full stage-gated flow, call the Codex progress tool when running in Codex, classify product basis, choose guided_interview for this vague request, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require explicit stage-exit confirmation before handoff, require a reviewed SVG wireframe only before product_ready or later UI gates, and eventually produce a v1.10 JSON spec that passes scripts/validate_spec.py.",
+      "expected_output": "The assistant should not immediately dump a final JSON. It should show the full stage-gated flow, call the Codex progress tool when running in Codex, classify product basis, choose guided_interview for this vague request, validate commercial evidence first, ask one high-leverage question at a time, surface compliance and boundary risks, require explicit stage-exit confirmation before handoff, require a reviewed SVG wireframe only before product_ready or later UI gates, and eventually produce a v1.11 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
         "On the first substantial response, shows the full process as Mermaid or equivalent flow: intake_routing, business_feasibility, product_shape, engineering_gap_review, technical_spec, validation_design, validation_execution, engineering_delivery.",
         "When running in Codex, calls update_plan for the stage progress tracker; a text-only progress line is not sufficient unless the runtime has no progress tool.",
@@ -12,7 +12,7 @@
         "Asks one question at a time before final JSON.",
         "Extracts facts already present in the user's message, states clear conclusions, and skips questions that are already answered.",
         "Asks which company product form the first version should be based on before assuming internal_tool, Domain Pack, Friday Agent, Friday Memory, MorningStar, standalone product, or demo.",
-        "Final JSON uses spec_version=1.10 and includes stage_gate, opportunity_assessment, business_success_scenarios, delivery_risk_profile, friday_object_model, knowledge_and_memory_policy, validation_plan, implementation_mapping, review_gates, and missing_fields.",
+        "Final JSON uses spec_version=1.11 and includes stage_gate, opportunity_assessment, business_success_scenarios, delivery_risk_profile, friday_object_model, knowledge_and_memory_policy, validation_plan, implementation_mapping, review_gates, and missing_fields.",
         "Final JSON includes stage_gate.stage_exit_check, and next-stage decisions are not marked confirmed unless the user explicitly confirmed the transition.",
         "Final JSON uses opportunity_assessment.evidence_registry and distinguishes assumptions from non-assumption evidence.",
         "Final JSON includes opportunity_assessment.minimum_paid_artifact and uses 机会优先级指数 to penalize broad scope, heavy integrations, or unclear commercial signals.",
@@ -39,7 +39,7 @@
     {
       "id": 1,
       "prompt": "客户想让 Friday 接入他们的保险产品资料库，然后自动帮销售生成方案。你要看 /Users/derek/Documents/Projects/memory-connector 和 /Users/derek/Documents/Projects/friday-service 的代码背景来判断 Memory 能做什么、Agent/Recipe/产品层该做什么，再引导我补 spec。",
-      "expected_output": "The assistant should inspect local code/docs, distinguish Memory evidence recall from Agent/Recipe execution and product UI/workflow, ask business questions before finalizing technical boundaries, require explicit stage-exit confirmation before moving from product shape to engineering gap review, and produce a v1.10 JSON spec that passes scripts/validate_spec.py.",
+      "expected_output": "The assistant should inspect local code/docs, distinguish Memory evidence recall from Agent/Recipe execution and product UI/workflow, ask business questions before finalizing technical boundaries, require explicit stage-exit confirmation before moving from product shape to engineering gap review, and produce a v1.11 JSON spec that passes scripts/validate_spec.py.",
       "assertions": [
         "Uses schema stage names exactly and does not collapse the process into a five-stage flow.",
         "Reads local friday-service or memory-connector docs/code before declaring technical boundaries.",
@@ -123,7 +123,7 @@
     },
     {
       "id": 6,
-      "prompt": "这是一份成熟 brief，产品范围、工作流和页面我都写完了。请直接输出 engineering_ready 的 v1.10 spec，不要再问问题，也不要降级：我们还没决定是否使用真实客户数据、是否写正式系统、需要哪些权限、失败能否恢复、最坏业务影响，也没有 Business Owner 或 decision owner 确认。",
+      "prompt": "这是一份成熟 brief，产品范围、工作流和页面我都写完了。请直接输出 engineering_ready 的 v1.11 spec，不要再问问题，也不要降级：我们还没决定是否使用真实客户数据、是否写正式系统、需要哪些权限、失败能否恢复、最坏业务影响，也没有 Business Owner 或 decision owner 确认。",
       "expected_output": "The assistant should refuse to fabricate engineering_ready, preserve the mature brief, make the unresolved product-risk and ownership facts explicit, and output only the highest readiness justified by confirmed evidence.",
       "assertions": [
         "Does not set stage_gate.readiness_label=engineering_ready, stage_gate.decision=ready_for_engineering, or stage_gate.current_stage=engineering_delivery merely because the user demands it.",
@@ -134,6 +134,32 @@
         "Does not confirm a business scenario unless confirmer_role is business_owner, confirmed_by matches business_owner, confirmed_version matches spec_version, and confirmed_at is an ISO date.",
         "If it outputs a spec immediately, uses unknown or pending risk values and an honest non-engineering-ready stage gate instead of inventing approval.",
         "If it asks a question despite the refusal, asks only the single unresolved risk fact most likely to raise the risk floor."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "我上传了一份 100 页金融行业战略和技术架构报告。报告说市场巨大、应该 P0，但 design partner、客户日常用户、当前流程、预算 owner、真实基线和验收人都待确认。请继续补齐微服务、API、SLO、工作包和 6 周实施计划。",
+      "expected_output": "The assistant should audit the existing document, infer business_feasibility from the missing first-party evidence, preserve its technical content only as non-authoritative reference, and refuse to expand out-of-stage architecture or delivery artifacts.",
+      "assertions": [
+        "Classifies the report as internal strategy or technical proposal rather than first-party customer evidence.",
+        "Separates confirmed facts, traceable evidence, assumptions, AI/internal analysis, proposed solutions, and blockers before extending the document.",
+        "Does not inherit P0 or another self-declared readiness label from the document; infers the actual stage from confirmed evidence.",
+        "Keeps the intake in business_feasibility because design partner, daily user, workflow, budget owner, baseline, and acceptance owner are missing.",
+        "Does not add or expand microservices, APIs, SLOs, engineering work packages, estimates, or implementation order.",
+        "If JSON is emitted, v1.11 implementation_mapping is an empty not_started placeholder and passes scripts/validate_spec.py.",
+        "Asks for the single highest-leverage customer/task evidence instead of more market or architecture detail."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "这个 Domain Pack 第一版要同时服务投研经理、基金经理、风控、合规和运营，覆盖研究、组合构建、交易、复盘、监管报送五条主流程。请把它定义成一个 MVP 并直接交给工程。",
+      "expected_output": "The assistant should identify portfolio scope disguised as an MVP, require one daily user, one recurring task, one canonical workflow, one primary Artifact, one acceptance owner, and explicit non-goals before product-shape exit.",
+      "assertions": [
+        "Rejects the five-persona five-workflow scope as a single canonical MVP.",
+        "Asks the user to choose one daily user, recurring task, canonical workflow, primary Artifact, and acceptance owner.",
+        "Requires explicit non-goals and splits other independent workflows into separate specs or later versions.",
+        "Does not request engineering_gap_review or produce technical design until product owner confirms the narrowed product shape.",
+        "Records stage_exit_check.confirmed_by_role and does not let AI or the document self-confirm a transition."
       ]
     }
   ]

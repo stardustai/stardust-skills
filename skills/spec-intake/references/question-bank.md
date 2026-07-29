@@ -1,5 +1,15 @@
 # Spec Intake Question Bank
 
+## Existing Document Audit
+
+Use these only when the user provides a report, PRD, architecture document, or implementation plan:
+
+- 这份文档里，哪些内容来自可追溯客户事实，哪些是内部或 AI 推演？
+- 文档声明的优先级和 readiness 是谁确认的，确认依据是什么？
+- 如果先不展开技术方案，当前缺失的客户、日常用户、任务、基线、预算和验收事实分别是什么？
+- 这份材料应该被分类为客户证据、内部战略、产品提案、技术参考还是交付承诺？
+- 按实际证据判断，它目前应停在哪个 stage？
+
 Use this as a menu, not a script. Ask the next question that most reduces ambiguity or risk. Ask one question at a time.
 
 Before asking:

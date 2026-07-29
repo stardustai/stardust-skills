@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.10",
+  "spec_version": "1.11",
   "spec_id": "SPEC-INS-BROKER-PROPOSAL-001",
   "title": "保险经纪人客户报销组合方案生成 Domain Pack",
   "status": "spec_review",
@@ -30,6 +30,7 @@
       "exit_summary": "Current stage product_shape is complete enough for engineering_gap_review only. Confirmed facts: product basis is Domain Pack; target buyer is insurance brokerage sales or company owner; acceptance reviewer is senior broker/compliance reviewer; current alternative is manual product lookup plus generic LLM drafting; minimum paid artifact is a reviewable insurance reimbursement proposal draft; evidence is single_case/anecdotal and design partner remains unconfirmed; PMF low score is customer_willingness/GTM repeatability; opportunity priority is medium because commercial signal is plausible but not paid; competitive research is confirmed; blocked next actions include engineering delivery, validation execution, formal quote, underwriting, and CRM writeback.",
       "confirmation_question": "是否确认结束产品形态收敛，只进入 engineering_gap_review，而不进入验证执行或工程交付？",
       "confirmed_by": "Derek",
+      "confirmed_by_role": "product_owner",
       "confirmed_at": "2026-07-10",
       "next_stage": "engineering_gap_review"
     }
@@ -697,7 +698,7 @@
         "confirmer_role": "business_owner",
         "confirmed_by": "示例业务 owner",
         "confirmed_at": "2026-07-20",
-        "confirmed_version": "1.10"
+        "confirmed_version": "1.11"
       }
     }
   ],
@@ -1330,6 +1331,7 @@
     "2026-07-21: 升级为 v1.7，新增 business 阶段市场体量评估",
     "2026-07-21: 升级为 v1.8，新增市场体量证据质量和来源组合要求",
     "2026-07-22: 升级为 v1.9，新增虚拟多角色评审团，支持 PM、算法、用户、专家、researcher、owner 等互相挑战设计假设",
-    "2026-07-22: 升级为 v1.10，将内部 PoC 阶段改名为 validation_design / validation_execution，并把客户 POC 保留为 business 阶段概念"
+    "2026-07-22: 升级为 v1.10，将内部 PoC 阶段改名为 validation_design / validation_execution，并把客户 POC 保留为 business 阶段概念",
+    "2026-07-29: 升级为 v1.11，新增阶段产物上限、已有文档审计、唯一 MVP 收敛和阶段确认角色校验"
   ]
 }

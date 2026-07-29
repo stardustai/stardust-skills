@@ -135,7 +135,8 @@ spec-intake/
 ├── SKILL.md - Codex/agent 实际执行该 skill 时读取的主指令。
 ├── README.md - 给人阅读的说明文档，也适合培训和推广。
 ├── references/
-│   ├── spec-schema.json - Spec Driven JSON v1.10 的结构定义和枚举。
+│   ├── spec-schema.json - Spec Driven JSON v1.11 的结构定义和枚举，兼容 v1.10。
+│   ├── stage-artifact-policy.md - 各阶段允许和禁止的产物、已有文档审计、MVP 收敛和确认角色规则。
 │   ├── business-success-scenarios.md - 业务成功场景、QA/工程映射和阶段门禁的详细规范。
 │   ├── delivery-risk-profile.md - 六维风险输入、R0-R3、控制项和产品门禁的详细规范。
 │   └── question-bank.md - 按阶段和字段组织的问题库。

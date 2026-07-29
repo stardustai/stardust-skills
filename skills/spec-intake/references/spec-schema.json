@@ -29,7 +29,7 @@
     "missing_fields"
   ],
   "properties": {
-    "spec_version": { "type": "string", "enum": ["1.10"] },
+    "spec_version": { "type": "string", "enum": ["1.10", "1.11"] },
     "spec_id": { "type": "string" },
     "title": { "type": "string" },
     "status": {
@@ -128,6 +128,18 @@
             "exit_summary": { "type": ["string", "null"] },
             "confirmation_question": { "type": ["string", "null"] },
             "confirmed_by": { "type": ["string", "null"] },
+            "confirmed_by_role": {
+              "type": ["string", "null"],
+              "enum": [
+                "business_owner",
+                "product_owner",
+                "engineering_owner",
+                "qa_owner",
+                "decision_owner",
+                "user",
+                null
+              ]
+            },
             "confirmed_at": { "type": ["string", "null"] },
             "next_stage": { "type": ["string", "null"] }
           }
