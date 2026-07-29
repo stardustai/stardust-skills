@@ -61,17 +61,39 @@ Use at least two materially different sources, including one primary source, for
 10. Research and score the candidate's technical-team environment. Verify financing stage, investors, business type, product identity, technical leadership, R&D/product evidence, and whether the company is product-led or project/outsourcing-led. Do not infer team quality from a company name alone.
 11. Score product-line fit for each relevant target product using exactly: hard-problem similarity 25%, technical-architecture similarity 25%, data/evaluation-loop similarity 20%, customer/deployment similarity 15%, and responsibility/stage similarity 15%. Do not average unrelated product lines merely to produce one number.
 12. Score recent-role functional fit separately. Product-line fit asks whether the former product's mechanisms transfer; recent-role functional fit asks what the person actually did recently. Do not let work at a relevant company or on a relevant product substitute for core-function ownership.
-13. Apply evidence caps and senior-level gates when not in resume-only mode.
-14. Show every required subdimension, weight, weighted contribution, and evidence basis; do not expose only a top-level score.
-15. Recalculate every weighted score independently and verify the displayed arithmetic.
-16. Confirm that the final report retains any contrary evidence that could change product identity, system boundaries, candidate ownership, team environment, recent function, or time alignment.
-17. Produce screening questions that target the largest unresolved claims.
+13. Apply the recency weighting and current-capability gates below. Historical prestige must not rescue weak recent technical evidence.
+14. Apply evidence caps and senior-level gates when not in resume-only mode.
+15. Show every required subdimension, weight, weighted contribution, and evidence basis; do not expose only a top-level score.
+16. Recalculate every weighted score independently and verify the displayed arithmetic.
+17. Confirm that the final report retains any contrary evidence that could change product identity, system boundaries, candidate ownership, team environment, recent function, or time alignment.
+18. Produce screening questions that target the largest unresolved claims.
+
+## Recency weighting and current-capability gate
+
+For L4/L5 core product R&D, AI engineering, architecture, technical-director, and CTO screening, current capability is the hiring object. Evaluate candidate-facing technical evidence using these maximum time weights:
+
+- Work from the most recent 0-3 years: at least 70% of the candidate-facing technical judgment.
+- Work from 3-7 years ago: at most 20%.
+- Work more than 7 years ago: at most 10%.
+
+Apply this rule to personal technical depth, technical taste, product-line transferability, and the career-portfolio interpretation of product technology. Keep a historical product's intrinsic technology score when describing that product in its own time, but discount its contribution to the candidate's current score. If a time window has no relevant evidence, do not silently reallocate its weight to old projects merely to preserve a high total.
+
+Historical work can prove foundations such as distributed-systems experience, engineering discipline, or prior exposure to scale. It cannot by itself prove current hands-on depth, current AI understanding, current product judgment, or readiness to lead today's technical direction. Do not count the same old project once as product prestige and again as personal depth to rescue weak recent evidence.
+
+For a target L4/L5 core-R&D role:
+
+- If technical depth demonstrated in the most recent three years is below 60, reject at the target level regardless of older flagship projects.
+- If the role requires leading AI/product technology and the recent three-year portfolio is below 60 on technical leadership and technical taste, reject at the target level even when an older project was historically strong.
+- A recent project consisting mainly of standard data collection, ETL, vector retrieval, prompt orchestration, or LLM API integration does not reach 60 unless the evidence shows difficult mechanisms such as evaluation and feedback loops, model or retrieval decisions, permissions and provenance, reliability/cost tradeoffs, failure analysis, or original architecture with measurable results.
+- Product similarity cannot substitute for depth. A generic RAG or Agent implementation may look adjacent to Friday or MorningStar while still being technically weak.
+
+Always show a recency evidence table with `time window / projects / candidate-owned work / weight used / current signal / reason`. State separately what the older evidence proves and what it does not prove.
 
 When a candidate highlights a highly repetitive technical topic such as a generic Agent harness, RAG wrapper, workflow builder, or chatbot, do not award technical-currency points for vocabulary alone. If neither public evidence nor the candidate's own description identifies an original problem, mechanism, comparison baseline, failure, or result, treat the project as evidence of weak technical selection and technical taste, not merely missing evidence.
 
 Treat each input row as one candidate by default. Never merge adjacent rows merely because companies, career stages, or technical topics appear related. Merge multiple rows into one career portfolio only when the source provides a stable candidate ID, candidate name, explicit resume boundary, or an equally direct identity link. If identity linkage is absent, score and report every row independently.
 
-For a confirmed multi-product career portfolio, first list every input row and preserve coverage. Then choose at most three representative product clusters using technical substance, plausible candidate ownership, recency when known, and relevance to the target products. Calculate each representative product's technology score, then derive the portfolio product-technology score with fixed weights `50%/30%/20%`; with two representatives use `60%/40%`, and with one use `100%`. Explain the selection and do not silently average every old or irrelevant project. Candidate technical depth and product-line fit may use evidence across the full portfolio, but every positive signal must cite a specific inferred-owned component.
+For a confirmed multi-product career portfolio, first list every input row and preserve coverage. Then choose at most three representative product clusters using technical substance, plausible candidate ownership, recency, and relevance to the target products. Calculate each representative product's intrinsic technology score, then derive the candidate's current portfolio signal using the recency limits above. The former fixed `50%/30%/20%` or `60%/40%` ordering must not override the time-window caps for L4/L5 screening. Explain the selection, time weight, and any unfilled recent-evidence weight; do not silently average every old or irrelevant project. Candidate technical depth and product-line fit may use evidence across the full portfolio, but every positive signal must cite a specific inferred-owned component and retain its recency discount.
 
 ## Senior-level decision rule
 

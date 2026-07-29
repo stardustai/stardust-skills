@@ -213,6 +213,32 @@ For L4/L5 roles that explicitly own core product R&D or AI product technology, a
 
 Always output the recent roles used, each role's actual function, distance from the target responsibility center, score, and evidence. Titles such as CTO, technical director, head of engineering, or AI lead are claims, not functional evidence.
 
+### 9.0.1 Recency-weighted current technical evidence
+
+For L4/L5 core product R&D, AI engineering, architecture, technical-director, and CTO roles, score the capability that is current enough to be hired now. Candidate-facing technical evidence must use these time limits:
+
+| Time window | Weight rule | What it may prove |
+|---|---:|---|
+| Most recent 0-3 years | At least 70% | Current technical depth, technical taste, hands-on ability, current product judgment, and current-paradigm transferability |
+| 3-7 years ago | At most 20% | Still-relevant depth and transferable mechanisms, with explicit staleness checks |
+| More than 7 years ago | At most 10% | Historical foundations only; normally not current leadership, AI understanding, or technical direction |
+
+Use these limits for personal technical depth, technical taste, product-line fit, and the candidate-facing career-portfolio product signal. A product fact card may retain the product's intrinsic historical score, because a strong product should be assessed against its contemporaneous alternatives. The candidate's current score must discount that old product separately.
+
+Do not reallocate an absent recent-evidence share to old work just to make the weights sum to a flattering portfolio. Show the missing recent share as missing current evidence. Do not double-count an old flagship project as both product prestige and current personal depth.
+
+Apply these target-level gates after calculating the weighted score:
+
+- Recent three-year technical depth below 60 blocks L4/L5 core-R&D advancement, regardless of older flagship products.
+- When the target role owns leading AI/product technology, recent three-year technical leadership or technical taste below 60 also blocks advancement at that level.
+- Standard data collection, ETL, vector retrieval, prompt orchestration, LLM API integration, generic RAG, Agent harnesses, or workflow wrappers normally remain below 60 when there is no evidence of evaluation/feedback loops, model or retrieval decisions, permissions/provenance, reliability or cost tradeoffs, hard failure analysis, original mechanisms, or measurable comparison results.
+- Similar vocabulary or product adjacency to Friday/MorningStar cannot raise a technically shallow project above the depth gate.
+
+Every report must include:
+
+| Time window | Products and dates | Candidate-owned work | Weight used | Current signal score | What it proves / does not prove |
+|---|---|---|---:|---:|---|
+
 ### 9.1 Resume-only screening
 
 If the available and intended decision input is the resume alone, the primary score is the resume signal composite. Do not apply E0-E4 numerical ceilings to create a confirmed composite: there is no later evidence in the current stage that could make such a score comparable across candidates. Public research provides product context and contemporaneous benchmarks only. Candidate-specific uncertainty must be expressed through the personal-depth subdimensions and explicit risk flags, without a second penalty.
@@ -246,13 +272,9 @@ With team environment = Product technology * 20% + Personal technical depth * 25
 
 Default input identity rule: one row equals one candidate. Adjacency, similar employers, plausible career progression, or related technical topics are not identity evidence. Merge rows only when a candidate ID, name, explicit resume boundary, or equally direct source linkage confirms that they belong to the same person. Otherwise produce a separate fact card, responsibility inference, scoring breakdown, and final score for every row.
 
-When one candidate is confirmed to have many product rows, preserve a coverage table for all rows and select no more than three representative product clusters. Choose them using technical substance, plausible personal ownership, recency when known, and target-product relevance. Score each representative product separately, then aggregate the product-technology score with fixed weights:
+When one candidate is confirmed to have many product rows, preserve a coverage table for all rows and select no more than three representative product clusters. Choose them using technical substance, plausible personal ownership, recency, and target-product relevance. Score each representative product's intrinsic technology separately, then aggregate the candidate-facing current portfolio signal using the time limits in 9.0.1. For L4/L5 screening, recency weighting supersedes the former fixed `50% / 30% / 20%` and `60% / 40%` representative ordering.
 
-- Three representatives: `50% / 30% / 20%` in ranked order.
-- Two representatives: `60% / 40%`.
-- One representative: `100%`.
-
-Do not average every historical project merely because it appears in the input. Explain why each representative was selected and which rows were grouped into it. Candidate technical depth and product-line fit can use the full portfolio, but must cite concrete inferred-owned components rather than company names or titles.
+Do not average every historical project merely because it appears in the input. Explain why each representative was selected, which rows were grouped into it, and how the time weight was applied. Candidate technical depth and product-line fit can use the full portfolio, but must cite concrete inferred-owned components and retain their recency discount rather than relying on company names or titles.
 
 For a general senior technical product role without a separate team-environment score:
 
