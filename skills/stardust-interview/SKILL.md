@@ -39,6 +39,8 @@ tool_search: xiaoqing_interview search_candidates get_interview_context list_can
 - `list_candidate_interviews`：确认候选人每一轮的 `interview_id`、轮次、面试官、时间和 revision。
 - `upload_interview_result`：提交结构化面评；必须先 dry run。
 
+**排期和面试记录是两类数据。** `get_interview_context` 完整评审包中的“面试安排时间”表用于判断目标轮次是否已分配面试官、是否填写安排时间；`list_candidate_interviews` 只列已经物化的面试记录。目标轮次没有 `interview_id`，不等于没有安排，也不等于不能填写面评。网页端目标轮次显示“填写评价”时，可以创建该轮面试记录并直接提交面评；不得要求 HR 先补建记录，也不得因此停止听记分析。
+
 `search_candidates` 只用于定位候选人，不作为最终事实源。搜索结果里的 `matched_sources` 只能说明为什么命中，不能证明某轮面评真实存在。最终事实必须来自 `get_interview_context`、`list_candidate_interviews` 和目标候选人的结构化字段。
 
 如果当前会话没有暴露 `mcp__xiaoqing_interview`，先检查：
@@ -617,10 +619,12 @@ AI 测试开发岗位的 60 分线不是“接触过 AI 工具”，而是刚刚
 只有用户确认提交后执行。提交前刷新当前上下文，不复用旧 revision：
 
 1. `get_interview_context`：确认 candidate、job、目标 round 和 target `interview_id`。
+   - 同时读取完整评审包的“面试安排时间”表确认目标轮次面试官。不要用 `list_candidate_interviews` 是否返回记录判断该轮是否安排。
 2. `list_candidate_interviews`：确认目标面试记录和当前 revision。
    - `status="scheduled"` 的记录是可提交目标，不要把其默认 recommendation/score 当作已提交面评。
    - `score_items` 为空时代表未面评，不代表 0 分真实评价。
    - 提交前确认 round 是目标轮次、interviewer 是目标面试官。
+   - 若目标轮次尚无 `interview_id`，但完整评审包已分配目标面试官或网页显示“填写评价”，继续完成听记分析和面评确认。用户确认提交后，使用网页端该轮“填写评价”创建并提交新记录，再刷新 `list_candidate_interviews` 读取新 `interview_id` 和 revision；严禁复用前一轮 `interview_id`。
 3. `upload_interview_result` with `dry_run=true`：
    - `interview_id`
    - `idempotency_key`
