@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   clickSendRequest,
+  ensureHistoryDateRange,
   GET_DINGTALK_HISTORY_GATE_STATE_JS,
   GET_PERMISSION_REQUEST_MESSAGE_FIELD_STATE_JS,
   getHistoryPageWithEmptyRowGrace,
@@ -309,4 +310,71 @@ test("getHistoryPageWithEmptyRowGrace waits through transient empty history rows
   assert.equal(pageState.rows[0].row_key, "row-1");
   assert.equal(evaluateCalls, 3);
   assert.equal(waitCalls, 2);
+});
+
+test("ensureHistoryDateRange expands the OA history date filter and clicks query", async () => {
+  const calls = [];
+  const startInput = {
+    click: async () => calls.push(["click_start_input"]),
+  };
+  const queryButton = {
+    click: async () => calls.push(["click_query"]),
+  };
+  const states = [
+    { found: true, start: "2026-08-01", end: "2026-08-01", query_visible: true },
+    { found: true, min: "2026-07-01", max: "2026-08-31", date_count: 84 },
+    { found: true, min: "2026-07-01", max: "2026-08-31", date_count: 84 },
+    { found: true, start: "2026-07-25", end: "2026-08-01", query_visible: true },
+  ];
+  let evaluateCalls = 0;
+  const tab = {
+    playwright: {
+      evaluate: async () => states[Math.min(evaluateCalls++, states.length - 1)],
+      getByPlaceholder: (placeholder, options) => {
+        assert.equal(options.exact, true);
+        return {
+          count: async () => 1,
+          first: () => {
+            if (placeholder === "开始时间") return startInput;
+            throw new Error(`unexpected placeholder: ${placeholder}`);
+          },
+        };
+      },
+      locator: (selector) => ({
+        count: async () => 1,
+        first: () => ({
+          click: async () => calls.push(["click_date", selector]),
+        }),
+        nth: (index) => ({
+          click: async () => calls.push(["click_date_nth", selector, index]),
+        }),
+      }),
+      getByRole: (role, options) => {
+        assert.equal(role, "button");
+        assert.equal(options.name, "查询");
+        return {
+          count: async () => 1,
+          first: () => queryButton,
+        };
+      },
+      waitForTimeout: async (ms) => calls.push(["wait", ms]),
+    },
+  };
+
+  const result = await ensureHistoryDateRange(tab, {
+    startDate: "2026-07-25",
+    endDate: "2026-08-01",
+    settleMs: 1,
+  });
+
+  assert.equal(result.changed, true);
+  assert.equal(result.clicked_query, true);
+  assert.equal(result.after.start, "2026-07-25");
+  assert.deepEqual(calls, [
+    ["click_start_input"],
+    ["click_date", 'td[title="2026-07-25"]'],
+    ["click_date", 'td[title="2026-08-01"]'],
+    ["click_query"],
+    ["wait", 1],
+  ]);
 });

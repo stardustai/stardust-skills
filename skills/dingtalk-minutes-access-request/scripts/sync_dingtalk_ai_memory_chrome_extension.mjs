@@ -3,7 +3,7 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 
 const BROWSER_CLIENT_PATH =
-  "/Users/derek/.codex/plugins/cache/openai-bundled/chrome/26.602.40724/scripts/browser-client.mjs";
+  "/Users/derek/.codex/plugins/cache/openai-bundled/chrome/26.727.40816/scripts/browser-client.mjs";
 const HISTORY_URL = "https://oa.dingtalk.com/meeting_oa#/flash_minutes/history_list";
 const DEFAULT_BASE_DIR = "/Users/derek/Documents/memory/AI听记";
 const DEFAULT_TARGET_ORG_NAME = "北京星尘纪元智能科技有限公司";
@@ -226,6 +226,14 @@ function parseLocalTimestamp(value) {
     Number(second),
     0,
   );
+}
+
+function formatDateInput(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  const year = String(date.getFullYear()).padStart(4, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function parseChinaTimestamp(value) {
@@ -659,6 +667,116 @@ async function waitForHistoryReady(tab, timeoutMs = 15000, { targetOrgName = DEF
   throw new Error(`History page did not become ready before timeout: ${JSON.stringify(lastGateState || {})}`);
 }
 
+export const GET_HISTORY_DATE_RANGE_STATE_JS = () => {
+  const normalize = (value) => ((value || '').replace(/\s+/g, ' ')).trim();
+  const inputs = Array.from(document.querySelectorAll('input'));
+  const startInput = inputs.find((input) => normalize(input.getAttribute('placeholder')) === '开始时间') || null;
+  const endInput = inputs.find((input) => normalize(input.getAttribute('placeholder')) === '结束时间') || null;
+  return {
+    found: !!startInput && !!endInput,
+    start: startInput?.value || "",
+    end: endInput?.value || "",
+    query_visible: Array.from(document.querySelectorAll('button')).some((button) => {
+      const rect = button.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && normalize(button.innerText || button.textContent) === '查询';
+    }),
+  };
+};
+
+const GET_VISIBLE_DATE_PICKER_STATE_JS = ({ date = "" } = {}) => {
+  const isVisible = (el) => {
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+  const dates = Array.from(document.querySelectorAll('td[title]'))
+    .filter(isVisible)
+    .map((cell) => String(cell.getAttribute('title') || ''))
+    .filter((title) => /^\d{4}-\d{2}-\d{2}$/.test(title))
+    .sort();
+  return {
+    found: !!date && dates.includes(date),
+    min: dates[0] || "",
+    max: dates[dates.length - 1] || "",
+    date_count: dates.length,
+  };
+};
+
+async function clickHistoryDatePickerDate(tab, date, timeoutMs = 10000) {
+  if (!date) return false;
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const state = await evaluatePage(
+      tab,
+      GET_VISIBLE_DATE_PICKER_STATE_JS,
+      { date },
+      { timeoutMs: 5000 },
+    );
+    if (state?.found) {
+      await tab.playwright.locator(`td[title="${date}"]`).first().click({ timeoutMs: 5000 });
+      return true;
+    }
+    if (!state?.min || !state?.max) {
+      await tab.playwright.waitForTimeout(300);
+      continue;
+    }
+    const goPrevious = date < state.min;
+    const selector = goPrevious ? ".dtd-picker-header-prev-btn" : ".dtd-picker-header-next-btn";
+    const buttons = tab.playwright.locator(selector);
+    const buttonCount = await buttons.count().catch(() => 0);
+    if (buttonCount < 1) return false;
+    const button = goPrevious ? buttons.first() : buttons.nth(buttonCount - 1);
+    await button.click({ timeoutMs: 5000 });
+    await tab.playwright.waitForTimeout(300);
+  }
+  return false;
+}
+
+export async function ensureHistoryDateRange(tab, { startDate = "", endDate = "", settleMs = 1500 } = {}) {
+  if (!startDate && !endDate) return { found: false, skipped: true, reason: "date_range_empty" };
+
+  const before = await evaluatePage(
+    tab,
+    GET_HISTORY_DATE_RANGE_STATE_JS,
+    undefined,
+    { timeoutMs: 5000 },
+  );
+  if (!before?.found) return { ...(before || {}), changed: false, clicked_query: false, reason: "date_inputs_missing" };
+
+  let changed = false;
+  if ((startDate && before.start !== startDate) || (endDate && before.end !== endDate)) {
+    const startInput = tab.playwright.getByPlaceholder("开始时间", { exact: true });
+    if ((await startInput.count().catch(() => 0)) < 1) {
+      return { ...before, changed: false, clicked_query: false, reason: "start_input_missing" };
+    }
+    await startInput.first().click({ timeoutMs: 5000 });
+    if (startDate && !(await clickHistoryDatePickerDate(tab, startDate))) {
+      return { ...before, changed: false, clicked_query: false, reason: "start_date_unselectable" };
+    }
+    if (endDate && !(await clickHistoryDatePickerDate(tab, endDate))) {
+      return { ...before, changed: false, clicked_query: false, reason: "end_date_unselectable" };
+    }
+    changed = true;
+  }
+
+  let clickedQuery = false;
+  if (changed) {
+    const queryButton = tab.playwright.getByRole("button", { name: "查询" });
+    if ((await queryButton.count().catch(() => 0)) > 0) {
+      await queryButton.first().click({ timeoutMs: 5000 });
+      clickedQuery = true;
+    }
+    await tab.playwright.waitForTimeout(settleMs);
+  }
+
+  const after = await evaluatePage(
+    tab,
+    GET_HISTORY_DATE_RANGE_STATE_JS,
+    undefined,
+    { timeoutMs: 5000 },
+  );
+  return { ...after, before, after, changed, clicked_query: clickedQuery, reason: "" };
+}
+
 async function getHistoryPage(tab) {
   return evaluatePage(tab,
     () => {
@@ -1080,6 +1198,20 @@ export async function runChromeDingTalkSync(options = {}) {
   try {
     emitProgress(`Opening DingTalk AI history through real Chrome`);
     await waitForHistoryReady(historyTab, Number(options.historyReadyTimeoutMs || 60000), { targetOrgName });
+    const historyStartDate = options.historyStartDate || formatDateInput(cutoffDate);
+    const historyEndDate = options.historyEndDate || formatDateInput(new Date());
+    const dateRangeState = await ensureHistoryDateRange(historyTab, {
+      startDate: historyStartDate,
+      endDate: historyEndDate,
+      settleMs: Number(options.historyDateRangeSettleMs || 1500),
+    });
+    if (dateRangeState?.found) {
+      emitProgress(
+        `History date range: ${dateRangeState.before?.start || ""}..${dateRangeState.before?.end || ""} -> ${dateRangeState.after?.start || ""}..${dateRangeState.after?.end || ""}`,
+      );
+    } else {
+      emitProgress(`History date range controls unavailable: ${dateRangeState?.reason || "unknown"}`);
+    }
     emitProgress(`History ready; scratch tab opened`);
 
     while (true) {
