@@ -39,7 +39,7 @@ tool_search: xiaoqing_interview search_candidates get_interview_context list_can
 - `list_candidate_interviews`：确认候选人每一轮的 `interview_id`、轮次、面试官、时间和 revision。
 - `upload_interview_result`：提交结构化面评；必须先 dry run。
 
-**排期和面试记录是两类数据。** `get_interview_context` 完整评审包中的“面试安排时间”表用于判断目标轮次是否已分配面试官、是否填写安排时间；`list_candidate_interviews` 只列已经物化的面试记录。目标轮次没有 `interview_id`，不等于没有安排，也不等于不能填写面评。网页端目标轮次显示“填写评价”时，可以创建该轮面试记录并直接提交面评；不得要求 HR 先补建记录，也不得因此停止听记分析。
+**排期和面试记录是两类数据。** `get_interview_context` 完整评审包中的“面试安排时间”表用于判断目标轮次是否已分配面试官、是否填写安排时间；`list_candidate_interviews` 只列已经物化的面试记录。目标轮次没有 `interview_id`，不等于没有安排，也不等于不能填写面评。遇到排期、记录缺失、自动回查或网页创建记录时，必须读取并遵循 [面试状态与提交目标](references/interview-state-and-submission.md)。
 
 `search_candidates` 只用于定位候选人，不作为最终事实源。搜索结果里的 `matched_sources` 只能说明为什么命中，不能证明某轮面评真实存在。最终事实必须来自 `get_interview_context`、`list_candidate_interviews` 和目标候选人的结构化字段。
 
@@ -134,12 +134,12 @@ dws doc search --query "如何识别AI认知水平" --page-size 10 --format json
    - 本轮优先深挖会改变录用、职级、薪资或岗位匹配判断的不确定点，以及前面轮次没有真实测试过的岗位核心能力。不要为了覆盖完整而重复已经得到稳定结论的问题。
    - 面试准备输出中明确给出：`前面轮次主要问题和判断结论`、`本轮不再重复的问题`、`仍未闭环的关键判断`、`本轮递进追问及通过/风险标准`。
 6. 输出面试建议，聚焦岗位关键能力，不做泛泛的行为面问题。
-7. 设置面试后自动复盘定时任务：面试准备完成后，创建一个**2 小时后的延后定时任务**，任务内容是按本 skill 自动拉取该候选人目标轮次的小青资料和 DWS AI 听记，若听记已生成则进行面评分析，并在满足提交条件时自动提交小青面评。任务标题/描述中必须包含候选人姓名、岗位、轮次和小青 `interview_id`，便于后续取消或排查。
+7. 设置面试后自动复盘定时任务：面试准备完成后，创建一个**2 小时后的延后定时任务**，任务内容是按本 skill 自动拉取该候选人目标轮次的小青资料和 DWS AI 听记，若听记已生成则进行面评分析，并在满足提交条件时自动提交小青面评。任务标题/描述必须包含候选人姓名、岗位、`candidate_id`、目标轮次和面试官；仅在目标轮记录已存在时附加 `interview_id`。详细状态判断遵循 [面试状态与提交目标](references/interview-state-and-submission.md)。
    - 如果本轮会话可用自动化/提醒工具，优先使用该工具创建延后任务；若工具未暴露，使用当前环境可用的等价定时任务能力，并在输出中说明任务是否创建成功。
    - **调度规则必须使用可靠的相对延后。** 对 Codex heartbeat，优先使用 `FREQ=MINUTELY;INTERVAL=120` 表达 2 小时后回查；如果必须使用固定时刻，则必须带明确 `DTSTART`，并在创建后检查配置里有可执行起点。不要用只有 `FREQ=DAILY;COUNT=1;BYHOUR=...;BYMINUTE=...` 的规则来模拟一次性 2 小时后任务，因为缺少 `DTSTART` 时可能不会被调度器拾取。
-   - 创建自动复盘任务后，必须立刻用自动化查看工具或本地 automation 配置验证：任务状态为 `ACTIVE`、`target_thread_id` 为当前线程、`rrule` 是相对延后或带 `DTSTART` 的明确规则、任务 prompt 含候选人姓名/岗位/轮次/`interview_id`。如果验证失败，不得报告“已创建成功”，应立即修正或说明阻塞。
+   - 创建自动复盘任务后，必须立刻用自动化查看工具或本地 automation 配置验证：任务状态为 `ACTIVE`、`target_thread_id` 为当前线程、`rrule` 是相对延后或带 `DTSTART` 的明确规则、任务 prompt 含候选人姓名/岗位/`candidate_id`/轮次/面试官。已有目标轮记录时再校验 `interview_id`。如果验证失败，不得报告“已创建成功”，应立即修正或说明阻塞。
    - 自动任务执行时仍要遵守小青提交协议：先刷新上下文和 revision，再 dry run，再正式提交；不要复用面试准备时的旧材料或旧 revision。
-   - 如果 2 小时后仍没有对应 AI 听记或小青面试记录不可提交，任务只生成状态说明，不要凭空提交。
+   - 如果 2 小时后仍没有对应 AI 听记，任务只生成状态说明，不要凭空评价。只有目标轮记录不存在时，继续分析并保留网页创建路径，不得把“无 interview_id”报告成无法面评。
    - 如果用户明确要求不要设置提醒/自动复盘任务，则跳过，并在面试准备输出里注明已按用户要求跳过。
 
 面试准备输出模板：
@@ -618,14 +618,14 @@ AI 测试开发岗位的 60 分线不是“接触过 AI 工具”，而是刚刚
 
 只有用户确认提交后执行。提交前刷新当前上下文，不复用旧 revision：
 
-1. `get_interview_context`：确认 candidate、job、目标 round 和 target `interview_id`。
-   - 同时读取完整评审包的“面试安排时间”表确认目标轮次面试官。不要用 `list_candidate_interviews` 是否返回记录判断该轮是否安排。
-2. `list_candidate_interviews`：确认目标面试记录和当前 revision。
+1. 按 [面试状态与提交目标](references/interview-state-and-submission.md) 区分排期、记录、听记和提交授权。
+2. `get_interview_context`：确认 candidate、job、目标 round，并从“面试安排时间”表读取目标轮次面试官和时间。
+3. `list_candidate_interviews`：确认目标面试记录和当前 revision。
    - `status="scheduled"` 的记录是可提交目标，不要把其默认 recommendation/score 当作已提交面评。
    - `score_items` 为空时代表未面评，不代表 0 分真实评价。
    - 提交前确认 round 是目标轮次、interviewer 是目标面试官。
-   - 若目标轮次尚无 `interview_id`，但完整评审包已分配目标面试官或网页显示“填写评价”，继续完成听记分析和面评确认。用户确认提交后，使用网页端该轮“填写评价”创建并提交新记录，再刷新 `list_candidate_interviews` 读取新 `interview_id` 和 revision；严禁复用前一轮 `interview_id`。
-3. `upload_interview_result` with `dry_run=true`：
+   - 若目标轮次尚无 `interview_id`，继续完成听记分析和面评确认。用户确认提交后，使用网页端该轮“填写评价”创建并提交新记录，再刷新列表读取新 `interview_id` 和 revision；严禁复用前一轮 ID。
+4. 已有目标轮记录时，调用 `upload_interview_result` with `dry_run=true`：
    - `interview_id`
    - `idempotency_key`
    - `source_type`
@@ -640,14 +640,14 @@ AI 测试开发岗位的 60 分线不是“接触过 AI 工具”，而是刚刚
    - `structured_info`
    - `review_basis`、`evidence_summary`、`transcript_text` 按材料情况填写
    - `薪资匹配度` 若不是岗位画像原生评分项，不要强行加入 `score_items`；应写入 `risk_notes`、`feedback_summary` 和 `structured_info` 的 offer/定级建议。若薪资差距会改变推荐结论或试用规则，必须在 dry run 前更新完整 payload。
-4. 如果 dry run 因 revision 格式失败，使用校验错误返回的精确 current revision 重跑 dry run。不要直接正式提交。
-5. dry run 通过后，处理方式取决于用户确认范围：
+5. 如果 dry run 因 revision 格式失败，使用校验错误返回的精确 current revision 重跑 dry run。不要直接正式提交。
+6. dry run 通过后，处理方式取决于用户确认范围：
    - 如果用户已经看过完整草案并明确说“提交”，且 dry run 的目标候选人、轮次、分数、结论和 payload 未变化，可以立即用相同 payload 改 `dry_run=false`。
    - 如果 dry run 后 payload、target_interview、revision、轮次或分数发生变化，必须先把 dry-run 结果发给用户确认，再正式提交。
    - 如果用户明确要求“提交前确认 dry-run 结果”，无论是否已确认草案，都停在 dry-run。
-6. 最终只报告写入结果、链接、revision 和错误。
-7. 正式提交成功后，取消该候选人该轮面试准备时创建的 2 小时延后自动复盘任务。取消时用候选人姓名、岗位、轮次和 `interview_id` 精确匹配，避免误取消其他候选人任务。若当前会话没有自动化工具或找不到对应任务，在最终结果里简要说明“未能自动取消/未找到待取消任务”，不要影响已经成功的小青提交结果。
-8. 正式提交成功后，按 [references/recruitment-group-notification.md](references/recruitment-group-notification.md) 将最终面评同步到该岗位对应的钉钉招聘群：@所有前面轮次的面试官，说明本轮与前轮在结论、分数、定级和核心证据上的差异，给出可执行的前置筛选建议（以后应排查什么、加强验证什么），并附小青面评链接。该动作与正式提交绑定；草稿、讨论和 dry run 阶段不得外发。
+7. 最终只报告写入结果、链接、revision 和错误。
+8. 正式提交成功后，取消该候选人该轮面试准备时创建的 2 小时延后自动复盘任务。取消时优先用候选人 `candidate_id` 和目标轮次精确匹配，再用新生成的 `interview_id` 复核，避免误取消其他候选人任务。若当前会话没有自动化工具或找不到对应任务，在最终结果里简要说明“未能自动取消/未找到待取消任务”，不要影响已经成功的小青提交结果。
+9. 正式提交成功后，按 [references/recruitment-group-notification.md](references/recruitment-group-notification.md) 将最终面评同步到该岗位对应的钉钉招聘群：@所有前面轮次的面试官，说明本轮与前轮在结论、分数、定级和核心证据上的差异，给出可执行的前置筛选建议（以后应排查什么、加强验证什么），并附小青面评链接。该动作与正式提交绑定；草稿、讨论和 dry run 阶段不得外发。
    - 用户已经通过“提交”确认最终面评时，视为同时授权发送这条标准招聘群同步消息，不再二次确认；用户明确要求不发群时除外。
    - 群、前轮面试官或真实 @ 身份无法唯一确认时，不猜测、不误发；保留小青提交结果并报告具体阻塞。
    - 群发送失败不回滚已经成功的小青提交；最终结果分别报告“小青提交”和“招聘群同步”状态。

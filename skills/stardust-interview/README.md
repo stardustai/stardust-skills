@@ -18,6 +18,8 @@
 2. DWS 是钉钉 AI 听记事实源：摘要、转写、会议时间、参会人和 task ID。
 3. 本地文件、SQLite、源码或浏览器页面只用于排错，不能替代小青业务查询。
 
+注意：完整评审包中的排期字段和 `list_candidate_interviews` 返回的面试记录不是同一类数据。面试官已填写但时间为空，表示该轮已分配、时间未填写；没有 `interview_id` 不代表没有安排，也不阻塞听记分析或网页端填写评价。
+
 ## 基本原则
 
 - 区分材料事实、面试官判断和 agent 分析。
@@ -38,6 +40,7 @@
 5. 对历史轮次做“问题-回答-判断”审计。
 6. 输出候选人定位、匹配程度、风险、薪资匹配、文化匹配和本轮追问。
 7. 如运行环境支持，设置 2 小时后自动复盘任务。
+   - 自动任务使用 `candidate_id + 目标轮次` 定位，`interview_id` 只在已有记录时使用。
 
 面试后复盘：
 
@@ -70,7 +73,9 @@
 stardust-interview/
 ├── SKILL.md
 └── references/
+    ├── interview-state-and-submission.md
     └── recruitment-group-notification.md
 ```
 
+排期、记录、听记、提交授权和无 ID 创建流程见 [interview state and submission](references/interview-state-and-submission.md)。
 招聘群同步规则见 [recruitment group notification](references/recruitment-group-notification.md)。

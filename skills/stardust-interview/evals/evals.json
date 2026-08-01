@@ -1,0 +1,38 @@
+{
+  "skill_name": "stardust-interview",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "候选人完整评审包显示二面面试官为 Derek、时间为空；list_candidate_interviews 只有一面。请检查二面并根据已有 DWS 听记生成面评。",
+      "expected_output": "明确区分排期和记录，判断二面已分配给 Derek、时间未填写、记录尚未生成；继续拉取听记和生成草稿，不通知 HR 补建记录。",
+      "files": [],
+      "assertions": [
+        "不得声称二面未安排",
+        "不得把缺少 interview_id 作为停止听记分析的理由",
+        "必须说明提交时可通过网页填写评价创建二面记录"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "候选人当前只有一面记录，但我已经确认二面面评，请提交二面。",
+      "expected_output": "不复用一面 ID；通过网页目标轮次的填写评价创建并提交二面记录，随后刷新列表核对新 ID、轮次、分数和 revision。",
+      "files": [],
+      "assertions": [
+        "不得覆盖或复用一面 interview_id",
+        "不得要求 HR 先创建二面记录",
+        "提交后必须读回新记录验证持久化"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "候选人的二面记录已存在，status=scheduled，score_items 为空，推荐和总分是系统默认值。请提交已确认的二面面评。",
+      "expected_output": "识别 scheduled 记录为可提交目标，不把默认分值当成正式面评；刷新 revision 后执行 MCP dry run，再使用相同 payload 正式提交并读回。",
+      "files": [],
+      "assertions": [
+        "必须使用二面 scheduled 记录的 interview_id",
+        "不得把空评分项和默认分值解释为已有面评",
+        "必须先 dry run 再正式提交"
+      ]
+    }
+  ]
+}
