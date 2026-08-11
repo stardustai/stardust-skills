@@ -15,6 +15,10 @@ Translate the target role into a capability map before reading product prestige 
 
 Match is relational. The same product experience can be highly relevant to one role and weak for another. Before scoring, mark any normally required gate that the target role explicitly does not require. Never remove a gate after seeing a candidate's result.
 
+When the organization is genuinely willing to hire at more than one level or responsibility track, define those tracks before scoring. For example, a technical-director track may require operating ownership while an L4 hands-on architect track may not. Keep the same seven scores for comparability, but apply decision gates per declared track. Do not invent a lower role after seeing weak scores; use it only when it is a real hiring option with a defined mission and responsibility boundary.
+
+The target definition must support HR routing, not only scoring. For every real track, record the product line, role/level, responsibility scope, interview decision standard, and upgrade path. If people can be assigned to whichever product they fit best, product scope is not an unresolved blocker: evaluate each product separately and select the best-supported primary route.
+
 ## 2. Convert the resume into claims
 
 Separate each resume item into five claim types:
@@ -89,6 +93,20 @@ Do not use "large", "complex", "famous", or "serves major customers" as synonyms
 Look for weak adoption, commodity features, discontinued products, public incidents, unproven claims, missing benchmarks, and dependence on third-party models or platforms. The goal is not to attack the candidate; it is to prevent one-sided evidence from becoming a hiring conclusion.
 
 Do not drop contrary evidence merely to shorten the report. Preserve any fact that changes product identity, proprietary-versus-third-party system boundaries, candidate tenure attribution, ownership, differentiation, or customer validation.
+
+### 3.7 Evaluate GitHub and other public-code evidence
+
+Public code is most useful when it shows a representative sample of difficult, relevant, attributable work. Use this order:
+
+1. **Select representative projects first.** Choose no more than three project clusters using target relevance, technical substance, candidate attribution, recency, and project impact. Do not average every repository or rank candidates by repository count.
+2. **Assess project impact separately.** Use stars, forks, releases, active contributors, downstream adoption, documentation, and production references to understand the upstream project's influence. These are product-context signals, not personal contribution.
+3. **Assess the candidate's contribution.** Inspect candidate-authored diffs, commits, pull requests, review discussions, tests, merge status, releases, and follow-up fixes. Prefer merged upstream work over a fork merely displayed on the profile.
+4. **Treat forks by their upstream result.** A fork's inherited code, stars, or size is not the candidate's work. Check which commits are new, which pull requests were sent upstream, whether they were merged, and whether the candidate continued to maintain the affected mechanism.
+5. **Use code volume asymmetrically.** A large change adds positive signal only when it enters a core mechanism, has a clear responsibility boundary, survives review, and is merged or adopted. A small change is never negative merely because it has few lines; security fixes, concurrency corrections, API contracts, and architectural simplifications may create high value with little code.
+6. **Keep tool choice neutral.** Use of Claude, Copilot, or another AI coding tool does not add or subtract points by itself. Lower personal-contribution judgment only when the candidate cannot explain or own the problem, design, implementation, tests, review corrections, and result.
+7. **Sample quality and value.** PR, commit, star, and fork counts help select samples and estimate activity or impact, but they never replace inspection of problem value, technical complexity, review quality, tests, defects, and sustained result.
+
+For reports with material public-code evidence, include a short ledger showing why each representative project was selected, project-level impact signals, candidate-attributable artifacts, merge/adoption result, code-volume interpretation, and what remains unproven.
 
 ## 4. Keep screening signal separate from confirmed ability
 
@@ -238,7 +256,7 @@ For Stardust/PreSeen, at minimum distinguish:
 - **Friday:** collaborative intelligence workspace; cross-application context ingestion; layered personal/team/organization memory; knowledge extraction, consolidation, recall, provenance, access control; Agent skills and long-horizon knowledge work; Memory/Recipe compounding.
 - **MorningStar:** enterprise AI data and model production platform; multimodal data ingestion and management; scenario/corner-case discovery; annotation and autolabeling; dataset/model/version lineage; evaluation and hard-case mining; training/deployment loops; SaaS/private deployment and enterprise data security.
 
-Output separate Friday and MorningStar scores. Use the in-scope target product's score as the seventh dimension and treat the other as adjacent evidence. If scope is unresolved, calculate both seven-dimension composites and preserve the ambiguity; never average the product lines or add a generic second fit score.
+Output separate Friday and MorningStar scores. Use the in-scope target product's score as the seventh dimension and treat the other as adjacent evidence. If scope is fixed but unresolved, calculate both seven-dimension composites and preserve the ambiguity. If the organization explicitly assigns the candidate to whichever product fits best, select the stronger evidence-supported product as the primary HR route and name the other as an adjacent alternative when useful. In both cases, never average the product lines or add a generic second fit score.
 
 ## 7. Recent-function evidence is a horizontal rule
 
@@ -292,6 +310,7 @@ Output only:
 - `证据覆盖率`;
 - uncertainty flags such as unresolved entity, missing tenure, unclear personal boundary, non-recomputable metric, company capability attributed to the candidate, or critical dimension not covered;
 - screening conclusion: interview, targeted verification, reject, or insufficient information;
+- an HR routing summary placed immediately after the one-line conclusion: recommended product, role/level, responsibility scope, interview decision, adjacent alternative, and upgrade path;
 - the continuous verification checklist in section 12.
 
 Do not output an E0-E4-capped second composite at resume stage. Public research supplies product context and contemporaneous baselines; it does not independently prove personal contribution.
@@ -329,7 +348,7 @@ Before finalizing, recompute every subdimension contribution, dimension score, c
 
 ## 10. Gates and decisions
 
-Apply these gates independently of the unified composite:
+Apply these gates independently of the unified composite and per role track:
 
 - 候选人个人技术贡献深度低于 60：不能录用为技术总监或同级核心技术负责人。
 - 产品与客户判断低于 60：不适合产品技术一体化岗位，可另评纯技术岗位。
@@ -339,7 +358,9 @@ Apply these gates independently of the unified composite:
 - 关键维度处于 `简历未覆盖`、`面试未覆盖`、`已覆盖待判断` 或 `证据矛盾`：可以进入针对性验证，不能给出已经证明的高级录用结论。
 - 关键个人贡献只有 E0/E1：不能结论性认定高级技术 ownership。
 
-If the target role does not require one of these gates, mark that exception in the target capability map before scoring. Do not waive it after seeing the candidate's score.
+If the target role does not require one of these gates, mark that exception in the target capability map before scoring. Do not waive it after seeing the candidate's score. A gate failure blocks only the tracks that require that gate. For example, operating ownership below 60 blocks an operating technical-director track but does not block a predeclared L4 hands-on architect track that does not own revenue, renewal, budget, or business-line results. Keep the operating dimension visible and scored; label it non-gating for that track rather than deleting it or recomputing an ad hoc composite.
+
+The final decision must route the candidate to the strongest supported real option. State the recommended product line, role/level, concrete responsibility scope, and whether to interview or hire. Do not make HR infer placement from the highest fit score or from a paragraph of caveats.
 
 Useful risk labels include:
 
@@ -373,7 +394,17 @@ Use one auditable report. Omit the stage-inapplicable scoring table: resume repo
 
 ```markdown
 ## 一句话结论
-[阶段、判断、最强证据、最大不确定性]
+[阶段、推荐产品、推荐岗位/级别、建议职责、面试或录用决定、最强证据、最大不确定性]
+
+### HR 岗位与产品匹配摘要
+| HR 决策项 | 建议 | 置信度 | 主要依据 | 不应据此认定 |
+|---|---|---:|---|---|
+| 是否进入面试/录用 | | | | |
+| 优先产品 | | | | |
+| 优先岗位/级别 | | | | |
+| 核心职责建议 | | | | |
+| 相邻备选 | | | | |
+| 升级路径 | | | | |
 
 ## 目标岗位能力图
 | 岗位使命 | 产品阶段 | 技术重点 | 关键约束 | 要求的责任范围 | 评分前声明的不适用门槛 |
@@ -408,6 +439,10 @@ Use one auditable report. Omit the stage-inapplicable scoring table: resume repo
 ## 互联网研究账本
 | 产品层/项目 | 公开事实与原文 | 直接来源与位置 | 来源阶梯 | 能证明什么 | 不能证明什么 | 是否与任职时间对齐 | 反证 |
 |---|---|---|---|---|---|---|---|
+
+### GitHub / 公开代码代表项目账本（存在公开代码证据时）
+| 代表项目及选择理由 | 项目影响信号 | 候选人可归因 diff/commit/PR/review/test | 上游 merge/发布/采用 | 代码量解释 | 能证明什么 | 不能证明什么 |
+|---|---|---|---|---|---|---|
 
 ## 候选人负责范围反推
 | 可能负责部分 | 反推依据 | 置信度 | 不应归给候选人的部分 | 面试验证问题 |
@@ -468,7 +503,7 @@ Use one auditable report. Omit the stage-inapplicable scoring table: resume repo
 | Friday | | | | | |
 | MorningStar | | | | | |
 
-明确说明目标岗位采用哪条产品线作为第七维；若岗位归属未决，分别给出两套综合分，不平均。
+明确说明目标岗位采用哪条产品线作为第七维。岗位归属固定但未决时分别给出两套综合分并保留歧义；组织按适配分配时分别计算后选择一个主要产品，并写入 HR 摘要与最终结论。任何情况下都不平均。
 
 ## 关键门槛
 | 门槛维度 | 60 分是否满足 | 证据覆盖是否足够 | 评分前是否声明不适用 | 判断 |
@@ -485,7 +520,7 @@ Use one auditable report. Omit the stage-inapplicable scoring table: resume repo
 |---|---|---|---|---|---|---|---|---|
 
 ## 筛选或录用结论
-[进入面试 / 针对性验证 / 淘汰 / 信息不足 / 录用建议 / 不录用]
+[推荐产品、岗位/级别、职责范围、进入面试 / 针对性验证 / 淘汰 / 信息不足 / 录用建议 / 不录用；相邻备选与升级路径]
 
 ## 评审反馈
 | 待确认判断 | 当前判断及证据编号 | 评审者反馈 |

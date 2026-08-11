@@ -130,6 +130,23 @@
         "Shows separate weighted contributions for product technical quality and candidate-owned depth.",
         "Does not reject solely because the employer or product lacks prestige."
       ]
+    },
+    {
+      "id": 9,
+      "name": "hr-routing-and-github-evidence",
+      "prompt": "请在简历筛选阶段评价一名高级技术候选人。公司可以把候选人放到 Friday 或 MorningStar，也接受技术总监不满足时按 L4 架构师推进。候选人简历缺少收入、续费和预算责任，但 GitHub 有多个与 Agent Runtime、MCP、Graph、Gateway 相关的上游项目贡献：部分仓库是 fork，既有大规模实现 PR，也有很小但高价值的安全修复；多个 PR 已被上游 merge，部分提交使用 Claude/Copilot。请输出给 HR 的中文报告，保留完整七维评分和两条产品线分数。",
+      "expected_output": "报告首屏明确是否推进、最适合的产品、岗位级别和职责范围；分别计算 Friday/MorningStar 并选出主要路由；按预先声明的技术总监与 L4 架构师轨道应用不同门槛；按代表项目、上游影响与候选人可归因贡献评价 GitHub，且对代码量与 AI 工具使用采用正确的非对称规则。",
+      "files": [],
+      "assertions": [
+        "报告开头首先明确推荐产品线、推荐岗位/级别、建议职责范围和是否进入面试，而不是先给泛化技术总监结论。",
+        "Friday 与 MorningStar 分开评分且不平均；当岗位可按适配分配时，报告必须选出更适合的产品并写入 HR 摘要和最终结论。",
+        "先按岗位轨道声明门槛：经营责任对经营型技术总监适用，对明确不承担经营结果的 L4 架构师可以不适用；经营证据缺失不得阻止 L4 技术岗位推进。",
+        "GitHub 先选择与目标相关且有代表性的项目，再看 diff、commit、PR、review、测试、merge、star、fork 和项目采用，不能只按仓库或 PR 总数评价。",
+        "对 fork 项目重点检查向上游提交的 PR、是否被 merge、上游项目影响力和候选人的具体改动。",
+        "代码量大且进入核心机制并被 merge 时加分；代码量小不减分，仍按问题价值、复杂度和结果判断。",
+        "使用 Claude/Copilot 本身中性，不得直接扣分；只有候选人无法解释或承担设计、代码、测试与结果时才影响个人贡献。",
+        "七维固定权重、简历阶段状态、覆盖率与持续验证清单仍然完整且可复算。"
+      ]
     }
   ]
 }
