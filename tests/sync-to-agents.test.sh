@@ -102,4 +102,35 @@ if bash "${SCRIPT}" --repo "${repo_dir}" --dest "${dest_dir}" --remote origin --
   exit 1
 fi
 
+timeout_remote_dir="${tmpdir}/timeout-remote.git"
+timeout_seed_dir="${tmpdir}/timeout-seed"
+timeout_repo_dir="${tmpdir}/timeout-repo"
+timeout_dest_dir="${tmpdir}/timeout-dest"
+fake_bin_dir="${tmpdir}/fake-bin"
+timeout_stderr="${tmpdir}/timeout-stderr"
+
+git init -b main "${timeout_seed_dir}" >/dev/null
+git -C "${timeout_seed_dir}" config user.email "test@example.com"
+git -C "${timeout_seed_dir}" config user.name "Test User"
+mkdir -p "${timeout_seed_dir}/skills/slow-skill"
+printf 'slow skill body\n' > "${timeout_seed_dir}/skills/slow-skill/SKILL.md"
+git -C "${timeout_seed_dir}" add skills
+git -C "${timeout_seed_dir}" commit -m "Initial timeout skill" >/dev/null
+git clone --bare "${timeout_seed_dir}" "${timeout_remote_dir}" >/dev/null
+git clone "${timeout_remote_dir}" "${timeout_repo_dir}" >/dev/null
+
+mkdir -p "${fake_bin_dir}"
+cat > "${fake_bin_dir}/rsync" <<'EOF'
+#!/usr/bin/env bash
+sleep 2
+EOF
+chmod +x "${fake_bin_dir}/rsync"
+
+if PATH="${fake_bin_dir}:${PATH}" SYNC_RSYNC_TIMEOUT_SECONDS=1 bash "${SCRIPT}" --repo "${timeout_repo_dir}" --dest "${timeout_dest_dir}" --remote origin --branch main 2>"${timeout_stderr}"; then
+  echo "expected sync to fail when rsync exceeds timeout" >&2
+  exit 1
+fi
+
+assert_file_contains "${timeout_stderr}" "rsync timed out after 1 seconds"
+
 echo "sync-to-agents tests passed"

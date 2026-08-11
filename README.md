@@ -93,6 +93,8 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 
 脚本会先 `fetch origin/main`。只有当前仓库是干净的 `main` 且可以安全 fast-forward 时，才会更新本地仓库，并把 GitHub 上的新 skill 版本同步到 `~/.agents/skills`。如果本机 skill 只是落后于 GitHub，会直接更新；如果本机 skill 也有修改，脚本会用上次同步的 repo 版本、本机版本和 GitHub 版本尝试三方合并；只有同一文件发生无法自动合并的冲突时才会停止。同步到本机时同样会排除 `config.json`、`.env`、浏览器状态、输出目录、日志和导出文件。
 
+每次过滤同步的 `rsync` 默认最多等待 120 秒；如果本机文件系统或 `rsync --checksum` 异常卡住，脚本会停止并报告卡住的源目录和目标目录。需要临时调整时，可设置 `SYNC_RSYNC_TIMEOUT_SECONDS` 为正整数秒数。
+
 ## 使用方式
 
 安装后，在支持 skills 的 Agent 中直接提出任务即可。例如：

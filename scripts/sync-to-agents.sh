@@ -7,6 +7,7 @@ DEST="${HOME}/.agents/skills"
 REMOTE="origin"
 BRANCH="main"
 STATE_FILE=""
+RSYNC_TIMEOUT_SECONDS="${SYNC_RSYNC_TIMEOUT_SECONDS:-120}"
 
 usage() {
   cat <<'EOF'
@@ -40,9 +41,21 @@ RSYNC_EXCLUDES=(
 sync_filtered() {
   local source_dir="$1"
   local dest_dir="$2"
+  local status
 
   mkdir -p "${dest_dir}"
-  rsync -a --checksum --delete --delete-excluded "${RSYNC_EXCLUDES[@]}" "${source_dir}/" "${dest_dir}/"
+
+  set +e
+  perl -e 'alarm shift; exec @ARGV' "${RSYNC_TIMEOUT_SECONDS}" \
+    rsync -a --checksum --delete --delete-excluded "${RSYNC_EXCLUDES[@]}" "${source_dir}/" "${dest_dir}/"
+  status="$?"
+  set -e
+
+  if [ "${status}" -eq 142 ]; then
+    echo "rsync timed out after ${RSYNC_TIMEOUT_SECONDS} seconds: ${source_dir} -> ${dest_dir}" >&2
+  fi
+
+  return "${status}"
 }
 
 copy_repo_skills_at_commit() {
@@ -105,6 +118,13 @@ if [ ! -d "${REPO}/skills" ]; then
   echo "repository skills directory does not exist: ${REPO}/skills" >&2
   exit 1
 fi
+
+case "${RSYNC_TIMEOUT_SECONDS}" in
+  ''|*[!0-9]*|0)
+    echo "SYNC_RSYNC_TIMEOUT_SECONDS must be a positive integer" >&2
+    exit 2
+    ;;
+esac
 
 if [ -n "$(git -C "${REPO}" status --porcelain)" ]; then
   echo "repository has uncommitted changes; refusing to sync local skills" >&2
