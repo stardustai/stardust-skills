@@ -4,64 +4,131 @@
     {
       "id": 1,
       "name": "netease-enterprise-mail",
-      "prompt": "Evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization, not only mature-system operations. Resume evidence: At NetEase, the candidate was enterprise-mail technical lead, led a backend team, owned a core-system migration from a legacy architecture, self-developed MTA, queue scheduling, retries, concurrency control, abnormal recovery, database/storage changes, overseas delivery links, and stability governance. The resume also says the candidate later led enterprise-mail AI assistant, administrator assistance, and after-sales knowledge analysis using RAG, full-text indexing, tool calling, permission checks, and structured output. Research the relevant products on the internet, distinguish public facts from candidate claims, and score product leadership, candidate technical depth, and target-role fit. Save the final report as report.md.",
-      "expected_output": "A single Chinese report with original text, internet-enhanced product facts, inferred candidate responsibility, technical-complexity/leadership score, candidate-depth score, separate Friday/MorningStar fit scores, and reproducible raw and confirmed final scores. It should recognize mature distributed-system depth without treating current AI features or product scale as proof of candidate ownership.",
+      "prompt": "Use resume-screening mode to evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization, not only mature-system operations. Resume evidence: At NetEase, the candidate was enterprise-mail technical lead, led a backend team, owned a core-system migration from a legacy architecture, self-developed MTA, queue scheduling, retries, concurrency control, abnormal recovery, database/storage changes, overseas delivery links, and stability governance. The resume also says the candidate later led enterprise-mail AI assistant, administrator assistance, and after-sales knowledge analysis using RAG, full-text indexing, tool calling, permission checks, and structured output. Research the relevant products on the internet, distinguish public facts from candidate claims, and score product leadership, candidate technical depth, and target-role fit. Save the final report as report.md.",
+      "expected_output": "A single Chinese resume-screening report with seven-dimension resume signal scores, overall and per-dimension evidence coverage, material risks, and separate Friday/MorningStar resume-stage fit scores. It should recognize mature distributed-system signal without treating current AI features or product scale as proof of candidate ownership, and it must not output E0-E4 grades, confirmed scores, or a confirmed composite.",
       "files": [],
       "assertions": [
+        "Uses the fixed seven-dimension formula: product/project technical quality 20%, candidate-owned technical depth 20%, AI/algorithm/data/evaluation judgment 10%, product/customer judgment 15%, operating ownership 15%, cross-functional information integration 5%, target-product/stage fit 15%.",
+        "Separates product-level facts from candidate-owned contribution and never double-counts company scale, brand, or public architecture as personal depth.",
+        "Applies recency and evidence quality across candidate-facing dimensions instead of using recent-role functional fit as a separate weighted dimension.",
+        "Outputs evidence coverage and an actionable validation ledger with missing item, affected dimension, next question, qualifying evidence, risk answer, suggested interviewer, and status.",
+        "Calculates Friday and MorningStar fit separately with the internal 25/25/20/15/15 fit weights and never averages the product lines.",
         "Uses direct internet sources and distinguishes public product facts from resume claims.",
         "Infers the candidate's likely responsibility boundary and explicitly excludes company capabilities that cannot be attributed personally.",
-        "Scores all six product-technology dimensions and all six candidate-depth dimensions with weights, evidence, and reproducible arithmetic.",
-        "Calculates separate Friday and MorningStar fit with the exact 25/25/20/15/15 product-line weights, uses those scores directly in final scores, and does not create a second generic fit score.",
         "Flags that current product pages may post-date the candidate's tenure unless dates are verified.",
         "Does not equate system scale, NetEase brand, or team leadership with candidate technical depth.",
-        "Produces targeted follow-up questions about architecture decisions, metrics, failures, and AI ownership."
+        "Produces targeted follow-up questions about architecture decisions, metrics, failures, and AI ownership; outputs only seven-dimension resume signal scores, overall and per-dimension evidence coverage, risks, and separate Friday/MorningStar resume-stage fit scores; counts target-fit coverage from target-product facts plus relevant resume evidence attributable to the candidate without requiring independent confirmation; and does not output E0-E4 grades, confirmed scores, or a confirmed composite."
       ]
     },
     {
       "id": 2,
       "name": "open-agent-harness-ambiguous",
-      "prompt": "Evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization. Resume evidence: Personal/open-source project named 'Open Agent Harness', claimed to solve long-task context drift, noisy tool calls, multi-agent handoff and review through Agent Protocol, Runtime, Memory, State Sharing, Permission, Audit, Handoff, and Review. Candidate claims to have led protocol design and runtime validation, but provides no repository URL, author identity, dates, users, benchmark, release, or adoption data. Research the internet, avoid attributing similarly named projects without identity proof, and score product leadership, candidate technical depth, and target-role fit. Save the final report as report.md.",
-      "expected_output": "A disciplined single Chinese report that refuses to use unrelated OpenHarness projects as evidence, treats generic Agent vocabulary without original mechanisms or results as weak technical-selection and technical-taste evidence, and still produces reproducible raw and confirmed final scores for Friday and MorningStar.",
+      "prompt": "Use resume-screening mode to evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization. Resume evidence: Personal/open-source project named 'Open Agent Harness', claimed to solve long-task context drift, noisy tool calls, multi-agent handoff and review through Agent Protocol, Runtime, Memory, State Sharing, Permission, Audit, Handoff, and Review. Candidate claims to have led protocol design and runtime validation, but provides no repository URL, author identity, dates, users, benchmark, release, or adoption data. Research the internet, avoid attributing similarly named projects without identity proof, and score product leadership, candidate technical depth, and target-role fit. Save the final report as report.md.",
+      "expected_output": "A disciplined single Chinese resume-screening report with seven-dimension resume signal scores, overall and per-dimension evidence coverage, material risks, and separate Friday/MorningStar resume-stage fit scores. It must refuse to use unrelated OpenHarness projects as evidence, treat generic Agent vocabulary without original mechanisms or results as weak technical-selection and technical-taste signal, and must not output E0-E4 grades, confirmed scores, or a confirmed composite.",
       "files": [],
       "assertions": [
+        "Uses the fixed seven-dimension formula: product/project technical quality 20%, candidate-owned technical depth 20%, AI/algorithm/data/evaluation judgment 10%, product/customer judgment 15%, operating ownership 15%, cross-functional information integration 5%, target-product/stage fit 15%.",
+        "Separates product-level facts from candidate-owned contribution and never double-counts company scale, brand, or public architecture as personal depth.",
+        "Applies recency and evidence quality across candidate-facing dimensions instead of using recent-role functional fit as a separate weighted dimension.",
+        "Outputs evidence coverage and an actionable validation ledger with missing item, affected dimension, next question, qualifying evidence, risk answer, suggested interviewer, and status.",
+        "Calculates Friday and MorningStar fit separately with the internal 25/25/20/15/15 fit weights and never averages the product lines.",
         "Performs entity-resolution checks and does not treat a similarly named public repository as the candidate's project.",
         "Separates conceptual relevance from verified technical leadership and contribution depth.",
         "Penalizes technical leadership, innovation, and technical taste when no distinct mechanism, baseline, failure, or result is provided.",
         "Infers the likely responsibility as concept design or prototype only unless stronger evidence exists.",
-        "Calculates separate Friday and MorningStar fit with the exact 25/25/20/15/15 weights and reproducible raw and evidence-capped final scores, without a second generic fit score.",
         "Requests repository, commits, architecture decisions, benchmark, users, failures, and candidate identity evidence.",
-        "Separates the resume-screen decision from the senior-hiring gate when critical contribution evidence is resume-only."
+        "Separates the resume-screen decision from the senior-hiring gate when critical contribution evidence is resume-only; outputs only seven-dimension resume signal scores, overall and per-dimension evidence coverage, risks, and separate Friday/MorningStar resume-stage fit scores; counts target-fit coverage from target-product facts plus relevant resume evidence attributable to the candidate without requiring independent confirmation; and does not output E0-E4 grades, confirmed scores, or a confirmed composite."
       ]
     },
     {
       "id": 3,
       "name": "bairong-aigc-platform",
       "prompt": "Evaluate this senior technical candidate's product experience for a Stardust/PreSeen senior technical leader role. Target role: hands-on AI-native B2B product and engineering leader for agent workflows, data/evaluation loops, Memory/Recipe, enterprise privacy, SaaS and private deployment; startup 0-to-1 and platformization. Resume evidence: At BaiRong Cloud, candidate 'led the AIGC technology roadmap, enterprise AIGC platform, algorithms, scenario delivery, team building and business model' across finance, telecom, large enterprises, government, retail, education and healthcare. Claimed technology includes LLM, multimodal, pretraining, SFT, RLHF, inference, RAG, vector databases, content safety, GPU scheduling and agents. Research BaiRong's official filings/product materials and independent evidence where available. Score product leadership, candidate technical depth, and target-role fit without treating breadth of keywords or company claims as proof of personal depth. Save the final report as report.md.",
-      "expected_output": "A single Chinese report that decomposes BaiRong's company-wide model, infrastructure, Agent platform, applications, and business stack; infers the candidate's plausible route-setting or organizational responsibility; and produces evidence-backed technical, depth, product-line-fit, raw-final, and confirmed-final scores.",
+      "expected_output": "A single Chinese resume-screening report that decomposes BaiRong's company-wide model, infrastructure, Agent platform, applications, and business stack; infers the candidate's plausible route-setting or organizational responsibility; and produces evidence-backed seven-dimension resume signal scores, evidence coverage, uncertainty flags, separate product-line fit, and targeted follow-up questions without E0-E4 grades or confirmed scores.",
       "files": [],
       "assertions": [
+        "Uses the fixed seven-dimension formula: product/project technical quality 20%, candidate-owned technical depth 20%, AI/algorithm/data/evaluation judgment 10%, product/customer judgment 15%, operating ownership 15%, cross-functional information integration 5%, target-product/stage fit 15%.",
+        "Separates product-level facts from candidate-owned contribution and never double-counts company scale, brand, or public architecture as personal depth.",
+        "Applies recency and evidence quality across candidate-facing dimensions instead of using recent-role functional fit as a separate weighted dimension.",
+        "Outputs evidence coverage and an actionable validation ledger with missing item, affected dimension, next question, qualifying evidence, risk answer, suggested interviewer, and status.",
+        "Calculates Friday and MorningStar fit separately with the internal 25/25/20/15/15 fit weights and never averages the product lines.",
         "Uses official filing or investor/product sources and at least one materially different corroborating source when available.",
         "Decomposes BaiRong's product stack and separates company/product evidence from the candidate's inferred personal responsibility.",
         "Treats broad AI keyword coverage as a packaging risk rather than automatic deep expertise.",
-        "Scores technical complexity, leadership, innovation, technical taste, responsibility authenticity, hard problems, decisions, failures, and duration explicitly.",
-        "Calculates separate Friday and MorningStar fit with the exact 25/25/20/15/15 weights and reproducible raw and evidence-capped final scores, without a second generic fit score.",
         "Checks whether product evidence and metrics align with the candidate's employment dates.",
-        "Produces differentiated signal and confirmed scores plus targeted questions about technical choices, business outcomes, failures, and hands-on depth."
+        "Produces seven-dimension resume signal scores, overall and per-dimension evidence coverage, uncertainty flags, and targeted questions about technical choices, business outcomes, failures, and hands-on depth; does not output E0-E4 grades or confirmed scores in resume-screening mode."
       ]
     },
     {
       "id": 4,
       "name": "b2b-product-team-with-unverified-financing",
-      "prompt": "Use resume-only screening mode to evaluate a senior infrastructure candidate from a standalone restaurant SaaS company. The company has a real standardized POS, ordering, payment, membership, inventory, and supply-chain product; public sources show engineering investment and production operation, but no reliable Series A, B, or C round mapping and it is not a top-tier technology company. The candidate claims to lead infrastructure and operations and to develop some core platforms. Include technical-team environment in the final score and explain the company-team category. Save the Chinese report as report.md.",
-      "expected_output": "A Chinese report that recognizes the real B2B product and core infrastructure signal but conservatively maps the team environment to the 50-69 band, rather than inventing an extra 75+ category. It must retain separate product, personal-depth, Friday/MorningStar fit, and team-environment scores with reproducible arithmetic.",
+      "prompt": "Use resume-only screening mode to evaluate a senior infrastructure candidate from a standalone restaurant SaaS company. The company has a real standardized POS, ordering, payment, membership, inventory, and supply-chain product; public sources show engineering investment and production operation, but no reliable Series A, B, or C round mapping and it is not a top-tier technology company. The candidate claims to lead infrastructure and operations and to develop some core platforms. Treat technical-team environment as a factual context card and evidence, not a fixed final-score component. Save the Chinese report as report.md.",
+      "expected_output": "A Chinese report that recognizes the prompt-provided B2B product and core infrastructure signal while keeping the anonymous company unresolved. It must present technical-team environment only as a non-scored factual context card and risk classification, explain why missing company, financing, and independent technical evidence prevents a Series A-C or top-tier classification, and retain the fixed seven-dimension score plus separate Friday/MorningStar fit with reproducible arithmetic.",
       "files": [],
       "assertions": [
-        "Uses internet sources to verify the standardized product, engineering evidence, financing status, and operational risks.",
+        "Uses the fixed seven-dimension formula: product/project technical quality 20%, candidate-owned technical depth 20%, AI/algorithm/data/evaluation judgment 10%, product/customer judgment 15%, operating ownership 15%, cross-functional information integration 5%, target-product/stage fit 15%.",
+        "Separates product-level facts from candidate-owned contribution and never double-counts company scale, brand, or public architecture as personal depth.",
+        "Applies recency and evidence quality across candidate-facing dimensions instead of using recent-role functional fit as a separate weighted dimension.",
+        "Outputs evidence coverage and an actionable validation ledger with missing item, affected dimension, next question, qualifying evidence, risk answer, suggested interviewer, and status.",
+        "Calculates Friday and MorningStar fit separately with the internal 25/25/20/15/15 fit weights and never averages the product lines.",
+        "Explicitly states that the anonymous company's identity is missing and does not fabricate company-level product, engineering, or financing verification; any public material is labeled only as an industry comparator while financing and technical-team-environment facts remain in the factual context card.",
         "Does not classify the company as a Series A-C technical team when round, date, and investors cannot be reliably mapped.",
         "Does not classify the company as a top-tier technology-company B2B team merely because it has a real SaaS product.",
-        "Assigns the technical-team environment to the 50-69 band and explains the within-band score.",
-        "Keeps team environment at 15 percent of the final score and does not let company context replace candidate technical depth.",
-        "Calculates separate Friday and MorningStar final scores and shows reproducible arithmetic."
+        "Treats technical-team environment as a non-scored factual context and risk classification, and explains why missing company identity, round/date/investor mapping, and independent technical evidence prevent a Series A-C or top-tier classification.",
+        "Treats team environment as a factual context card and evidence rather than a fixed final-score component."
+      ]
+    },
+    {
+      "id": 5,
+      "name": "resume-missing-operating-and-cross-functional-evidence",
+      "prompt": "Use resume-screening mode to evaluate a technical-director candidate. The resume names a real enterprise AI product and says the candidate led architecture and a 20-person team, but gives no personal decisions, failures, customer adoption, revenue/cost result, or cross-functional conflict example. Produce the Chinese screening report and the handoff list for HR and later interviewers.",
+      "expected_output": "A Chinese resume-screening report that does not equate missing resume information with proven inability, scores only visible signal, reports evidence coverage, and assigns concrete follow-up questions to technical, business, and management interviewers.",
+      "files": [],
+      "assertions": [
+        "Marks absent resume evidence as resume-not-covered rather than proven inability.",
+        "Does not give personal technical depth credit from team size or company product capability.",
+        "Creates questions for personal architecture decisions, operating metrics, product tradeoffs, failures, and cross-functional decisions.",
+        "Includes qualifying evidence, risk answers, suggested interviewer, and pending status for each missing item.",
+        "Produces a seven-dimension resume signal score and evidence coverage without applying a second evidence cap."
+      ]
+    },
+    {
+      "id": 6,
+      "name": "interview-did-not-cover-operating-ownership",
+      "prompt": "Evaluate a technical-director candidate from the resume and an interview transcript. The transcript deeply verifies architecture and AI evaluation decisions but never asks about revenue, customer adoption, resource tradeoffs, or business-line ownership. Produce the Chinese post-interview evaluation.",
+      "expected_output": "The report must mark operating ownership as interview-not-covered, avoid treating that omission as negative candidate evidence, and block a confirmed technical-director hiring recommendation until the next interviewer verifies it.",
+      "files": [],
+      "assertions": [
+        "Distinguishes interviewer omission from candidate weakness.",
+        "Marks operating ownership as interview-not-covered and routes it to the next interview.",
+        "Does not claim the senior hiring gate is passed while a critical dimension remains uncovered.",
+        "Preserves the positively verified technical and AI evidence without lowering it because a different topic was not asked."
+      ]
+    },
+    {
+      "id": 7,
+      "name": "interview-asked-but-candidate-cannot-prove-ownership",
+      "prompt": "Evaluate a candidate whose resume says he personally designed the core high-scale AI/ML platform architecture of Amazon SageMaker AI. Before scoring, actually open and cite these official primary sources: https://docs.aws.amazon.com/sagemaker/latest/dg/whatis.html (SageMaker AI as a fully managed ML service, distributed training over extremely large datasets, and secure/scalable deployment); https://docs.aws.amazon.com/sagemaker/latest/dg/how-it-works-training.html (containerized training workloads and managed compute resources); and https://aws.amazon.com/sagemaker/sla/ (the SLA thresholds for Online Inference and Batch Transform). Use these sources only to establish the product entity and product-level scale, architecture, training/deployment, and availability requirements; they do not identify this candidate or prove his ownership. In the interview, after repeated follow-up, he can only describe the company/product architecture and cannot name his own alternatives, decisions, a failed approach, or a personally attributable result. Produce the Chinese post-interview evaluation.",
+      "expected_output": "The report must cite all three specified official SageMaker sources, retain the independently supported product entity, distributed-training, managed-compute, secure/scalable-deployment, and SLA facts plus a separate product technical score, while explicitly refusing to treat those facts as candidate ownership. It must move the personal claim to asked-but-unproven negative evidence, lower candidate-owned technical contribution and current confirmed score, apply the senior technical-depth gate, and flag passenger risk.",
+      "files": [],
+      "assertions": [
+        "Labels the unresolved personal claim as asked-but-unproven rather than ordinary missing information.",
+        "Keeps product technical quality separate from candidate-owned technical contribution.",
+        "Cites all three specified official SageMaker sources to retain independently supported product facts and a separate product technical score, while not attributing those facts to the candidate and lowering candidate-owned technical contribution and current confirmed score.",
+        "Applies the senior technical-depth gate and explicitly reports passenger risk."
+      ]
+    },
+    {
+      "id": 8,
+      "name": "ordinary-product-deep-personal-contribution",
+      "prompt": "Evaluate a senior engineer from a commercially ordinary internal workflow product. The product was not market-leading, but the candidate provides specific personal evidence of redesigning a consistency mechanism, comparing three architectures, diagnosing a production failure, reducing recovery time from 90 minutes to 8 minutes, and sustaining the system for three years. Produce the Chinese report for a senior technical role.",
+      "expected_output": "The report should score product technical quality conservatively while recognizing strong candidate-owned technical depth, without allowing either dimension to overwrite the other.",
+      "files": [],
+      "assertions": [
+        "Does not inflate product technical leadership merely because the candidate solved a hard local mechanism.",
+        "Credits personal architecture decisions, failure diagnosis, measurable result, and sustained ownership.",
+        "Shows separate weighted contributions for product technical quality and candidate-owned depth.",
+        "Does not reject solely because the employer or product lacks prestige."
       ]
     }
   ]

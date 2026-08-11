@@ -1,4 +1,4 @@
-# Methodology: Product Leadership, Technical Depth, and Role Fit
+# Methodology: Senior Technical Product Leadership Evaluation
 
 ## 1. First define the target
 
@@ -13,7 +13,7 @@ Translate the target role into a capability map before reading product prestige 
 | Ownership | Hands-on architect, technical product owner, engineering manager, organization builder, or executive? |
 | Time horizon | What must be delivered in 90 days and in 12 months? |
 
-Match is relational. The same product experience can be highly relevant to one role and weak for another.
+Match is relational. The same product experience can be highly relevant to one role and weak for another. Before scoring, mark any normally required gate that the target role explicitly does not require. Never remove a gate after seeing a candidate's result.
 
 ## 2. Convert the resume into claims
 
@@ -47,6 +47,7 @@ Write the fact card for a reviewer who knows neither the company nor the product
 | Business model | SaaS subscription, usage, license, implementation, managed service, outcome pricing, or unknown |
 | Hard technical problems | The mechanisms that materially determine reliability, quality, cost, safety, or product value |
 | Product history | Capabilities and market position during the candidate's tenure, not only the current page |
+| Technical-team environment | Product ownership, sustained R&D, identifiable technical output, team quality, and whether the candidate sat in the core product team; use as fact and risk context only |
 | Original-source ledger | Short source excerpt, direct URL, date, exact page/section, what it proves, and what it does not prove |
 | Unknowns | Missing facts that could change product identity, leadership, or candidate attribution |
 
@@ -62,7 +63,7 @@ Prefer sources in this order:
 4. Company marketing or executive interview.
 5. Candidate resume or interview statement.
 
-Company marketing can establish positioning and claimed capability. It cannot independently establish leadership.
+Company marketing can establish positioning and claimed capability. It cannot independently establish leadership or the candidate's personal contribution.
 
 ### 3.4 Time-align evidence
 
@@ -91,21 +92,17 @@ Do not drop contrary evidence merely to shorten the report. Preserve any fact th
 
 ## 4. Keep screening signal separate from confirmed ability
 
-For each dimension, produce two numbers when possible:
+Use the same seven dimensions in both stages, but do not pretend that the stages have the same evidence:
 
-- **Raw signal score:** How strong, specific, difficult, and relevant the available claim appears if it is true. Public product evidence and resume detail can raise this score. Keyword breadth, titles, team size, and brand prestige cannot.
-- **Current confirmed score:** How much ability the available evidence actually proves today. Apply the evidence-grade cap to this score.
+- **Resume signal score（七维简历信号分）:** how strong, specific, difficult, and relevant the available claim appears if it is true. Public product evidence and resume detail can raise it. Keyword breadth, titles, team size, and brand prestige cannot. Resume screening does not apply E0-E4 as a second numerical cap.
+- **Raw ability score（七维原始能力分）:** after interview evidence is available, how strong the claimed ability would be if the claim is true.
+- **Current confirmed score（七维确认分）:** how much ability the available evidence proves now. This exists only for the interview/hiring stage and uses the evidence-grade cap.
 
-Do not lower the raw signal score merely because the claim has not yet been independently verified; that uncertainty belongs in the evidence grade and confirmed score. Conversely, do not give a high raw signal score to vague claims such as "led the AI platform" simply because public evidence proves the company had a strong product.
-
-This distinction prevents two opposite errors:
-
-- treating an impressive but unverified resume as proven senior ability;
-- rejecting every senior candidate at resume stage because personal contribution has not yet been interviewed.
+Do not lower a signal or raw score merely because a strong claim has not yet been independently verified; put that uncertainty in evidence coverage, the missing-information state, and—at interview stage—the confirmed score. Conversely, do not give a high signal score to vague claims such as "led the AI platform" merely because public evidence proves the company had a strong product.
 
 ## 5. Evidence grades and confirmed-score caps
 
-Grade each of the three scores separately:
+At the interview/hiring stage, grade each of the seven dimensions separately:
 
 | Grade | Evidence quality | Confirmed-score cap |
 |---|---|---:|
@@ -115,214 +112,273 @@ Grade each of the three scores separately:
 | E3 | Time-aligned primary evidence plus a materially different corroborating source | 85 |
 | E4 | E3 plus inspectable output, benchmark, code, architecture decision record, or pressure-tested candidate explanation | 100 |
 
-Evidence caps prevent confidence from being smuggled into a hiring conclusion. A raw signal may exceed the cap, but the confirmed score may not.
+Evidence caps prevent confidence from being smuggled into a hiring conclusion. A raw ability score may exceed the cap, but the confirmed score may not. E0-E4 are not used to impose a second numerical ceiling on resume signal scores.
 
-## 6. Score A: Product technical complexity and leadership
+## 6. Seven fixed evaluation dimensions
 
-Score the product or claimed project, not the candidate. This is not a product-design score. Business importance and generic feature differentiation receive little weight; technical difficulty, period-appropriate leadership, innovation, and technical taste dominate.
+Use exactly this composite in both stages. At resume stage, each term is the dimension's resume signal score. At interview stage, calculate both a raw-ability composite and a confirmed composite using the corresponding seven dimension scores.
 
-| Subdimension | Weight | What strong evidence looks like |
+```text
+统一综合分 = 产品/项目技术含金量 × 20%
+           + 候选人个人技术贡献深度 × 20%
+           + AI、算法、数据与评测判断 × 10%
+           + 产品与客户判断 × 15%
+           + 经营责任与创业型 ownership × 15%
+           + 跨职能领导与信息整合 × 5%
+           + 目标产品与阶段匹配 × 15%
+```
+
+Technical-team environment is recorded in the product fact card and risk context. It is not an eighth dimension and never enters the composite.
+
+### 6.1 产品/项目技术含金量
+
+Score the product or claimed project, not the candidate. Technical difficulty, period-appropriate leadership, innovation, technical selection, and validation dominate.
+
+| 子项 | 权重 | 强证据 |
 |---|---:|---|
-| Problem importance | 5 | The technical problem is worth solving and failure has material cost |
-| Technical complexity | 25 | Hard scale, consistency, reliability, security, model, data, or systems mechanisms that common components do not solve directly |
-| Technical leadership | 25 | Period-appropriate advantage in quality, performance, cost, reliability, safety, or engineering paradigm, supported by comparison evidence |
-| Technical innovation | 20 | A new mechanism, architecture, algorithm, data loop, evaluation method, or engineering approach rather than recombination of standard components |
-| Technical selection and taste | 15 | Chooses an important, under-solved technical problem and identifies the genuinely hard part instead of following fashionable vocabulary |
-| Real-world validation | 10 | Production duration, scale, benchmark, users, operational result, or independent evidence |
+| 问题重要性 | 5% | 技术问题值得解决，且失败有实质成本 |
+| 技术复杂度 | 25% | 规模、一致性、可靠性、安全、模型、数据或系统机制不是通用组件直接可解 |
+| 同期技术领先性 | 25% | 与任期同期替代方案比较，在质量、性能、成本、可靠性、安全或范式上有可验证优势 |
+| 技术创新 | 20% | 有新机制、架构、算法、数据闭环、评测方法或工程方法，而非标准组件拼装 |
+| 技术选择与品味 | 15% | 选中重要且未被充分解决的问题，并识别真正困难部分 |
+| 真实世界验证 | 10% | 有生产时长、规模、基准、用户、运营结果或独立证据 |
 
-Do not equate missing public evidence with low technical taste by itself. Lower technical-taste and innovation scores when the candidate voluntarily presents a highly repetitive topic as a core project but neither public information nor the candidate's description contains a distinct hypothesis, mechanism, baseline, failure, or result. A generic Agent harness, RAG wrapper, workflow builder, or chatbot should not receive a high score simply because its terminology matches the target product.
+Generic Agent harnesses, RAG wrappers, workflow builders, or chatbots do not score highly merely because their vocabulary resembles the target product. Missing public evidence is uncertainty, not automatically low technical taste; lower the score when the presented core project lacks a distinct hypothesis, mechanism, baseline, failure, and result.
 
-Interpretation:
+### 6.2 候选人个人技术贡献深度
 
-- 80-100: demonstrably leading, not merely competitive.
-- 70-79: strong product with meaningful differentiation.
-- 60-69: credible and useful, but leadership is limited or unproven.
-- Below 60: commodity, internal-only, weakly validated, or mostly positioning.
+First infer the likely responsibility boundary from resume verbs, specificity, organizational scope, tenure, product layers, and plausibility. Output `likely owned part / inference basis / confidence / parts not attributable / verification question`. Score only what the candidate personally did or credibly led.
 
-## 7. Infer responsibility, then score candidate technical depth
-
-Before scoring, infer the candidate's likely responsibility boundary. Use resume verbs, specificity, organizational scope, tenure, product layers, and plausibility. Output `likely owned part / inference basis / confidence / parts not attributable / verification question`. Broad claims spanning models, infrastructure, applications, teams, and business models usually indicate route-setting or organizational responsibility, not personal implementation of every layer.
-
-Score only what the candidate most likely contributed.
-
-| Subdimension | Weight | What strong evidence looks like |
+| 子项 | 权重 | 强证据 |
 |---|---:|---|
-| Responsibility authenticity and boundary | 15 | Specific and internally consistent distinction between personal work, team work, company capability, and third-party capability |
-| Implementation complexity | 20 | Personal work reaches architecture, algorithms, data, reliability, performance, security, or implementation mechanics |
-| Hard-problem depth | 20 | Identifies and solves the core failure mechanism rather than peripheral integration or coordination |
-| Technical decisions | 20 | Explains alternatives, constraints, tradeoffs, and why the chosen design won |
-| Failure and iteration | 15 | Describes failed approaches, diagnosis, correction, changed design, and learned judgment |
-| Development duration and continuity | 10 | Sustained production use, multiple versions, operational learning, and continued ownership rather than a short demo |
+| 个人责任边界真实性 | 15% | 一致地区分个人、团队、公司和第三方的工作与能力 |
+| 关键架构与实现复杂度 | 20% | 个人工作深入架构、算法、数据、可靠性、性能、安全或实现机制 |
+| 核心故障机制理解 | 20% | 找到并解决核心失败机制，而非只做外围集成或协调 |
+| 技术方案比较与取舍 | 20% | 说明备选方案、约束、取舍和选择胜出的原因 |
+| 失败诊断与迭代 | 15% | 说明失败方案、诊断、修正、设计变化和判断更新 |
+| 生产持续性与当前能力 | 10% | 有持续生产、多版本、运行学习和当前仍可复用的能力，而非短期演示 |
 
-Management scope is relevant only when tied to technical standards, architecture decisions, talent density, delivery quality, or measurable organizational leverage.
+Management scope matters only when tied to technical standards, architecture decisions, talent density, delivery quality, or measurable organizational leverage.
 
-## 8. Score C: Product-line fit
+### 6.3 禁止重复计分
 
-Score transferability to each target product line, not keyword overlap. This is the only fit score used in the final composite; do not calculate a second generic target-role-fit score.
+- 公司品牌、产品规模和公开架构只属于产品/项目技术含金量。
+- 团队环境（包括团队能力、团队质量、融资、团队规模和领导者质量）始终只进入产品事实卡和风险上下文，不进入产品含金量、个人贡献或任何其他评分维度。
+- 候选人个人决策、实现、失败诊断和可归因结果才属于个人技术贡献。
+- “支持千万用户”不能同时抬高两个维度；只有证明候选人本人解决了该规模下的具体故障机制，才能在个人维度得分。
+- 强产品不能在个人贡献不清时自动成为个人正面证据；产品分高而个人贡献低或未覆盖时，标记“优秀产品环境，搭便车风险”。
 
-| Subdimension | Weight | What strong evidence looks like |
+### 6.4 AI、算法、数据与评测判断
+
+| 子项 | 权重 | 强证据 | 无效替代信号 |
+|---|---:|---|---|
+| 问题与模型/算法方案匹配 | 20% | 比较规则、检索、传统算法、模型或人工流程，说明选择条件和结果 | AI 品牌、模型名称或“接入大模型” |
+| 数据质量与数据闭环 | 20% | 定义数据质量、采集偏差、标注、版本和生产反馈回流 | 数据量、ETL 或向量库本身 |
+| 评测体系与基线比较 | 20% | 有离线/在线指标、基线、分层样本和可复算比较 | 单次演示或主观“效果好” |
+| 反馈、失败样本与持续改进 | 15% | 分类 hard cases，追踪失败机制并验证迭代收益 | 只收集反馈或增加 Prompt |
+| 可靠性、成本与延迟取舍 | 15% | 量化质量、可用性、成本、延迟之间的取舍及生产结果 | 只宣称高并发、低成本或稳定 |
+| 权限、来源、安全与审计 | 10% | 说明权限边界、来源、隐私、安全、审计和失效处理 | 只写“企业级”或“合规” |
+
+AI 术语不能单独得高分。普通数据采集、ETL、向量检索、Prompt 编排、LLM API 接入、通用 RAG 或 Agent 框架，在没有评测/反馈闭环、关键取舍、失败分析和比较结果时不能因术语相似自动达到 60 分。
+
+### 6.5 产品与客户判断
+
+| 子项 | 权重 | 强证据 | 无效替代信号 |
+|---|---:|---|---|
+| 客户问题识别 | 20% | 区分购买者、使用者和真实任务，以行为或损失验证问题 | 转述需求、行业热词或客户名单 |
+| 产品边界与优先级 | 20% | 说明做什么、不做什么、先后顺序及被否决方案 | 功能数量或完整需求清单 |
+| 产品与技术取舍 | 20% | 把客户价值与质量、成本、时限和工程约束连接起来 | 只说“业务技术对齐” |
+| 客户验证与反馈闭环 | 15% | 通过试点、观察、访谈和行为数据改变假设与方案 | 参加评审或收集意见 |
+| 使用、采购、续费或采用结果 | 15% | 有使用、采购、续费、转化、留存或采用结果及因果边界 | 交付上线或签约数量本身 |
+| 产品选择与技术品味 | 10% | 选择重要未解问题，并用客户和技术事实持续校正方向 | PRD、路线图或产品经理头衔 |
+
+“参与需求评审”“撰写 PRD”“支持客户交付”不能替代产品判断。强证据必须展示取舍、被否定方案、客户行为变化和结果。
+
+### 6.6 经营责任与创业型 ownership
+
+| 子项 | 权重 | 强证据 | 无效替代信号 |
+|---|---:|---|---|
+| 明确经营或客户结果 | 25% | 有明确目标、实际值、时间和本人责任边界 | 创业头衔、业务线名称或愿景 |
+| 从问题到采用的完整责任 | 25% | 从问题发现、产品/技术选择到上线、采用和复盘持续负责 | 只负责研发交付或一个里程碑 |
+| 收入、续费、毛利、成本或客户价值 | 20% | 有可复算指标、基线、变化及候选人行动的因果边界 | 只给营收规模、融资或客户数量 |
+| 资源与优先级取舍 | 10% | 在人力、预算、时间和机会成本之间作出并承担取舍 | 团队规模或预算规模 |
+| 不确定性下主动推进 | 10% | 信息不完整时提出可验证路径、获得资源并更新方向 | “推动落地”或加班完成 |
+| 结果不达标后的调整与问责 | 10% | 承认未达标，诊断原因，改变资源/策略并承担后果 | 只归因市场、团队或上级 |
+
+创业经历可以是强证据但不是必要条件；在大公司真正拥有独立产品线、预算和经营指标也可成立。创业头衔不能单独得高分，没有客户、指标、资源取舍和失败事实时不得用头衔补分。
+
+### 6.7 跨职能领导与信息整合
+
+| 子项 | 权重 | 强证据 | 无效替代信号 |
+|---|---:|---|---|
+| 复杂信息压缩与关键矛盾识别 | 20% | 把多方事实压缩成关键矛盾、选项和可执行判断 | 汇总材料或复述各方意见 |
+| 产品、算法和工程之间的翻译 | 20% | 让不同专业约束进入同一决策并形成可验证接口/标准 | 参加跨部门会议 |
+| 面向客户和销售的产品表达 | 15% | 准确说明价值、限制和适用边界并改变承诺或方案 | 演示、汇报次数或表达流畅 |
+| 决策、责任和升级机制 | 15% | 明确谁决定、谁负责、何时升级以及冲突如何关闭 | “推动协作”或协调会议 |
+| 技术标准与人才判断 | 15% | 建立并校正技术标准，用具体事实做招聘、培养和去留判断 | 团队规模或管理年限 |
+| 团队效率与复用能力 | 10% | 用机制、平台或工作方式产生持续可量化复用 | 一次性攻坚或加人交付 |
+| 接受反馈并纠正自身判断 | 5% | 能说明自己的误判、反馈来源、修正行为和结果 | 笼统表示开放、谦虚 |
+
+团队规模、协调会议和“沟通能力强”不能单独得高分。必须追问冲突、候选人的最终判断、采取的行动、信息如何被压缩以及结果是否持续。
+
+### 6.8 目标产品与阶段匹配
+
+Score transferability, not keyword overlap. Use the fixed five subdimensions separately for each material target product line:
+
+| 子项 | 权重 | 强证据 |
 |---|---:|---|
-| Hard-problem similarity | 25 | The same core failure mechanisms and decision patterns recur in the target product |
-| Technical-architecture similarity | 25 | The same difficult system mechanisms recur beyond shared vocabulary |
-| Data and evaluation-loop similarity | 20 | Comparable production data, human feedback, evaluation, failure return, or model-improvement loop |
-| Customer and deployment similarity | 15 | Similar buyer, privacy, integration, reliability, SaaS/private-deployment, and compliance constraints |
-| Responsibility and stage similarity | 15 | Candidate's inferred ownership matches the target product's stage, ambiguity, team size, and hands-on requirement |
-
-Industry equality is neither necessary nor sufficient. Distributed reliability experience may transfer across industries; enterprise delivery experience may not transfer to AI product discovery without evidence of current experimentation and product judgment.
-
-### 8.1 Separate product lines are mandatory when the company has multiple products
-
-Do not use one generic company-fit score when the target company has materially different product lines. Build one current capability map per product, then apply the fixed Score C dimensions above separately to each product line.
+| 核心难题相似度 | 25% | 目标产品中重复出现相同核心失败机制和决策模式 |
+| 技术架构相似度 | 25% | 不只词汇相同，困难系统机制也可迁移 |
+| 数据与评测闭环相似度 | 20% | 有可比的生产数据、人工反馈、评测、失败回流或模型改进闭环 |
+| 客户与部署环境相似度 | 15% | 购买者、隐私、集成、可靠性、SaaS/私有化和合规约束相似 |
+| 责任范围与发展阶段相似度 | 15% | 已证明责任与目标产品阶段、模糊度、团队规模和动手要求匹配 |
 
 For Stardust/PreSeen, at minimum distinguish:
 
 - **Friday:** collaborative intelligence workspace; cross-application context ingestion; layered personal/team/organization memory; knowledge extraction, consolidation, recall, provenance, access control; Agent skills and long-horizon knowledge work; Memory/Recipe compounding.
 - **MorningStar:** enterprise AI data and model production platform; multimodal data ingestion and management; scenario/corner-case discovery; annotation and autolabeling; dataset/model/version lineage; evaluation and hard-case mining; training/deployment loops; SaaS/private deployment and enterprise data security.
 
-Output a separate raw and confirmed fit score for each product line. If the hiring role is scoped to Friday, use Friday fit directly as Score C and treat MorningStar as adjacent evidence; reverse this for a MorningStar role. If scope is unresolved, calculate both final composites and do not hide the ambiguity in an average. Do not add any additional generic fit score because it would duplicate Score C.
+Output separate Friday and MorningStar scores. Use the in-scope target product's score as the seventh dimension and treat the other as adjacent evidence. If scope is unresolved, calculate both seven-dimension composites and preserve the ambiguity; never average the product lines or add a generic second fit score.
 
-## 9. Composites and gates
+## 7. Recent-function evidence is a horizontal rule
 
-### 9.0 Score D: Recent-role functional fit
+Do not create an independent recent-role dimension. Apply the candidate's actual recent function and the following time shares across all candidate-ability dimensions:
 
-Score what the candidate actually did in the most recent three years, not the prestige, product category, or title of the employer. Use the current role plus the immediately preceding substantive role when needed to cover roughly 24-36 months. If the candidate had a career break, use the latest substantive role and disclose the time gap.
+```text
+0—3 年证据至少占候选人能力判断的 70%；
+3—7 年最多 20%；
+7 年以上最多 10%；
+最近主要从事 SRE、DevOps、质量、交付或纯管理时，只能在被实际证明的维度得分。
+```
 
-This score is intentionally separate from product-line fit:
-
-- Product-line fit measures whether product mechanisms, customers, architecture, and constraints transfer.
-- Recent-role functional fit measures whether the candidate's recent day-to-day responsibility and output match the target job.
-- Personal technical depth measures how deeply and credibly the candidate performed the work, not whether that work is the right function.
-
-| Subdimension | Weight | What strong evidence looks like |
-|---|---:|---|
-| Core-function similarity | 30 | Recent work is the same responsibility center as the target: core product R&D, AI product engineering, infrastructure, algorithms, or another explicitly required function |
-| Output and result similarity | 25 | Recent deliverables and success metrics match the target role's expected product, technical, and business outcomes |
-| Ownership position | 20 | Candidate sat inside and owned the core team or mechanism, rather than supporting it through SRE, DevOps, QA, delivery, governance, or coordination |
-| Current technical-paradigm exposure | 15 | Recent hands-on decisions and artifacts use the target role's current paradigm, not only older transferable foundations or tool adoption |
-| Recency and continuity | 10 | Relevant function was sustained and remains current, rather than a short project or experience more than three years old |
-
-Functional categories are not a universal prestige ordering. Score them relative to the target role. SRE can score highly for an SRE leadership role and poorly for a core AI product R&D role. Likewise, product engineering should not score highly for a specialist reliability role without relevant evidence.
-
-For L4/L5 roles that explicitly own core product R&D or AI product technology, apply these caps and gates:
-
-- Recent work mainly in SRE, DevOps, quality effectiveness, delivery, PMO, technical support, or infrastructure operations, with no verified core-product ownership: cap recent-role functional fit at 59.
-- Adjacent platform/infrastructure ownership with current hands-on architecture and direct responsibility for a target-critical platform mechanism: normally 60-69 unless core-product responsibility is also demonstrated.
-- Relevant product R&D management without current hands-on technical decisions or inspectable output: normally cap at 74.
-- A relevant company or AI-branded product does not raise this score when the candidate's own function was support, governance, tool selection, or operational assurance.
-- Confirmed recent-role functional fit below 60 blocks a recommendation at the target L4/L5 core-R&D level. The candidate may still be considered for a functionally aligned infrastructure, SRE, DevOps, or engineering-effectiveness role.
-
-Always output the recent roles used, each role's actual function, distance from the target responsibility center, score, and evidence. Titles such as CTO, technical director, head of engineering, or AI lead are claims, not functional evidence.
-
-### 9.0.1 Recency-weighted current technical evidence
-
-For L4/L5 core product R&D, AI engineering, architecture, technical-director, and CTO roles, score the capability that is current enough to be hired now. Candidate-facing technical evidence must use these time limits:
-
-| Time window | Weight rule | What it may prove |
-|---|---:|---|
-| Most recent 0-3 years | At least 70% | Current technical depth, technical taste, hands-on ability, current product judgment, and current-paradigm transferability |
-| 3-7 years ago | At most 20% | Still-relevant depth and transferable mechanisms, with explicit staleness checks |
-| More than 7 years ago | At most 10% | Historical foundations only; normally not current leadership, AI understanding, or technical direction |
-
-Use these limits for personal technical depth, technical taste, product-line fit, technical-team environment, and the candidate-facing career-portfolio product signal. A product fact card may retain the product's intrinsic historical score, because a strong product should be assessed against its contemporaneous alternatives. The candidate's current score must discount that old product separately.
-
-Do not reallocate an absent recent-evidence share to old work just to make the weights sum to a flattering portfolio. Show the missing recent share as missing current evidence. Do not double-count an old flagship project as both product prestige and current personal depth.
-
-Apply these target-level gates after calculating the weighted score:
-
-- Recent three-year technical depth below 60 blocks L4/L5 core-R&D advancement, regardless of older flagship products.
-- When the target role owns leading AI/product technology, recent three-year technical leadership or technical taste below 60 also blocks advancement at that level.
-- Standard data collection, ETL, vector retrieval, prompt orchestration, LLM API integration, generic RAG, Agent harnesses, or workflow wrappers normally remain below 60 when there is no evidence of evaluation/feedback loops, model or retrieval decisions, permissions/provenance, reliability or cost tradeoffs, hard failure analysis, original mechanisms, or measurable comparison results.
-- Similar vocabulary or product adjacency to Friday/MorningStar cannot raise a technically shallow project above the depth gate.
+Use the current role plus the immediately preceding substantive role when needed to cover roughly 24–36 months. Do not transfer an absent recent share to old work to create a flattering total. A product's intrinsic historical score may remain time-aligned to its own period, but current candidate ability must discount stale personal evidence. Titles such as CTO, technical director, head of engineering, or AI lead do not prove current function.
 
 Every report must include:
 
-| Time window | Products and dates | Candidate-owned work | Weight used | Current signal score | What it proves / does not prove |
-|---|---|---|---:|---:|---|
+| Time window | Products and dates | Candidate-owned work | Weight used | Affected dimensions | What it proves / does not prove |
+|---|---|---|---:|---|---|
 
-### 9.1 Resume-only screening
+## 8. Missing-information state machine
 
-If the available and intended decision input is the resume alone, the primary score is the resume signal composite. Do not apply E0-E4 numerical ceilings to create a confirmed composite: there is no later evidence in the current stage that could make such a score comparable across candidates. Public research provides product context and contemporaneous benchmarks only. Candidate-specific uncertainty must be expressed through the personal-depth subdimensions and explicit risk flags, without a second penalty.
-
-For resume-only cohort ranking, add rank and percentile while preserving the absolute score. Use these default bands: `>=75 strong interview recommendation`, `70-74.9 interview recommendation`, `65-69.9 weak recommendation/priority verification`, `60-64.9 targeted verification`, `<60 reject`.
-
-### 9.1.1 Technical-team environment
-
-When team environment is requested, research it independently and add it as a 15% final dimension. Use these category bands:
-
-| Team category | Default band | Required evidence |
-|---|---:|---|
-| Product-led technical startup with disclosed Series A-C financing | 85-100 | Financing round/date/investors plus identifiable product and technical team |
-| Excellent B2B product team at a top-tier technology company | 75-89 | Named B2B product, product ownership, engineering or market evidence |
-| Product-led B2C technology company | 65-79 | Real consumer product, scale/operations, identifiable technical work |
-| Independent large-enterprise technology subsidiary or externally competitive product technology team | 50-69 | Standardized product, independent ownership, sustained R&D, external customers or market competition, and verifiable technical output |
-| Consulting/custom-delivery or project/outsourcing-led B2B; non-technology enterprise internal digitalization; no clear product; state/central enterprise; public institution | 20-49 | Default low-priority environment; ordinary internal platforms, AI labels, project names, and titles are insufficient |
-
-Adjust within the band using technical founder/leader quality, R&D/product evidence, open-source or engineering output, customer/product traction, and whether the candidate sat in the core product team. Record exact sources and dates. Do not let financing alone prove technical excellence.
-
-Within the lowest band, use `20-39` by default for consulting companies, custom-delivery teams, outsourcing/project companies, and internal digitalization teams inside real-estate, manufacturing, retail, finance, or other non-technology enterprises. A team may reach `40-49` only when evidence proves an externally used standardized product, independent product ownership, sustained R&D, difficult technical mechanisms, and meaningful engineering output. Scores of `50-69` require an independent technology subsidiary or a genuinely product-led technical team with external customers or market competition; ordinary internal IT or digitalization teams do not qualify.
-
-For a standalone B2B product company that has a real standardized product but lacks both disclosed Series A-C financing and top-tier technology-company status, use the `50-69` band conservatively rather than inventing a sixth high-priority category. This preserves the requested ordering: clear product evidence keeps it above project/outsourcing environments, while missing financing and company-quality evidence keeps it below the first two tiers. Apply the `70% / 20% / 10%` recency weights from 9.0.1 to the technical-team environment score; a strong employer from more than seven years ago cannot raise a candidate whose recent environments are weak.
-
-The resume-only final formulas are:
+Every claim or verification item must use exactly one of these states:
 
 ```text
-Without team environment = Product technology * 25% + Personal technical depth * 30% + Product-line fit * 25% + Recent-role functional fit * 20%
-With team environment = Product technology * 20% + Personal technical depth * 25% + Product-line fit * 20% + Recent-role functional fit * 20% + Technical-team environment * 15%
+简历未覆盖
+面试未覆盖
+已覆盖待判断
+已证明
+已追问未证明
+证据矛盾
+不适用
 ```
 
-### 9.2 Multi-product portfolio aggregation
+- `简历未覆盖`: do not claim the candidate lacks the ability. Score only visible resume signal, explain whether a normally expected senior claim is absent, and add a next-round item.
+- `面试未覆盖`: do not treat the omission as negative candidate evidence. The affected critical dimension remains unconfirmed and returns to the next-round list.
+- `已覆盖待判断`: evidence exists but has not yet been weighed or reconciled.
+- `已证明`: evidence is adequate for the stated claim and its attribution boundary.
+- `已追问未证明`: a targeted question was asked but the claim remained unsupported. This is negative evidence; retain the original answer and lower the relevant raw and confirmed scores.
+- `证据矛盾`: preserve conflicting resume, interview, public, and artifact evidence side by side; create a second verification or reference-check item.
+- `不适用`: the target capability map declared the item unnecessary before candidate scoring. Exclude it from coverage denominators; do not use it as a post-hoc exemption.
 
-Default input identity rule: one row equals one candidate. Adjacency, similar employers, plausible career progression, or related technical topics are not identity evidence. Merge rows only when a candidate ID, name, explicit resume boundary, or equally direct source linkage confirms that they belong to the same person. Otherwise produce a separate fact card, responsibility inference, scoring breakdown, and final score for every row.
+State progression must preserve history. A later evaluation cites and updates unresolved earlier items instead of generating a disconnected report.
 
-When one candidate is confirmed to have many product rows, preserve a coverage table for all rows and select no more than three representative product clusters. Choose them using technical substance, plausible personal ownership, recency, and target-product relevance. Score each representative product's intrinsic technology separately, then aggregate the candidate-facing current portfolio signal using the time limits in 9.0.1. For L4/L5 screening, recency weighting supersedes the former fixed `50% / 30% / 20%` and `60% / 40%` representative ordering.
+## 9. Two-stage scores and coverage
 
-Do not average every historical project merely because it appears in the input. Explain why each representative was selected, which rows were grouped into it, and how the time weight was applied. Candidate technical depth and product-line fit can use the full portfolio, but must cite concrete inferred-owned components and retain their recency discount rather than relying on company names or titles.
+### 9.1 Resume screening
 
-For a general senior technical product role without a separate team-environment score:
+Output only:
 
-```text
-Signal composite = raw Product technical complexity and leadership * 25% + raw Technical depth * 30% + raw Product-line fit * 25% + raw Recent-role functional fit * 20%
-Confirmed composite = confirmed Product technical complexity and leadership * 25% + confirmed Technical depth * 30% + confirmed Product-line fit * 25% + confirmed Recent-role functional fit * 20%
-```
+- seven dimension resume signal scores and `简历信号综合分` using the fixed formula;
+- `证据覆盖率`;
+- uncertainty flags such as unresolved entity, missing tenure, unclear personal boundary, non-recomputable metric, company capability attributed to the candidate, or critical dimension not covered;
+- screening conclusion: interview, targeted verification, reject, or insufficient information;
+- the continuous verification checklist in section 12.
 
-Change weights only when the target role explicitly requires it, and disclose the change.
+Do not output an E0-E4-capped second composite at resume stage. Public research supplies product context and contemporaneous baselines; it does not independently prove personal contribution.
 
-Before finalizing, recompute each weighted term and the total separately. The printed formula, component scores, and reported composite must agree exactly.
+Resume coverage uses an evidence object appropriate to each dimension:
 
-If one dimension is E0/Unknown, keep any separately justified raw claim score for resume screening, but use 0 for that dimension's contribution to the evidence-capped confirmed composite. Label the zero as an unresolved-evidence penalty, not as proof that the candidate's actual ability is zero.
+- 产品/项目技术含金量：使用与候选人任期对齐的产品级证据；不要求该产品事实可归因到候选人，也不把团队环境事实计入覆盖率。
+- 候选人能力维度（个人技术贡献、AI/算法/数据/评测判断、产品与客户判断、经营责任、跨职能领导）：只使用可归因到候选人的证据；公司、产品或团队能力不能替代个人证据。
+- 目标产品与阶段匹配：同时要求目标产品事实和可归因到候选人的相关简历证据；简历阶段不要求该候选人证据已独立确认，只有一侧存在时对应子项不算覆盖。
 
-Product-line fit has 25% impact without a team-environment dimension and 20% with it; recent-role functional fit has 20% impact in both formulas. Calculate both from the candidate's inferred responsibility boundary rather than the full former-company product. When the target product is unresolved, calculate separate final composites for each material product line and label the highest one as the best-fit product-line score; do not average product lines. Always display both the raw resume-signal composite and the evidence-capped confirmed composite.
+For each dimension, resume coverage equals the sum of the subdimension weights that meet its evidence-object rule. Overall resume evidence coverage equals the sum of `fixed dimension weight × dimension coverage`. Coverage measures presence, not truth or evidence grade, and never replaces the score.
 
-Apply two different gates after calculating the scores.
+For resume-only cohort ranking, preserve the absolute score and optionally add rank/percentile. Default bands are `>=75 strong interview recommendation`, `70-74.9 interview recommendation`, `65-69.9 weak recommendation/priority verification`, `60-64.9 targeted verification`, and `<60 reject`, subject to the critical gates and missing-evidence rules below.
 
-### Resume-screen gate
+### 9.2 Interview and hiring
 
-- **Advance to targeted interview:** raw technical depth and raw fit are normally at least 70, the claims are specific enough to test, and no material contradiction has been found.
-- **Targeted verification:** at least one critical raw score is 60-69, or a high raw score depends on identity, dates, ownership, or one missing artifact that can be checked cheaply.
-- **Reject at screen:** a critical raw score is below 60 even if the claim is true, the experience is materially stale or stage-mismatched, or research contradicts the central claim.
-- **Insufficient identity:** do not advance through the normal loop until the exact product, candidate identity, repository, or employment dates are supplied.
+Output:
 
-### Senior-hiring gate
+- seven dimension raw ability scores and the fixed-formula `原始能力综合分`;
+- E0-E4 grade and current confirmed score for each dimension, plus `当前确认综合分`;
+- `确认覆盖率`, contradictions, remaining risks, and gate decisions;
+- the updated continuous verification checklist.
 
-- Confirmed technical depth below 60: not yet qualified as proven senior technical ownership.
-- Confirmed target-role fit below 60: do not recommend for this role, even if generally strong.
-- Confirmed recent-role functional fit below 60: do not recommend at an L4/L5 core-R&D level unless the target role is explicitly aligned with that recent function.
-- Critical contribution evidence E0/E1: do not conclude senior-level ownership without interview or work-sample verification.
-- Product technical leadership above 75 with technical depth below 60: label "leading technology context, passenger risk".
-- Technical depth above 75 with product technical leadership below 60: label "strong engineering, technical-selection evidence weak".
-- Fit above 75 based mainly on shared AI keywords: reduce to apparent fit until mechanism, recency, and work products are verified.
+At interview stage, product technical value uses tenure-aligned product-level evidence, candidate-ability dimensions require evidence attributable to the candidate, and target fit requires both target-product facts and candidate-responsibility evidence that is decision-ready. Within those boundaries, confirmed coverage equals the sum of subdimension weights whose evidence is decision-ready: either the claim is `已证明`, or a targeted attempt is recorded as `已追问未证明` and can support a bounded negative conclusion. `简历未覆盖`, `面试未覆盖`, `已覆盖待判断`, and `证据矛盾` do not count as confirmed coverage. Overall confirmed coverage equals the sum of `fixed dimension weight × dimension confirmed coverage`, excluding predeclared `不适用` items from the denominator.
 
-Use these decision labels:
+When a critical dimension is not covered, the conclusion can only be targeted/further verification, never a confirmed senior-hiring recommendation. High scores do not override insufficient coverage.
 
-- 80+: strong evidence of senior-level fit.
-- 70-79: credible fit with bounded risks.
-- 60-69: marginal; only advance when targeted verification is cheap and important.
-- Below 60: does not meet the target role.
-- Unknown: insufficient evidence; never translate unknown into a positive score.
+### 9.3 Multi-product portfolio aggregation
 
-## 10. Required output format
+One row equals one candidate unless a candidate ID, name, explicit resume boundary, or equally direct linkage proves otherwise. For a confirmed multi-product candidate, preserve all rows but select no more than three representative product clusters based on technical substance, plausible personal ownership, recency, and target relevance. Score each product's intrinsic technology separately, then aggregate candidate-facing evidence with the time rules in section 7.
+
+Do not average every historical project. Explain why each representative was selected, which rows it groups, and how time weight was applied. Never count the same flagship product as both product prestige and current personal ability without separate personal evidence.
+
+Before finalizing, recompute every subdimension contribution, dimension score, composite term, and total. Printed formulas and reported totals must agree exactly.
+
+## 10. Gates and decisions
+
+Apply these gates independently of the unified composite:
+
+- 候选人个人技术贡献深度低于 60：不能录用为技术总监或同级核心技术负责人。
+- 产品与客户判断低于 60：不适合产品技术一体化岗位，可另评纯技术岗位。
+- 经营责任与创业型 ownership 低于 60：不符合对经营结果负责的技术总监画像。
+- AI、算法、数据与评测判断低于 60：不能领导当前 AI 产品技术方向。
+- 目标产品与阶段匹配低于 60：不推荐当前目标岗位。
+- 关键维度处于 `简历未覆盖`、`面试未覆盖`、`已覆盖待判断` 或 `证据矛盾`：可以进入针对性验证，不能给出已经证明的高级录用结论。
+- 关键个人贡献只有 E0/E1：不能结论性认定高级技术 ownership。
+
+If the target role does not require one of these gates, mark that exception in the target capability map before scoring. Do not waive it after seeing the candidate's score.
+
+Useful risk labels include:
+
+- product technology above 75 with personal contribution below 60: `优秀产品环境，搭便车风险`;
+- personal contribution above 75 with product technology below 60: `强工程能力，产品/技术选择证据弱`;
+- target fit above 75 mainly from shared AI words: `表面匹配，待机制与当前证据验证`.
+
+Unknown never becomes a positive score. Distinguish missing evidence from demonstrated weakness and from contradiction.
+
+## 11. Technical-team environment as context
+
+Research technical-team environment independently when it changes interpretation of access, standards, or attribution. Record product ownership, financing where relevant, sustained R&D, external customers, technical output, leader quality, and whether the candidate sat in the core team. Team quality can explain opportunity or risk, but cannot raise any dimension without dimension-specific candidate evidence.
+
+Technical-team environment has no percentage, score, or optional composite. Company prestige, financing, team size, and employer category are contextual facts only.
+
+## 12. Continuous verification checklist
+
+Every evaluation maintains the same table, and every later reviewer updates unresolved rows rather than starting over:
+
+| 待验证事项 | 当前材料 | 当前判断 | 影响维度 | 下一轮问题 | 合格证据 | 风险回答 | 建议验证人 | 状态 |
+|---|---|---|---|---|---|---|---|---|
+| 个人架构决策与责任边界 | 仅有笼统负责表述，未提供个人决策/取舍 | 边界不清 | 候选人个人技术贡献深度 | 哪三个关键决策由你本人作出？ | 方案、取舍、结果、失败 | 只描述团队工作 | 架构师 | 简历未覆盖 |
+| 经营责任 | 简历未提供 | 未知 | 经营责任与创业型 ownership | 直接负责什么经营或客户指标？ | 目标、实际值、取舍、复盘 | 只有交付日期 | CEO/业务负责人 | 简历未覆盖 |
+| 跨部门决策 | 面试写“推动协作” | 已问但仍缺最终判断与结果 | 跨职能领导与信息整合 | 各方冲突是什么，谁作出最终决定？ | 冲突、决策、行动、结果 | 主要工作是开会协调 | 管理面试官 | 已追问未证明 |
+
+The status column must contain exactly one state from section 8. Preserve the source excerpt or exact interview answer behind each current-material entry.
+
+## 13. Required output format
+
+Use one auditable report. Omit the stage-inapplicable scoring table: resume reports must not print evidence grades or confirmed scores; interview/hiring reports must include them.
 
 ```markdown
+## 一句话结论
+[阶段、判断、最强证据、最大不确定性]
+
+## 目标岗位能力图
+| 岗位使命 | 产品阶段 | 技术重点 | 关键约束 | 要求的责任范围 | 评分前声明的不适用门槛 |
+|---|---|---|---|---|---|
+
 ## 产品事实卡
 ### [产品名称]
 | 字段 | 内容 | 原文依据 |
@@ -335,10 +391,12 @@ Use these decision labels:
 | 商业模式 | | |
 | 核心技术难点 | | |
 | 候选人任期内状态 | | |
+| 技术团队环境与风险上下文 | | |
 | 未知项 | | |
 
 ### 产品原文证据
 | 来源 | 日期与位置 | 原文短摘录 | 能证明什么 | 不能证明什么 |
+|---|---|---|---|---|
 
 ## 原始材料
 ### 内部产品原文摘录
@@ -347,66 +405,74 @@ Use these decision labels:
 ### 候选人原文摘录
 [原文、来源、日期、是否经过格式清理]
 
-## 互联网增强信息
-| 产品层/项目 | 公开事实与原文 | 直接来源与位置 | 能证明什么 | 不能证明什么 |
+## 互联网研究账本
+| 产品层/项目 | 公开事实与原文 | 直接来源与位置 | 来源阶梯 | 能证明什么 | 不能证明什么 | 是否与任职时间对齐 | 反证 |
+|---|---|---|---|---|---|---|---|
 
 ## 候选人负责范围反推
 | 可能负责部分 | 反推依据 | 置信度 | 不应归给候选人的部分 | 面试验证问题 |
-
-## 一句话结论
-[筛选判断、最强证据、最大不确定性]
-
-## 目标岗位画像
-| 岗位使命 | 产品阶段 | 技术重点 | 关键约束 | 要求的责任范围 |
-
-## 互联网调研
-| 编号 | 产品主张 | 公开事实 | 来源与日期 | 来源类型 | 能支持什么 | 不能支持什么 | 是否与任职时间对齐 |
+|---|---|---|---|---|
 
 ## 主张核验
-| 简历/候选人主张 | 已证明部分 | 未证明或矛盾部分 | 是否证明为候选人个人贡献 |
+| 简历/候选人主张 | 已证明部分 | 未证明或矛盾部分 | 是否证明为候选人个人贡献 | 缺失信息状态 |
+|---|---|---|---|---|
 
-## 评分
-| 评价维度 | 原始简历信号分 | 证据等级 | 当前确认分 | 评分理由 |
-| 产品技术复杂度与领先性 | | | | |
-| 候选人技术深入度 | | | | |
-| Friday 产品线匹配度 | | | | |
-| MorningStar 产品线匹配度 | | | | |
-| 最近岗位职能匹配度 | | | | |
+## 最近三年实际职能证据
+| 时间窗口 | 产品与日期 | 候选人个人工作 | 使用权重 | 影响维度 | 能证明 / 不能证明 |
+|---|---|---|---:|---|---|
 
-### 产品线匹配矩阵
-| 产品线 | 原始相似度 | 证据等级 | 当前确认相似度 | 匹配机制 | 关键缺口 |
+## 产品能力与个人贡献边界
+| 证据 | 只进入产品含金量 | 可进入个人贡献 | 不得重复计分的理由 |
+|---|---|---|---|
+
+## 七维评分
+
+### 简历阶段（仅简历筛选使用）
+| 评价维度 | 权重 | 简历信号分 | 加权贡献 | 证据覆盖率 | 评分依据 | 缺失信息状态 |
+|---|---:|---:|---:|---:|---|---|
+| 产品/项目技术含金量 | 20% | | | | | |
+| 候选人个人技术贡献深度 | 20% | | | | | |
+| AI、算法、数据与评测判断 | 10% | | | | | |
+| 产品与客户判断 | 15% | | | | | |
+| 经营责任与创业型 ownership | 15% | | | | | |
+| 跨职能领导与信息整合 | 5% | | | | | |
+| 目标产品与阶段匹配 | 15% | | | | | |
+
+简历信号综合分：
+证据覆盖率：
+不确定性标记：
+
+### 面试及录用阶段（仅已有面试证据时使用）
+| 评价维度 | 权重 | 原始能力分 | 证据等级及上限 | 当前确认分 | 原始分加权贡献 | 确认分加权贡献 | 确认覆盖率 | 缺失信息状态 | 评分理由 |
+|---|---:|---:|---|---:|---:|---:|---:|---|---|
+| 产品/项目技术含金量 | 20% | | | | | | | | |
+| 候选人个人技术贡献深度 | 20% | | | | | | | | |
+| AI、算法、数据与评测判断 | 10% | | | | | | | | |
+| 产品与客户判断 | 15% | | | | | | | | |
+| 经营责任与创业型 ownership | 15% | | | | | | | | |
+| 跨职能领导与信息整合 | 5% | | | | | | | | |
+| 目标产品与阶段匹配 | 15% | | | | | | | | |
+
+原始能力综合分：
+当前确认综合分：
+确认覆盖率：
+
+### 七维子项明细
+[为七个维度分别使用本方法论规定的子项和权重]
+| 子项 | 权重 | 阶段适用分 | 加权贡献 | 证据依据 | 缺失信息状态 |
+|---|---:|---:|---:|---|---|
+
+### Friday / MorningStar 匹配矩阵
+| 产品线 | 原始/简历信号分 | 证据等级（面试阶段） | 当前确认分（面试阶段） | 匹配机制 | 关键缺口 |
+|---|---:|---|---:|---|---|
 | Friday | | | | | |
 | MorningStar | | | | | |
 
-### 最近岗位职能匹配
-| 最近岗位与时间 | 实际职能 | 与目标岗位的责任中心距离 | 原始分 | 证据等级 | 当前确认分 | 依据与缺口 |
+明确说明目标岗位采用哪条产品线作为第七维；若岗位归属未决，分别给出两套综合分，不平均。
 
-明确说明：更匹配哪条产品线；目标岗位匹配度采用哪条产品线作为主要依据；是否存在岗位归属不明的问题。
-
-### 子项打分明细
-
-分别为产品技术复杂度与领先性、候选人技术深入度、每条目标产品线匹配度，以及最近岗位职能匹配度输出一张表：
-
-| 子项 | 权重 | 原始分 | 加权贡献 | 打分依据与缺失证据 |
-|---|---:|---:|---:|---|
-
-每张表必须满足：
-
-- 产品技术复杂度与领先性、候选人技术深入度各展示六个规定子项；每条产品线匹配度使用且仅使用 `25/25/20/15/15` 五个规定子项；最近岗位职能匹配度使用且仅使用 `30/25/20/15/10` 五个规定子项。
-- 加权贡献之和必须与该维度的原始分一致；如有四舍五入，明确标注。
-- 打分依据应指向前文公开证据、候选人主张或明确的缺失证据，不能只写形容词。
-- 原始分反映“如果主张属实”的信号强度；当前确认分另行结合证据等级、时间对齐和个人归因计算，不要把两者混在子项表中。
-- E0/未知的维度不编造子项数字，逐项标记未知并说明缺少什么证据。
-
-### 确认分调整
-
-| 评价维度 | 原始分 | 证据等级及上限 | 确认分 | 从原始分扣减的具体原因 |
-|---|---:|---|---:|---|
-
-简历信号综合分：
-当前确认综合分：
-简历筛选门槛：
-高级人才录用门槛：
+## 关键门槛
+| 门槛维度 | 60 分是否满足 | 证据覆盖是否足够 | 评分前是否声明不适用 | 判断 |
+|---|---|---|---|---|
 
 ## 可迁移优势
 - ...
@@ -414,14 +480,16 @@ Use these decision labels:
 ## 风险与缺失证据
 - ...
 
-## 筛选结论
-[进入面试 / 针对性验证 / 淘汰 / 信息不足]
+## 持续验证清单
+| 待验证事项 | 当前材料 | 当前判断 | 影响维度 | 下一轮问题 | 合格证据 | 风险回答 | 建议验证人 | 状态 |
+|---|---|---|---|---|---|---|---|---|
 
-## 下一步问题
-| 问题 | 验证的主张 | 合格回答 | 风险信号 |
+## 筛选或录用结论
+[进入面试 / 针对性验证 / 淘汰 / 信息不足 / 录用建议 / 不录用]
 
 ## 评审反馈
 | 待确认判断 | 当前判断及证据编号 | 评审者反馈 |
+|---|---|---|
 ```
 
-Every factual public claim needs a direct source link. Clearly label inference. Do not cite a search-results page.
+Every factual public claim needs a direct source link. Clearly label inference. Do not cite a search-results page. Every score must trace to an original excerpt, public fact, interview answer, artifact, or explicit missing state.

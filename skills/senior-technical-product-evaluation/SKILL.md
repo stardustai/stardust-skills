@@ -1,156 +1,113 @@
 ---
 name: senior-technical-product-evaluation
-description: Evaluate senior technical candidates by researching the products they worked on and separating product technical complexity and leadership, the candidate's inferred responsibility and technical depth, and target-role fit. Use whenever screening resumes or assessing CTOs, technical directors, principal engineers, architects, AI leaders, or other senior technical candidates, especially when the resume lists impressive companies, large systems, AI platforms, Agent frameworks, 0-to-1 products, or claims of leading/core ownership. Requires internet cross-checking, responsibility-boundary inference, and explicit technical-taste assessment rather than accepting resume or company marketing claims at face value.
+description: Evaluate senior technical candidates across resume screening, interview preparation, interview-transcript review, scorecard updates, and hiring decisions. Use for CTOs, technical directors, principal engineers, architects, AI leaders, and other senior technical candidates whenever product quality, personal technical ownership, AI judgment, product/customer judgment, operating responsibility, cross-functional leadership, target-role fit, or missing evidence must be assessed and handed to later interviewers. Requires public product research, responsibility-boundary inference, stage-aware evidence handling, and an actionable validation ledger.
 ---
 
 # Senior Technical Product Evaluation
 
-Use this skill to answer a narrow but important question: does a senior technical candidate's product history demonstrate the kind of technical and product judgment required by the target role?
+Evaluate the same seven objects from resume screening through interview review and the final hiring decision:
 
-Do not collapse this into one vague "product experience" score. Evaluate three separate objects:
+1. 产品/项目技术含金量。
+2. 候选人个人技术贡献深度。
+3. AI、算法、数据与评测判断。
+4. 产品与客户判断。
+5. 经营责任与创业型 ownership。
+6. 跨职能领导与信息整合。
+7. 目标产品与阶段匹配。
 
-1. The product: was it technically complex, leading, and innovative for its market and time, or merely a common implementation of a popular topic?
-2. The candidate: which parts did this person most likely own, and did they solve the hard parts or merely participate around them?
-3. The transfer: does that experience map to the target role's product, stage, constraints, and technical paradigm?
-4. The recent function: what did the candidate actually spend the last three years doing, and is that work function the same as the target role rather than merely adjacent to it?
+Keep product facts and personal facts separate. Public evidence can establish what a company or product did, but it cannot prove what the candidate personally decided, built, operated, or achieved. Use the same seven dimensions at resume and interview stages; change the evidence treatment and output by stage, not the evaluation target.
 
-Read [references/methodology.md](references/methodology.md) before evaluating a candidate. Follow its research protocol, score caps, gates, and output format.
+Read [references/methodology.md](references/methodology.md) completely before evaluating a candidate. It is authoritative for the seven-dimension formula and subdimensions, evidence grades and caps, missing-information state machine, gates, coverage calculation, continuous validation ledger, and exact output format. Do not invent alternative weights, an eighth scoring dimension, or a disconnected report format.
 
 ## Required inputs
 
-Collect these before scoring:
+Collect and preserve the best available version of:
 
-- Target role mission, level, product stage, customers, technical priorities, and near-term problems.
-- Current internal product definitions for every product line the role may serve. For Stardust/PreSeen, evaluate Friday and MorningStar separately unless the role is explicitly scoped to only one.
-- Candidate employment dates and exact product or project claims.
-- The actual function of the candidate's current and recent roles, including whether they owned core product R&D, infrastructure/SRE, DevOps, quality, delivery, project management, or another responsibility center.
-- Candidate's stated role, decisions, implementation, metrics, failures, and results.
-- Public information about each relevant product during the candidate's tenure.
-- A product fact card for every material candidate product: plain-language description, buyer and user, end-to-end workflow, product boundary, major modules, business model when knowable, hard technical problems, and dated source excerpts.
+- Current stage: resume screening, interview preparation, interview-transcript review, scorecard update, or final hiring decision.
+- Target role mission, level, product stage, customers, technical priorities, operating expectations, and near-term problems.
+- Current internal product definitions for each product line the role may serve. For Stardust/PreSeen, evaluate Friday and MorningStar separately unless the role is explicitly scoped to one.
+- Candidate resume, employment dates, original product/project claims, and the actual function of current and recent roles.
+- Interview transcript or AI minutes, exact candidate answers, interviewer questions, and inspectable artifacts when available.
+- Existing scorecards or interview reviews and the prior round's conclusions, contradictions, uncertainty flags, and continuous validation ledger（持续验证清单）.
+- Candidate-attributable technical decisions, implementations, alternatives, tradeoffs, failures, iterations, production duration, and measurable results.
+- Operating metrics and resource decisions, including revenue, renewal, gross margin, cost, adoption, retention, or customer-value outcomes when relevant.
+- Customer evidence and cross-functional decisions involving product, algorithm, engineering, sales, delivery, or operations.
+- Public information about every material product during the candidate's tenure.
 
-If the target role or product is unclear, state the working assumptions. Do not silently judge against a generic "senior engineer" profile.
+If the target role, product line, candidate identity, tenure, or evaluation stage is unclear, state the working assumption and keep it as an unresolved validation item. Do not silently judge against a generic senior-engineer profile.
+
+## Mandatory execution sequence
+
+Follow this order:
+
+1. **Identify the stage.** Select the resume-stage or interview/hiring-stage contract below. Interview preparation begins from the resume-stage evidence and ledger; transcript review and scorecard updates use the interview/hiring-stage contract.
+2. **Inherit earlier evidence.** Read the resume, previous conclusions, scorecards, transcripts, and validation ledger. Preserve unresolved items, exact source text, prior states, and contradictions; do not restart the evaluation from zero.
+3. **Define target-role gates.** Build the target capability map and declare any inapplicable gate before candidate scoring.
+4. **Build product fact cards.** Resolve each material product, research its tenure-aligned facts and contrary evidence, and separate product, platform, internal-project, and company-stack boundaries.
+5. **Infer personal responsibility.** For each claim, show the likely owned part, inference basis, confidence, parts not attributable to the candidate, and the next verification question.
+6. **Score all seven dimensions.** Use only the fixed formula and subdimensions in the methodology. Keep Friday and MorningStar fit separate and use only the in-scope product line as the seventh dimension; if scope is unresolved, calculate both composites and do not average them.
+7. **Apply the missing-information state machine.** Use exactly the methodology states, preserve state history, and distinguish absence, demonstrated weakness, and contradiction.
+8. **Update the continuous validation ledger.** Every unresolved or contradicted claim must become an actionable row with the next question, qualifying evidence, risky answer, owner, and current state.
+9. **Apply gates and issue the stage-appropriate decision.** Recalculate every contribution and total before finalizing.
 
 ## Internet research is mandatory
 
-Research every product that materially affects the decision. A resume, interview summary, company name, or internal table is only a lead.
+Research every product that materially affects the decision. A resume, interview statement, company name, existing scorecard, or internal table is only a lead.
 
 For each product:
 
-1. Resolve the exact entity using company, product name, dates, geography, and product category. Do not attach evidence from a similarly named project without identity proof.
-2. Search primary sources first: official product documentation, repositories, papers, patents, regulatory filings, annual reports, technical talks, release notes, and customer case studies with named outcomes.
-3. Add an independent source when available: recognized benchmarks, customer evidence, reputable industry analysis, or credible technical reporting.
-4. Compare the product with alternatives available during the candidate's tenure. Current popularity does not prove historical leadership, and an old architecture is not weak merely because newer technology now exists.
-5. Search for limitations, failed launches, weak adoption, security incidents, discontinued products, and contradictory metrics. Marketing claims are not independent verification.
-6. Record source URL, publication date, source type, supported claim, and whether the evidence aligns with the candidate's dates.
+1. Resolve the exact entity from company, product name, dates, geography, product category, repository, and domain. If identity remains ambiguous, mark it unresolved rather than attaching a similarly named product.
+2. Prefer primary technical and business sources, then add an independent source when available. Search for limitations, failed launches, weak adoption, incidents, discontinued products, and contradictory metrics as well as positive evidence.
+3. Compare the product with alternatives available during the candidate's tenure. Current popularity does not prove historical leadership, and current documentation may describe capabilities added after the candidate left.
+4. Record the direct URL, publication date, source type, supported claim, unsupported inference, and tenure alignment. A high-confidence product-leading claim requires at least two materially different sources, including one primary source.
+5. Explain what buyers and users actually do, the product boundary and workflow, and where the candidate's claimed system sits before scoring technical quality.
 
-Do not start from a score or from a list of technical nouns. First explain the product so that a reviewer unfamiliar with it can understand what is bought, what users actually do, and where the candidate's claimed system sits. Resolve whether the input names a single product, a product family, one platform layer, an internal project, or an entire company product stack. If several layers are merged into one resume row, split them before comparison. If the exact product cannot be resolved, mark it E0/Unknown instead of inventing a product description.
+Public product or company facts may support product technical value and context only. They never establish the candidate's personal ownership, technical depth, AI judgment, product/customer judgment, operating responsibility, or cross-functional leadership without candidate-attributable evidence. Do not transfer company scale, product features, financing, team quality, or leadership reputation into a personal score.
 
-Use at least two materially different sources, including one primary source, for a high-confidence product-leading claim. When only company marketing or candidate wording is available, mark the claim unverified and apply the evidence cap.
+## Recent-function evidence is horizontal
 
-## Evaluation sequence
+Apply the candidate's actual recent function across every candidate-ability dimension: evidence from the most recent 0–3 years supplies at least 70% of the judgment, evidence from 3–7 years supplies at most 20%, and evidence older than 7 years supplies at most 10%. Do not create a separate recent-role dimension, and do not reallocate a missing recent share to older prestigious work.
 
-1. Build the target-role capability map and a separate capability map for each relevant internal product line.
-2. Resolve the boundary of each candidate product and create its product fact card before assigning any score.
-3. Quote the relevant internal product-definition excerpts and the candidate's original resume/project text before interpreting either one. Preserve source links, document dates, and wording; label any cleanup such as removed HTML styling.
-4. Turn each resume item into explicit claims.
-5. Research and time-align the product evidence. Keep a source log showing what each source proves and cannot prove.
-6. Infer the candidate's likely responsibility boundary from resume verbs, technical specificity, scope, tenure, and organizational plausibility. Label each inferred part with confidence and explicitly list company capabilities that must not be attributed to the candidate.
-7. Separate product facts from candidate attribution. Public evidence that a company had a capability does not prove the candidate designed or built it.
-8. Score product technical complexity and leadership independently of the candidate. Put most weight on technical complexity, technical leadership, innovation, and technical taste; give problem importance and generic product differentiation little weight.
-9. Score candidate technical depth only on the inferred responsibility boundary. Examine claim authenticity, implementation complexity, hard problems, technical decisions, failures and iteration, and development duration.
-10. Research and score the candidate's technical-team environment. Verify financing stage, investors, business type, product identity, technical leadership, R&D/product evidence, and whether the company is product-led or project/outsourcing-led. Do not infer team quality from a company name alone.
-11. Score product-line fit for each relevant target product using exactly: hard-problem similarity 25%, technical-architecture similarity 25%, data/evaluation-loop similarity 20%, customer/deployment similarity 15%, and responsibility/stage similarity 15%. Do not average unrelated product lines merely to produce one number.
-12. Score recent-role functional fit separately. Product-line fit asks whether the former product's mechanisms transfer; recent-role functional fit asks what the person actually did recently. Do not let work at a relevant company or on a relevant product substitute for core-function ownership.
-13. Apply the recency weighting and current-capability gates below. Historical prestige must not rescue weak recent technical evidence.
-14. Apply evidence caps and senior-level gates when not in resume-only mode.
-15. Show every required subdimension, weight, weighted contribution, and evidence basis; do not expose only a top-level score.
-16. Recalculate every weighted score independently and verify the displayed arithmetic.
-17. Confirm that the final report retains any contrary evidence that could change product identity, system boundaries, candidate ownership, team environment, recent function, or time alignment.
-18. Produce screening questions that target the largest unresolved claims.
+When the recent function is mainly SRE, DevOps, quality, delivery, project management, or pure people management, score only the abilities actually proved. Titles and product adjacency do not establish current core-product, AI, architecture, product, customer, or operating ability. Always output the methodology's recent-function evidence table and state what older evidence proves and does not prove.
 
-## Recency weighting and current-capability gate
+## Stage routing and output contract
 
-For L4/L5 core product R&D, AI engineering, architecture, technical-director, and CTO screening, current capability is the hiring object. Evaluate candidate-facing technical evidence using these maximum time weights:
+### Resume screening and interview preparation
 
-- Work from the most recent 0-3 years: at least 70% of the candidate-facing technical judgment.
-- Work from 3-7 years ago: at most 20%.
-- Work more than 7 years ago: at most 10%.
+Use resume evidence and mandatory public product research to produce:
 
-Apply this rule to personal technical depth, technical taste, product-line transferability, technical-team environment, and the career-portfolio interpretation of product technology. Keep a historical product's intrinsic technology score when describing that product in its own time, but discount its contribution to the candidate's current score. If a time window has no relevant evidence, do not silently reallocate its weight to old projects merely to preserve a high total.
+- Seven resume signal scores and the fixed-formula `简历信号综合分`.
+- Overall and per-dimension `证据覆盖率` using the methodology's evidence-object boundaries.
+- Uncertainty flags and material risks, including unresolved entities, missing tenure, unclear personal boundaries, non-recomputable metrics, company capability attributed to the candidate, and critical dimensions not covered.
+- A screening conclusion: enter interview, targeted verification, reject, or insufficient information.
+- Targeted follow-up questions and an updated continuous validation ledger that later interviewers can execute.
 
-Historical work can prove foundations such as distributed-systems experience, engineering discipline, or prior exposure to scale. It cannot by itself prove current hands-on depth, current AI understanding, current product judgment, or readiness to lead today's technical direction. Do not count the same old project once as product prestige and again as personal depth to rescue weak recent evidence.
+Do not output evidence-capped confirmation scores at this stage. Public research can strengthen product context and comparison baselines, but it cannot confirm personal contribution. Missing resume evidence is `简历未覆盖`; it creates a question and affects visible signal or coverage according to the methodology, but it is not proof that the candidate lacks the ability.
 
-For a target L4/L5 core-R&D role:
+### Interview-transcript review, scorecard update, and hiring decision
 
-- If technical depth demonstrated in the most recent three years is below 60, reject at the target level regardless of older flagship projects.
-- If the role requires leading AI/product technology and the recent three-year portfolio is below 60 on technical leadership and technical taste, reject at the target level even when an older project was historically strong.
-- A recent project consisting mainly of standard data collection, ETL, vector retrieval, prompt orchestration, or LLM API integration does not reach 60 unless the evidence shows difficult mechanisms such as evaluation and feedback loops, model or retrieval decisions, permissions and provenance, reliability/cost tradeoffs, failure analysis, or original architecture with measurable results.
-- Product similarity cannot substitute for depth. A generic RAG or Agent implementation may look adjacent to Friday or MorningStar while still being technically weak.
+Read the resume-stage report and every available prior-round conclusion and validation item before using the interview transcript. Then produce:
 
-Always show a recency evidence table with `time window / projects / candidate-owned work / weight used / current signal / reason`. State separately what the older evidence proves and what it does not prove.
+- Seven raw ability scores and `原始能力综合分`.
+- An E0–E4 grade and current confirmed score for each dimension, plus `当前确认综合分`.
+- Per-dimension and overall `确认覆盖率`.
+- Preserved contradictions, changed judgments, decision gates, remaining risks, and remaining validation items.
+- An updated continuous validation ledger that cites the prior item, exact question and answer, new evidence, state transition, next owner, and next action.
 
-When a candidate highlights a highly repetitive technical topic such as a generic Agent harness, RAG wrapper, workflow builder, or chatbot, do not award technical-currency points for vocabulary alone. If neither public evidence nor the candidate's own description identifies an original problem, mechanism, comparison baseline, failure, or result, treat the project as evidence of weak technical selection and technical taste, not merely missing evidence.
+Distinguish the two interview absences strictly:
 
-Treat each input row as one candidate by default. Never merge adjacent rows merely because companies, career stages, or technical topics appear related. Merge multiple rows into one career portfolio only when the source provides a stable candidate ID, candidate name, explicit resume boundary, or an equally direct identity link. If identity linkage is absent, score and report every row independently.
+- `面试未覆盖`: the topic was not meaningfully asked. Do not use the omission as negative candidate evidence; keep the critical dimension unconfirmed and return it to the ledger.
+- `已追问未证明`: a targeted question was asked but the claim remained unsupported. Preserve the question and answer, treat this as bounded negative evidence, and lower the relevant raw and confirmed scores as the methodology requires.
 
-For a confirmed multi-product career portfolio, first list every input row and preserve coverage. Then choose at most three representative product clusters using technical substance, plausible candidate ownership, recency, and relevance to the target products. Calculate each representative product's intrinsic technology score, then derive the candidate's current portfolio signal using the recency limits above. The former fixed `50%/30%/20%` or `60%/40%` ordering must not override the time-window caps for L4/L5 screening. Explain the selection, time weight, and any unfilled recent-evidence weight; do not silently average every old or irrelevant project. Candidate technical depth and product-line fit may use evidence across the full portfolio, but every positive signal must cite a specific inferred-owned component and retain its recency discount.
+Use `证据矛盾` when resume, interview, public, or artifact evidence conflicts. Show both sides and create a second verification or reference-check item instead of silently choosing the favorable version.
 
-## Senior-level decision rule
+## Final output constraints
 
-For a senior technical hire, impressive context is not enough. The candidate must demonstrate both hard technical ownership and relevant transferability.
-
-- A leading product with shallow personal contribution indicates a passenger, not a senior owner.
-- Deep work on a mature or non-leading product may still show strong engineering, but does not prove product-forward judgment.
-- A highly similar product without metrics, decisions, failures, or public verification is only apparent fit.
-- Large team size proves organizational scope, not technical depth or product quality.
-- AI vocabulary proves neither current technical understanding nor AI-native product judgment.
-
-Separate two decisions that use the same evidence but have different burdens of proof:
-
-- **Resume-screen decision:** Is the claim specific, difficult, relevant, and valuable enough to justify a targeted interview?
-- **Senior-hiring decision:** Has the candidate's ownership and ability been verified strongly enough to support level and hiring risk?
-
-The raw signal score supports the first decision. The evidence-capped confirmed score supports the second. Resume-only evidence can justify a targeted interview when the underlying claim is strong; it cannot by itself validate a senior hire.
-
-### Resume-only screening mode
-
-When the recruiting workflow explicitly states that only the resume will ever be available at this stage, use **resume-only screening mode**:
-
-- Produce one primary `简历评估分`; do not evidence-cap it into a lower `确认分`, and do not use E0-E4 as a numerical multiplier or ceiling.
-- Internet research is still required to understand the former product, its real workflow, technical complexity, contemporaneous baseline, and technical leadership. It does not verify the candidate's personal contribution.
-- Evaluate personal ownership only from resume wording, specificity, plausible scope, technical mechanisms, metrics, decisions, failures, iteration, and duration. Missing evidence lowers the relevant depth subdimensions directly; do not penalize the same absence again through a separate confirmation cap.
-- Keep uncertainty as non-numeric flags such as `产品实体未解析`, `任期缺失`, `个人边界模糊`, `指标不可复算`, or `疑似公司能力归因`, rather than compressing the final score.
-- Use the fixed final formula `产品技术 25% + 个人技术深入度 30% + 产品线匹配度 25% + 最近岗位职能匹配度 20%` and show the stronger of Friday and MorningStar as the primary resume score while retaining both product-line scores.
-- When technical-team environment is part of the requested screen, use `产品技术 20% + 个人技术深入度 25% + 产品线匹配度 20% + 最近岗位职能匹配度 20% + 技术团队环境 15%`. Show the team score, category, sources, and adjustment reasons. Do not additionally use the former formula as the decision score.
-- For cohort screening, show rank and percentile in addition to the absolute score. Do not stretch or normalize the absolute score merely to create visual separation.
-- Default decision bands: `>=75 强推荐进入面试`, `70-74.9 推荐进入面试`, `65-69.9 弱推荐/优先验证`, `60-64.9 针对性验证`, `<60 淘汰`. A material red flag may lower the decision, but the reason must be explicit.
-
-Do not recommend a candidate as proven senior-level product/technology leadership when confirmed technical depth, product-line fit, or recent-role functional fit is below 60, or when candidate-contribution evidence is only resume-level and the critical claim has not been pressure-tested.
-
-## Output
-
-Use the exact structure in the methodology reference. Produce one consolidated report, not separate summary, evidence, scoring, and product-description files. Keep original input, internet-enhanced facts, responsibility inference, public evidence, and conclusions visibly separate inside that file. Every score needs a reason and an evidence grade. For each top-level dimension, include a subdimension breakdown table with `子项 / 权重 / 原始分 / 加权贡献 / 打分依据`; then explain separately why the evidence grade raises or lowers the current confirmed score. A top-level score without this breakdown is incomplete.
-
-For Stardust/PreSeen reports, include a Friday/MorningStar product-line fit matrix showing raw similarity, evidence-capped confirmed similarity, matching mechanisms, and critical gaps. State which product line is the stronger match. Also include a recent-role functional-fit table that distinguishes core product R&D from SRE/DevOps, infrastructure, quality, delivery, and management functions.
-
-Include a technical-team environment fact card when requested. Use this preference order, verified through internet research:
-
-1. Product-led technical team with disclosed Series A-C financing.
-2. Excellent B2B product team inside a top-tier technology company.
-3. Product-led B2C technology company.
-4. Independent technology subsidiary or externally competitive product technology team inside a large enterprise, with a standardized product, clear product ownership, sustained R&D, and verifiable technical output.
-5. No clear product; consulting/custom-delivery or project/outsourcing-led B2B company; internal digitalization team inside a non-technology company; state-owned or central enterprise; or public institution.
-
-Financing news alone is insufficient: verify the round, date, investors, product, and technical-team signals. State-owned status does not erase a concrete leading product team, but absent contrary product/technical evidence it belongs in the lowest band.
-
-Use `20-39` by default for consulting companies, custom-delivery teams, outsourcing/project companies, and internal digitalization teams inside real-estate, manufacturing, retail, finance, or other non-technology enterprises. An internal platform, AI label, technical-director title, or named project does not raise the environment score. Move such a team to `40-49` only when evidence proves an externally used standardized product, independent product ownership, sustained R&D, difficult technical mechanisms, and meaningful engineering output. Scores of `50-69` require an independent technology subsidiary or a genuinely product-led technical team with external customers or market competition; ordinary internal IT or digitalization teams do not qualify.
-
-If a standalone B2B company has a clear product but neither disclosed Series A-C financing nor evidence that it is a top-tier technology company, do not create an extra high-scoring category for it. Evaluate it conservatively alongside the fourth band and cap the team score at 69. A real standardized product, core-team position, sustained R&D, and strong engineering output can move it toward the top of that band; project revenue, implementation-heavy delivery, unstable operations, or unclear ownership move it toward the lowest band. Apply the same `70% / 20% / 10%` recency weighting to technical-team environment, so a strong employer from more than seven years ago cannot rescue weak recent environments.
-
-The report must be auditable by a human reviewer. Include enough original product and candidate text to evaluate whether the interpretation is faithful, plus a research ledger with `source / fact / supports / does not support`. If the reviewer cannot trace a score back to original text and a named evidence item, the report is incomplete. Add a short feedback table for disputed assumptions and judgment calls.
-
-Put the product fact card before the scores. It must make sense to a reviewer who has never heard of the product. A report that says only “enterprise email”, “AIGC platform”, “Agent Runtime”, or another category label without explaining the actual product and workflow is incomplete.
-
-Always calculate a final score. Product-line fit contributes 25% without a team-environment dimension and 20% when team environment is included; recent-role functional fit contributes 20% in both cases. Base both on the candidate's inferred responsibility boundary, not whole-company keyword similarity. Use the fixed product-line-fit weights `25/25/20/15/15`; do not substitute the former generic fit weights `30/20/20/15/15`. If the role's product line is unresolved, calculate separate Friday and MorningStar final scores, identify the higher as the best-fit product-line score, and still show both. In normal evidence-rich mode, report both the raw resume-signal final score and the evidence-capped confirmed final score. In resume-only screening mode, report one primary resume score plus non-numeric uncertainty flags; do not use the confirmed score for ranking or decisions.
-
-Write the report in the user's language. For Stardust/PreSeen recruiting tasks or Chinese prompts, default to Chinese; keep product names, technical terms, and source titles in their original language when translation would reduce precision.
+- Produce one auditable report using the exact stage-aware structure in the methodology; omit the scoring table that does not apply to the current stage.
+- Keep original resume/interview excerpts, public product facts, responsibility inference, scores, and conclusions visibly separate.
+- Show all seven dimension scores, every required subdimension, weight, weighted contribution, evidence basis, coverage, and missing-information state. A top-level score without traceable arithmetic is incomplete.
+- Keep Friday and MorningStar in separate fit rows. Never average the two product lines merely to create one result.
+- Treat technical-team environment only as product-fact-card and risk context. It is not a scored dimension and does not enter any composite.
+- Every factual public claim needs a direct source link; every inference must be labeled; every personal claim must trace to candidate-attributable evidence.
+- Preserve the continuous validation ledger across stages. The report is not complete if later interviewers cannot see what remains unknown, why it matters, exactly what to ask, what counts as proof, and who should verify it.
+- Recompute the seven-dimension formula, subdimension contributions, coverage, and displayed totals before issuing the conclusion.
