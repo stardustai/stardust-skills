@@ -29,7 +29,7 @@ description: Stardust Inc. / PreSeen Inc. 候选人面试工作流。凡是用�
 优先用可调用工具：
 
 ```text
-tool_search: xiaoqing_interview search_candidates get_interview_context list_candidate_interviews upload_interview_result
+tool_search: xiaoqing_interview search_candidates get_interview_context list_candidate_interviews upload_transcript_document upload_interview_result
 ```
 
 常用小青 MCP 工具：
@@ -37,6 +37,7 @@ tool_search: xiaoqing_interview search_candidates get_interview_context list_can
 - `search_candidates`：按姓名、岗位、面试轮次、面试官、日期检索候选人。
 - `get_interview_context`：读取完整候选人评审包 HTML 和结构化上下文。
 - `list_candidate_interviews`：确认候选人每一轮的 `interview_id`、轮次、面试官、时间和 revision。
+- `upload_transcript_document`：把 `.txt`、`.md`、`.docx` 或 `.pdf` 原始听记文件绑定到准确的 `interview_id`，返回 `transcript_attachment_id`。必须上传原文文件，不能把 AI 摘要冒充 Transcript。
 - `upload_interview_result`：提交结构化面评；必须先 dry run。
 
 **排期和面试记录是两类数据。** `get_interview_context` 完整评审包中的“面试安排时间”表用于判断目标轮次是否已分配面试官、是否填写安排时间；`list_candidate_interviews` 只列已经物化的面试记录。目标轮次没有 `interview_id`，不等于没有安排，也不等于不能填写面评。遇到排期、记录缺失、自动回查或网页创建记录时，必须读取并遵循 [面试状态与提交目标](references/interview-state-and-submission.md)。
@@ -76,7 +77,7 @@ sed -n '1,220p' ~/.agents/skills/dws/SKILL.md
 - 转写全文或足够完整的分页转写
 - 会议时间、参会人、发言人信息（如果可得）
 
-转写很长时，不要只看摘要。分页读取并抽取和岗位画像、面试问题、候选人能力有关的关键证据。最终可以提交精简版 `transcript_text`，但要保留可审计的核心摘录和 `taskUuid`。
+转写很长时，不要只看摘要。分页读取并抽取和岗位画像、面试问题、候选人能力有关的关键证据。最终提交必须保留原文来源：可直接传完整 `transcript_text`，可先用 `upload_transcript_document` 上传原文并传 `transcript_attachment_id`，或把钉钉 AI 听记 `taskUuid` 放入 `structured_info.external_reference_id` 让小青通过钉钉 OpenAPI 自动分页拉取全文。不能只提交 AI 摘要。
 
 DWS 转写处理要求：
 
@@ -288,6 +289,45 @@ dws doc search --query "如何识别AI认知水平" --page-size 10 --format json
 - **Owner vs 助理**：区分候选人是独立方案 owner，还是只做协调、页面、图表、原型、材料整理和辅助推进。后者不应按售前解决方案 owner 打高分。
 
 售前岗的关键风险不能被“会做 PPT/原型/包装项目”抵消。材料组织是加分项，但如果公司理解、技术可信度、需求挖掘或客户信任低，整体结论通常不能超过 `弱不推荐`。
+
+## 销售与销售工程师岗位判断框架
+
+具体岗位以小青岗位画像为准。若岗位是销售工程师、大客户销售、行业销售、国际销售或兼具销售与解决方案责任的岗位，客户经历和行业标签只能用于定位验证方向，不能直接换算为能力分。
+
+### 客户类型和 AI 需求前置门槛
+
+- **KA 经历本身不加分。** 服务过银行、政府、央国企、头部客户或大金额项目，只能证明接触过该类客户。必须继续验证候选人是否理解客户画像、决策链、预算来源、采购机制、尚未满足的需求，以及本人在获客、推进、成交和回款中的责任。
+- **政府类客户销售经验在当前阶段减分。** Stardust 当前优先寻找能够销售市场化 AI 产品、主动发现新需求并快速验证成交路径的人，而不是以政府预算、政策项目、招投标、关系维护和长交付周期为主要打法的销售。候选人过往客户如果主要是政府部门、金融监管局、公安、事业单位或政府信息化项目，应降低最近岗位职能匹配度、场景拓展和成交能力判断；不能因为项目金额大、客户级别高或招投标经验丰富而补分。
+- **政府经验只有证明迁移后才能止损。** 候选人必须用真实案例证明自己能脱离政策预算和既有关系，面向企业客户主动获客，识别未被满足的问题，找到业务负责人和付费方，设计轻量验证并形成合同与回款。只有政府项目经验、没有上述迁移证据时，不能按当前销售工程师岗位的合格经验计算。
+- **客户标签必须具体化。** “擅长金融客户”“擅长政府客户”“有央企资源”都不是有效答案。至少要具体到客户组织类型、目标部门和角色、业务流程、关键 KPI、预算/采购特点、信任门槛和典型阻力。长期服务政府部门、金融监管局、公安经侦或央企信息化部门，不应笼统计为金融机构客户能力。
+- **不懂 AI 要减分。** 销售不要求达到算法或工程师深度，但必须理解 AI 能力边界、数据和权限条件、准确性与评测、人工兜底、成本和 ROI。不能区分 AI 与传统 BI/规则系统/数据中台，不能解释为什么该问题适合用 AI，或只会复述大模型、Agent、RAG 等热词，应直接降低产品理解、场景洞察和客户可信度评分。
+- **需求洞察比客户名气重要。** 候选人能否发现客户尚未被满足、且有采购价值的问题，比是否服务过 KA 更重要。已有标准系统能够解决的问题、单纯替换旧技术、泛泛的降本增效和政策驱动，不自动构成 AI 商机。
+
+HR 初筛必须逐字问：
+
+```text
+你擅长哪类客户画像？
+他们尚未被满足的需求是什么？
+哪些需求可以用 AI 解决？为什么？
+```
+
+合格回答必须同时包含：
+
+1. 具体客户画像：组织类型、部门/角色、业务流程、决策链或采购特点，而不是只报行业和客户名单。
+2. 未满足需求：说明现有方案为什么没有解决、问题造成什么业务损失、谁为结果负责，以及客户为什么可能付费。
+3. AI 适配判断：说明 AI 相比规则、BI、流程改造或传统软件的增量价值，以及所需数据、评测指标、准确性边界、人工兜底和 ROI 假设。
+4. 真实证据：至少一个本人接触的具体客户或项目，讲清候选人如何发现需求、验证需求和推进下一步。
+
+以下回答视为未通过前置门槛：
+
+- 只说“擅长政府、金融、央企、KA”，没有具体角色、流程和决策链。
+- 主要依赖政府预算、政策驱动、招投标和长期关系，却无法说明如何迁移到市场化企业客户、AI 新产品和更短验证周期。
+- 只罗列知识库、智能问答、报告生成、数字化转型等通用场景，没有未满足问题和付费理由。
+- 认为现有系统可以直接换成大模型，但说不清为什么效果更好、如何验证、失败如何兜底。
+- 把传统数据中台、BI、规则引擎、流程自动化直接当成 AI 场景。
+- 无法说明本人如何获取或验证这些客户洞察，只复述公司产品和行业趋势。
+
+这个问题是 HR 推进业务面试的硬门槛。若候选人不能回答好，原则上不再推进；只有招聘群内基于明确证据讨论后认为值得补充验证，才可例外进入下一轮。不能用 KA 标签、项目金额、表达流畅、态度良好或售前材料能力抵消该门槛失败。
 
 ### 售前面试回答质量红线
 
@@ -632,7 +672,11 @@ AI 测试开发岗位的 60 分线不是“接触过 AI 工具”，而是刚刚
    - `score_items` 为空时代表未面评，不代表 0 分真实评价。
    - 提交前确认 round 是目标轮次、interviewer 是目标面试官。
    - 若目标轮次尚无 `interview_id`，继续完成听记分析和面评确认。用户确认提交后，使用网页端该轮“填写评价”创建并提交新记录，再刷新列表读取新 `interview_id` 和 revision；严禁复用前一轮 ID。
-4. 已有目标轮记录时，调用 `upload_interview_result` with `dry_run=true`：
+4. 已有目标轮记录时，先确定听记原文来源，再调用 `upload_interview_result` with `dry_run=true`：
+   - 直接文本：传完整 `transcript_text`。
+   - 原始听记文件：先调用 `upload_transcript_document`，再传返回的 `transcript_attachment_id`。
+   - 钉钉 AI 听记：传 `structured_info.external_reference_id=taskUuid`，由小青服务端自动分页拉取全文。
+   - `source_type` 为 `transcript` 或 `mixed` 时三种来源至少提供一种；AI 摘要不能代替 Transcript 原文。
    - `interview_id`
    - `idempotency_key`
    - `source_type`
