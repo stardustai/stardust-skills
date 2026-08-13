@@ -27,6 +27,7 @@
 | `stardust-interview` | 星尘候选人面试工作流：读取小青候选人材料和岗位画像，按需结合 DWS AI 听记，按 Derek 的证据链标准准备面试建议、结构化面评，并在确认后 dry run + 提交小青面评。 |
 | `stardust-sre` | 为星尘 Web/API/worker 服务生成生产部署包、发布门禁、Kubernetes/Docker 模板、变更单和域名申请材料，并执行部署前安全与运维基线检查。 |
 | `transcribe` | 使用 OpenAI 转写模型把音频/视频转成文本，按需支持说话人区分和已知说话人参考音频。 |
+| `veyra-timesheet` | 把一段时间的真实活动核对并补齐到 Veyra 睿策工时系统：采集钉钉侧证据（日程、消息、听记、日志）并与已填记录对账，逐日推断项目归属，小时数以数值·依据·置信度形式提案，经用户确认后写入。支持请假与加班，仅 macOS。 |
 | `vibe-coding` | 将 `spec-intake` 产出的工程就绪 Spec 自动编排成稳定代码：初始化项目合同，按风险治理架构和技术债，执行 TDD、业务场景 E2E/Eval、独立 Review、Git 交付和可选 SRE 部署。 |
 
 ## 适用场景
@@ -174,6 +175,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `stardust-interview` | 需要可用的 `xiaoqing_interview` MCP OAuth 授权；读取 AI 听记时还需要可用的 `dws minutes` 授权。 |
 | `stardust-sre` | 默认不需要业务系统凭证。它读取用户授权范围内的仓库源码、部署配置和需求材料；生成的发布包、变更单、域名申请和安全检查结果仍需按生产变更流程确认后执行。 |
 | `transcribe` | 需要本机环境变量 `OPENAI_API_KEY`。仓库不保存 OpenAI API key；音视频文件只在用户指定任务中读取并发送给 OpenAI 转写接口。 |
+| `veyra-timesheet` | 不需要开放平台 key。需要已登录的 `dws`，以及 opencli daemon + Browser Bridge 扩展（Chrome Web Store 安装），且挂扩展的 Chrome profile 已登录 Veyra。首次使用跑 skill 的 init 引导安装；登录态全部留在本机，不进仓库。 |
 | `vibe-coding` | 默认不需要业务系统凭证，但需要用户授权读取和修改目标仓库、运行其测试/Eval 命令并访问已确认的远程仓库。生产数据、Secret、部署和外部系统写入仍由项目权限及 `production-devops-sre` 门禁控制。 |
 
 `dingtang-okr-review` 的 OKR 导出目前不是纯 API 实现。未来如果 `dws okr` 或叮当 OKR 官方 API 可用，才需要根据对应 API 的企业权限、应用授权或服务开通方式配置凭证。
@@ -209,6 +211,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 │   ├── stardust-interview/
 │   ├── stardust-sre/
 │   ├── transcribe/
+│   ├── veyra-timesheet/
 │   └── vibe-coding/
 └── README.md
 ```
