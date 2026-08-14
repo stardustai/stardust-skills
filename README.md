@@ -73,6 +73,33 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 - 导出的 Excel、JSONL、日志和输出目录
 - 运行产物目录 `runs`
 
+如果希望本机已安装 skills 每天自动跟随 GitHub/main 更新，可以安装每日同步任务：
+
+```bash
+./install.sh --daily-sync
+```
+
+每日同步会在本机安装一个 macOS LaunchAgent，默认每天本地时间 09:00 运行：
+
+```bash
+./scripts/sync-to-agents.sh --repo <当前仓库> --dest ~/.agents/skills --remote origin --branch main
+```
+
+它只把 GitHub/main 中的仓库 skill 同步到本机 `~/.agents/skills`，不会把本机修改同步回仓库，也不会提交或 push。同步脚本会先检查仓库分支、未提交变更和 fast-forward 安全性；如果本机 installed skill 与 GitHub 更新发生无法自动合并的冲突，会停止并保留本机内容。
+
+可以指定每日同步时间：
+
+```bash
+./install.sh --daily-sync --daily-sync-hour 3 --daily-sync-minute 30
+```
+
+同步日志写入：
+
+```text
+~/.agents/logs/stardust-skills/daily-sync.log
+~/.agents/logs/stardust-skills/daily-sync.err.log
+```
+
 ## 从本机 Skills 更新仓库
 
 当你在本机 `~/.agents/skills` 里修改了本仓库已有的同名 skill，可以运行：
