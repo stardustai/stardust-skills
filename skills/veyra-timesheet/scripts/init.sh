@@ -6,8 +6,13 @@
 # 只探测和报告，不代做 —— Agent 按 references/setup.md 引导用户。
 #
 # 用法:
-#   init.sh              探测 + 安装缺失项（幂等，可反复跑）
-#   init.sh --check      只探测，不安装任何东西
+#   init.sh              只探测，不改动任何东西（默认；--check 同义）
+#   init.sh --install    探测 + 安装缺失项（幂等，可反复跑）。会改动：
+#                        npm 全局(@jackwener/opencli)、brew(node/jq)、
+#                        ~/.opencli/clis/veyra/（adapter 与 config 模板）、
+#                        ~/.opencli/bridge-extension/（仅商店不可达时）、
+#                        重启 opencli daemon、打开 Chrome 商店页、dws 官方安装脚本。
+#                        Agent 必须先跑默认探测，把缺失项和上述改动范围给用户确认后才可用。
 #   init.sh -h|--help
 #
 # 输出契约（每行 "KEY  STATUS  detail"，末尾一行 => 汇总）:
@@ -17,6 +22,7 @@
 #   JQ             ok|INSTALLED|MISSING     collect.sh / digest.sh 硬依赖
 #   EXTENSION      ok|MISSING               主路径 = Chrome Web Store 一键装（自动更新），GUI 需人工
 #   EXTENSION_PKG  FETCHED|MISSING          仅商店不可达的回落路径出现：release zip 是否到位
+#   VEYRA_CONFIG   ok|CREATED|MISSING       Veyra 地址（config.json），真实地址需用户提供
 #   VEYRA_LOGIN    ok|MISSING               需人工
 #   DWS            ok|MISSING|UNAUTH        UNAUTH 需人工扫码
 #   => N 项需人工 / 全部就绪
@@ -28,15 +34,14 @@ export LANG="${LANG:-en_US.UTF-8}" LC_ALL="${LC_ALL:-en_US.UTF-8}"
 SKILL_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUNDLED_ADAPTER="$SKILL_DIR/references/adapter"
 TARGET_ADAPTER="$HOME/.opencli/clis/veyra"
-VEYRA_URL="${VEYRA_BASE_URL:-https://guance.corpintra.rosettalab.top}"
-CHECK_ONLY=0
+CHECK_ONLY=1   # 默认只探测；--install 才改动机器状态（评审要求：所有变更需显式选择）
 NEED_HUMAN=0
 
 case "${1:-}" in
-  -h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-  --check)   CHECK_ONLY=1 ;;
-  "")        ;;
-  *)         echo "init.sh: 未知参数 '$1'（试 --help）" >&2; exit 1 ;;
+  -h|--help)   sed -n '2,36p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+  --install)   CHECK_ONLY=0 ;;
+  --check|"")  ;;
+  *)           echo "init.sh: 未知参数 '$1'（试 --help）" >&2; exit 1 ;;
 esac
 
 say()  { printf '%-14s %-10s %s\n' "$1" "$2" "${3:-}"; }
@@ -62,7 +67,7 @@ npm_diag() {  # 认出三类常见死因给对应修法，认不出就贴原始�
 if command -v opencli >/dev/null 2>&1; then
   say OPENCLI ok "$(opencli --version 2>/dev/null | head -1)"
 elif [ "$CHECK_ONLY" -eq 1 ]; then
-  say OPENCLI MISSING "未安装（--check 模式不装）"
+  say OPENCLI MISSING "未安装（默认只探测；用户确认后跑 init.sh --install）"
 else
   if ! command -v npm >/dev/null 2>&1; then
     echo "  [init] 未找到 npm，先装 Node.js…" >&2
@@ -107,7 +112,7 @@ read -r A_MISSING A_DRIFT <<<"$(adapter_state)"
 if [ "$A_MISSING" -eq 0 ] && [ "$A_DRIFT" -eq 0 ]; then
   say ADAPTER ok "$(ls -1 "$TARGET_ADAPTER"/*.js 2>/dev/null | wc -l | tr -d ' ') files"
 elif [ "$CHECK_ONLY" -eq 1 ]; then
-  say ADAPTER MISSING "缺 $A_MISSING 个，drift $A_DRIFT 个（--check 模式不装）"
+  say ADAPTER MISSING "缺 $A_MISSING 个，drift $A_DRIFT 个（--install 会复制缺失项，绝不覆盖）"
 else
   mkdir -p "$TARGET_ADAPTER"
   copied=0
@@ -115,6 +120,8 @@ else
     base="$(basename "$f")"
     [ -f "$TARGET_ADAPTER/$base" ] || { cp "$f" "$TARGET_ADAPTER/$base"; copied=$((copied+1)); }
   done
+  # 配置模板一并放入（不覆盖已有文件；config.json 是用户数据，绝不动）
+  [ -f "$TARGET_ADAPTER/config.example.json" ] || cp "$BUNDLED_ADAPTER/config.example.json" "$TARGET_ADAPTER/" 2>/dev/null || true
   if [ "$A_DRIFT" -gt 0 ]; then
     say ADAPTER DRIFT "新装 $copied 个；另有 $A_DRIFT 个与 bundled 不一致，**未覆盖**（可能是本地自愈改动，请人工比对 $TARGET_ADAPTER）"
     NEED_HUMAN=$((NEED_HUMAN+1))
@@ -129,7 +136,7 @@ if ! command -v opencli >/dev/null 2>&1; then
 elif opencli doctor 2>/dev/null | grep -q '\[OK\] Daemon'; then
   say DAEMON ok
 elif [ "$CHECK_ONLY" -eq 1 ]; then
-  say DAEMON FAIL "未运行（--check 模式不启动）"
+  say DAEMON FAIL "未运行（--install 会 opencli daemon restart）"
 else
   opencli daemon restart >/dev/null 2>&1
   sleep 2
@@ -144,7 +151,7 @@ fi
 if command -v jq >/dev/null 2>&1; then
   say JQ ok "$(jq --version 2>/dev/null)"
 elif [ "$CHECK_ONLY" -eq 1 ]; then
-  say JQ MISSING "collect.sh / digest.sh 都要它（--check 模式不装）"
+  say JQ MISSING "collect.sh / digest.sh 都要它（--install 会 brew install jq）"
 elif command -v brew >/dev/null 2>&1 && brew install jq >/dev/null 2>&1; then
   say JQ INSTALLED "$(jq --version 2>/dev/null)"
 else
@@ -166,7 +173,7 @@ elif [ -f "$EXT_DIR/manifest.json" ]; then
   # zip 已在磁盘（走过回落路径）：就近引导装完，不再绕商店
   human EXTENSION MISSING "扩展文件已在磁盘（v$(ext_ver)）。人工：chrome://extensions → 开发者模式 → 加载已解压 → ${EXT_DIR}，然后 opencli daemon restart；也可改装商店版 ${STORE_URL}"
 elif [ "$CHECK_ONLY" -eq 1 ]; then
-  human EXTENSION MISSING "人工：Chrome Web Store 一键安装 ${STORE_URL}（装在登录 Veyra 的那个 profile）。商店打不开就跑不带 --check 的 init.sh 走 zip 回落"
+  human EXTENSION MISSING "人工：Chrome Web Store 一键安装 ${STORE_URL}（装在登录 Veyra 的那个 profile）。商店打不开时 --install 模式会走 zip 回落"
 elif curl -fsSL -o /dev/null --max-time 8 "$STORE_URL" 2>/dev/null; then
   open -a "Google Chrome" "$STORE_URL" >/dev/null 2>&1 || open "$STORE_URL" >/dev/null 2>&1 || true
   human EXTENSION MISSING "人工：已打开商店页，点「添加至 Chrome」（装在登录 Veyra 的那个 profile），然后 opencli daemon restart。页面没弹出就手动开 ${STORE_URL}"
@@ -200,10 +207,31 @@ else
   fi
 fi
 
-# ---------- 6. Veyra 登录态（人工）----------
+# ---------- 6. Veyra 地址配置 ----------
+# 地址不随 skill 分发（公开仓库不放内网信息），真实地址只能用户给：
+# Agent 问「平时填工时的网站地址」写入 config.json；env VEYRA_BASE_URL 可临时覆盖。
+VEYRA_CFG="$TARGET_ADAPTER/config.json"
+cfg_url() { jq -r '.veyra_base_url // empty' "$VEYRA_CFG" 2>/dev/null; }
+CFG_OK=0
+if [ -n "${VEYRA_BASE_URL:-}" ]; then
+  CFG_OK=1; say VEYRA_CONFIG ok "env VEYRA_BASE_URL 已设置（覆盖 config.json）"
+elif [ -f "$VEYRA_CFG" ] && ! grep -q '<' "$VEYRA_CFG" 2>/dev/null && [ -n "$(cfg_url)" ]; then
+  CFG_OK=1; say VEYRA_CONFIG ok "$(cfg_url)"
+elif [ "$CHECK_ONLY" -eq 0 ] && [ ! -f "$VEYRA_CFG" ] && [ -f "$BUNDLED_ADAPTER/config.example.json" ]; then
+  mkdir -p "$TARGET_ADAPTER" && cp "$BUNDLED_ADAPTER/config.example.json" "$VEYRA_CFG"
+  human VEYRA_CONFIG CREATED "已建 ${VEYRA_CFG}（占位符）。人工：问用户要平时填工时的网站地址，替换占位符"
+else
+  human VEYRA_CONFIG MISSING "人工：问用户要平时填工时的网站地址，写入 ${VEYRA_CFG}（格式: {\"veyra_base_url\":\"https://…\"}）"
+fi
+
+# ---------- 7. Veyra 登录态（人工）----------
 # 用 adapter 自带的 doctor 判定；它一次测登录态 + 读端点 + 项目端点。
+VEYRA_URL="${VEYRA_BASE_URL:-$(cfg_url)}"
+case "$VEYRA_URL" in ''|*'<'*) VEYRA_URL="你平时填工时的 Veyra 网站" ;; esac
 if ! command -v opencli >/dev/null 2>&1; then
   human VEYRA_LOGIN MISSING "OPENCLI 装好后：在挂 Bridge 扩展的那个 Chrome 里登录 ${VEYRA_URL}，跑 opencli veyra doctor 验证"
+elif [ "$CFG_OK" -eq 0 ]; then
+  human VEYRA_LOGIN MISSING "待 VEYRA_CONFIG 配好后：在挂 Bridge 扩展的那个 Chrome 里登录该地址，跑 opencli veyra doctor 验证"
 else
   VEYRA_DOC="$(opencli veyra doctor -f json 2>/dev/null)"
   if [ -n "$VEYRA_DOC" ] && ! printf '%s' "$VEYRA_DOC" | grep -q '"ok": *false'; then
@@ -216,10 +244,10 @@ else
   fi
 fi
 
-# ---------- 7. dws ----------
+# ---------- 8. dws ----------
 if ! command -v dws >/dev/null 2>&1; then
   if [ "$CHECK_ONLY" -eq 1 ]; then
-    say DWS MISSING "未安装（--check 模式不装）"
+    say DWS MISSING "未安装（--install 会走官方安装脚本）"
   else
     echo "  [init] 安装 dws…" >&2
     if curl -fsSL https://raw.githubusercontent.com/DingTalk-Real-AI/dingtalk-workspace-cli/main/scripts/install.sh | sh >/dev/null 2>&1 \

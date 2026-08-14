@@ -74,6 +74,11 @@ dws auth status --format json 2>/dev/null | jq -e '.authenticated == true' >/dev
 
 if [ "$SKIP_VEYRA" -eq 0 ]; then
   command -v opencli >/dev/null 2>&1 || die "未找到 opencli（未安装或不在 PATH）。跑: $INIT"
+  # Veyra 地址不随 skill 分发：env 或 config.json 二选一，都没有就没法采 Veyra 侧
+  VEYRA_CFG="$HOME/.opencli/clis/veyra/config.json"
+  if [ -z "${VEYRA_BASE_URL:-}" ] && { [ ! -f "$VEYRA_CFG" ] || grep -q '<' "$VEYRA_CFG" 2>/dev/null; }; then
+    die "Veyra 地址未配置。问用户要平时填工时的网站地址，写入 $VEYRA_CFG（格式 {\"veyra_base_url\":\"https://…\"}）。跑 $INIT 看全景"
+  fi
   VDOC="$(opencli veyra doctor -f json 2>/dev/null)"
   if [ -z "$VDOC" ]; then
     # 区分两种原因，否则会误诊。首次使用最常见的是 adapter 根本没装，
@@ -81,7 +86,7 @@ if [ "$SKIP_VEYRA" -eq 0 ]; then
     if [ ! -f "$HOME/.opencli/clis/veyra/doctor.js" ]; then
       die "veyra adapter 未安装（$HOME/.opencli/clis/veyra/ 下没有 doctor.js）。跑: $INIT"
     fi
-    die "adapter 在位但 veyra doctor 调不通，多为 daemon 未运行或 Chrome 扩展未加载。跑: $INIT --check 看哪一项缺"
+    die "adapter 在位但 veyra doctor 调不通，多为 daemon 未运行或 Chrome 扩展未加载。跑: $INIT 看哪一项缺"
   fi
   if printf '%s' "$VDOC" | jq -e 'map(select(.ok == false)) | length > 0' >/dev/null 2>&1; then
     printf '%s\n' "$VDOC" | jq -r '.[] | "    \(.check): \(if .ok then "ok" else "FAIL" end) \(.detail)"' >&2

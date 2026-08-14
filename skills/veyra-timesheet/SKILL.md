@@ -23,7 +23,7 @@ argument-hint: "[init|repair] [日期范围]"
 
 | 命令 | 用途 |
 |---|---|
-| `bash <skill>/scripts/init.sh` | 装环境。**`collect.sh` 报环境相关错误时跑它**；加 `--check` 只探测不安装。详见 [references/setup.md](./references/setup.md) |
+| `bash <skill>/scripts/init.sh` | 探测环境（**默认只探测不改动**）。`collect.sh` 报环境错误时先跑它；把缺失项和将改动的路径告知用户，**确认后**加 `--install` 安装。详见 [references/setup.md](./references/setup.md) |
 | `bash <skill>/scripts/collect.sh [起 止]` | 采集钉钉侧 + Veyra 侧，输出 bundle 路径。默认本周一至今天 |
 | `bash <skill>/scripts/digest.sh <bundle>` | bundle 压成可读文本 |
 | `opencli veyra timesheet-list --start <起> --end <止> -f json` | 列已填，含记录 id |
@@ -32,6 +32,8 @@ argument-hint: "[init|repair] [日期范围]"
 | `opencli veyra doctor -f json` | 环境自检 |
 
 `--project` 和 `--type` 必须**成对**取自项目池同一条记录的 `id` 和 `type`。`type` 是 `lead` / `deal` / `project` 三者之一，客户商机常见 `deal`，内部立项和 `QTSW-*` 才是 `project`——照抄成 `project` 会挂错类型。
+
+探测报 `VEYRA_CONFIG` 缺失时：问用户要**平时填工时的网站地址**（可并入登录 Veyra 那一步），写入 `~/.opencli/clis/veyra/config.json`。
 
 环境装不上或采集报 401 → [references/setup.md](./references/setup.md)
 Veyra 改版导致命令失效 → [references/repair.md](./references/repair.md)
@@ -52,7 +54,7 @@ bash <skill>/scripts/digest.sh <上一步打印的路径>
 
 **当天的活动采不全。** 下午跑，晚上的活动就不在 digest 里。所以当天的小时数是暂定值，次日重跑会按完整证据修正。要一次定稿就采到昨天为止。
 
-采集会把全量钉钉消息（含单聊）落到 `$TMPDIR/veyra-timesheet/` 供本地模型读取，不经任何外部服务。一周需数分钟，脚本有进度输出。
+采集会把全量钉钉消息（含单聊）落到 `$TMPDIR/veyra-timesheet/` 供本地模型读取，不经任何外部服务；系统会定期自动清理该临时目录，用户要求立即清除时跑 `rm -rf "$TMPDIR/veyra-timesheet"`。一周需数分钟，脚本有进度输出。
 
 **可选**：若设置了环境变量 `TIMESHEET_TRACE_FILE`，把其中的 `%s` 换成日期得到文件路径，存在就优先读它，再用 digest 补缺。用于已有更完整当日记录的场景（例如另一个 skill 产出的、含会议时长与主导/参会标记的提炼稿）。未设置就只用 digest，不要提示用户去装别的东西。
 

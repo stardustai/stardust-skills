@@ -1,8 +1,20 @@
 import { cli, Strategy } from '@jackwener/opencli/registry';
+import { readFileSync } from 'node:fs';
 
 // Veyra 睿策工时系统 — 列出已填工时
-// base_url 可用 env VEYRA_BASE_URL 覆盖；默认公司地址
-const BASE = process.env.VEYRA_BASE_URL || 'https://guance.corpintra.rosettalab.top';
+// Veyra 地址不硬编码：env VEYRA_BASE_URL 优先，否则读本目录 config.json（init 流程写入）。
+// 未配置时不在 import 阶段抛错（会让整组命令无法注册、被误诊为未安装），改为占位 domain + 调用时报错。
+const CFG = new URL('./config.json', import.meta.url);
+const BASE = (() => {
+  if (process.env.VEYRA_BASE_URL) return process.env.VEYRA_BASE_URL.replace(/\/+$/, '');
+  try {
+    const u = JSON.parse(readFileSync(CFG, 'utf8')).veyra_base_url;
+    if (u && !u.includes('<')) return u.replace(/\/+$/, '');
+  } catch {}
+  return null;
+})();
+const DOMAIN = BASE ? new URL(BASE).host : 'veyra-unconfigured.invalid';
+const requireBase = () => { if (!BASE) throw new Error(`Veyra 地址未配置：把公司工时系统地址写入 ${CFG.pathname}（格式见 config.example.json）或设置环境变量 VEYRA_BASE_URL`); return BASE; };
 
 // 服务端约束（2026-08-07 实测）：
 // - pageSize 硬上限 100，传更大值仍只回 100 条；
@@ -18,7 +30,7 @@ cli({
   description: '列出 Veyra 已填工时（可按日期范围过滤）',
   access: 'read',
   example: 'opencli veyra timesheet-list --start 2026-06-15 --end 2026-06-21',
-  domain: 'guance.corpintra.rosettalab.top',
+  domain: DOMAIN,
   strategy: Strategy.COOKIE,
   browser: true,
   args: [
@@ -28,6 +40,7 @@ cli({
   ],
   columns: ['workDate', 'hours', 'project', 'content', 'id'],
   func: async (page, kwargs) => {
+    requireBase();
     await page.goto(`${BASE}/timesheets`);
     await page.wait(2);
     const { start, end } = kwargs;

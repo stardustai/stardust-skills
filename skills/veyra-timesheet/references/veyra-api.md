@@ -48,7 +48,7 @@
 
 ## 底层 API 契约
 
-adapter 位于 `~/.opencli/clis/veyra/`，用 COOKIE strategy 借已登录 Chrome 的 cookie，通过 `page.evaluate` 在登录态页面内 fetch `/api/*`。base_url 默认硬编码公司地址，可用 env `VEYRA_BASE_URL` 覆盖。stdout 是干净 JSON，版本升级提示走 stderr。
+adapter 位于 `~/.opencli/clis/veyra/`，用 COOKIE strategy 借已登录 Chrome 的 cookie，通过 `page.evaluate` 在登录态页面内 fetch `/api/*`。base_url 不硬编码：从 env `VEYRA_BASE_URL` 或 adapter 同目录 `config.json` 读取（init 流程向用户询问后写入）。stdout 是干净 JSON，版本升级提示走 stderr。
 
 ### GET /api/timesheets
 

@@ -1,9 +1,11 @@
 # 装环境
 
 ```bash
-bash <skill>/scripts/init.sh          # 探测并安装缺失项，可反复跑
-bash <skill>/scripts/init.sh --check  # 只探测，不装
+bash <skill>/scripts/init.sh            # 只探测，不改动任何东西（默认）
+bash <skill>/scripts/init.sh --install  # 安装缺失项，幂等可反复跑
 ```
+
+**`--install` 前必须把探测结果和下表「会改动什么」给用户看，得到确认。**
 
 退出码：`0` 全部就绪 · `10` 有项需人工 · `1` 参数错误。单项失败不会中断脚本，全部检查跑完统一汇总。
 
@@ -11,7 +13,21 @@ bash <skill>/scripts/init.sh --check  # 只探测，不装
 
 实测组合（2026-08-13）：opencli CLI 1.8.4 + Bridge 扩展 v1.0.20。商店版扩展与 release zip 同源；新装后跑 `opencli doctor` 和 `opencli veyra doctor` 确认，行为异常先对版本。
 
-## 脚本自动处理
+## --install 会改动什么
+
+| 位置 | 动作 |
+|---|---|
+| npm 全局 | `npm install -g @jackwener/opencli` |
+| Homebrew | 缺 npm 时 `brew install node`；缺 jq 时 `brew install jq` |
+| `~/.opencli/clis/veyra/` | 复制 adapter `*.js` 和 `config.example.json`；缺 `config.json` 时从模板创建（占位符，真实地址仍需用户提供） |
+| `~/.opencli/bridge-extension/unpacked/` | 仅商店不可达时：下载 release zip 并解压 |
+| opencli daemon | `opencli daemon restart` |
+| Chrome | 打开 Web Store 商店页（只打开，不代点） |
+| dws | 官方安装脚本（写入其默认路径） |
+
+默认模式（不带参数）不做以上任何动作。
+
+## 脚本自动处理（仅 --install 模式）
 
 | KEY | 行为 |
 |---|---|
@@ -20,11 +36,22 @@ bash <skill>/scripts/init.sh --check  # 只探测，不装
 | `DAEMON` | `opencli daemon restart` |
 | `JQ` | `brew install jq`。采集脚本硬依赖 |
 | `EXTENSION_PKG` | 仅商店不可达时出现：从 GitHub release 下最新 `opencli-extension-v*.zip` 解压到位 |
+| `VEYRA_CONFIG` | 缺 `config.json` 时从模板创建占位文件；**真实地址脚本不猜**，必须问用户 |
 | `DWS` | 走官方安装脚本 |
 
-## 三件只能人做的事
+## 四件只能人做的事
 
-每完成一项重跑 `init.sh --check` 确认。
+每完成一项重跑 `init.sh` 确认。
+
+### VEYRA_CONFIG 需要用户提供地址
+
+Veyra 地址不随 skill 分发（公开仓库不放内网信息）。问用户要**平时填工时的网站地址**（工时通报里就有链接），写入 `~/.opencli/clis/veyra/config.json`：
+
+```json
+{ "veyra_base_url": "https://…" }
+```
+
+临时换环境可用环境变量 `VEYRA_BASE_URL` 覆盖。这一步可以和下面的登录 Veyra 并成一步：让用户打开该网站登录，顺便把地址发你。
 
 ### EXTENSION 需要在 Chrome 里装扩展（一次点击）
 
@@ -51,7 +78,7 @@ zip 自动获取也失败（无网、API 限流、缺 unzip）时全手工：从
 
 **必须是挂着 Bridge 扩展的那个 Chrome 和那个 profile。** 多 profile 的机器最容易在这里踩空——另一个 profile 登录了不算。
 
-让用户打开 base_url（默认 `https://guance.corpintra.rosettalab.top`）正常登录，然后 `opencli veyra doctor -f json` 三项应全 `ok:true`。
+让用户打开 `config.json` 里那个地址（就是他平时填工时的网站）正常登录，然后 `opencli veyra doctor -f json` 三项应全 `ok:true`。
 
 登录态会过期。以后采集报 401 就是这个，回到这一步即可，不用重装任何东西。
 
@@ -89,6 +116,7 @@ dws auth status     # 应为 authenticated
 | `npm install -g` 权限报错 | npm 全局目录属 root。建议改 npm prefix 或用 nvm，不要 sudo |
 | npm 报 EBADENGINE，或 opencli 装完即崩 | node < 20。`brew upgrade node` 或 `nvm install 20` |
 | npm 一直超时 / ENOTFOUND | 国内网络换镜像：`npm config set registry https://registry.npmmirror.com` 后重跑 |
+| `veyra` 命令报「Veyra 地址未配置」 | 问用户要平时填工时的网址，写入 `~/.opencli/clis/veyra/config.json` |
 | `opencli doctor` 全绿但 `veyra doctor` 401 | 登录的不是挂扩展那个 Chrome profile |
 | 商店和 GitHub release 都打不开 | 换网络或代理；实在不行让能访问的人下好 zip 拷给你，解压到 `~/.opencli/bridge-extension/unpacked/` |
 | `veyra doctor` 端点报 404 或 500 而非 401 | Veyra 改版了，读 [repair.md](./repair.md)，不要手填表 |

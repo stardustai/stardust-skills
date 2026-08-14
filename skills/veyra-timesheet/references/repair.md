@@ -32,7 +32,7 @@ opencli doctor                 # 浏览器桥本身：Daemon / Extension / Conne
 会话名用 `veyra`，与 adapter 的 domain 共用登录态。
 
 ```bash
-BASE=https://guance.corpintra.rosettalab.top   # 或你的 VEYRA_BASE_URL
+BASE="$(jq -r .veyra_base_url ~/.opencli/clis/veyra/config.json)"   # 或用 $VEYRA_BASE_URL
 
 # 页面还在、URL 没变？
 opencli browser veyra open "$BASE/timesheets"
