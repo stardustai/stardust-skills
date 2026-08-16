@@ -53,6 +53,18 @@ Return the `text` field to the user or use it as source material for
 summarization, translation, or analysis. Preserve `source`, `title`, and
 `video_id` in citations when useful.
 
+## Optional MCP
+
+Clients that support remote MCP endpoints may use the service endpoint below:
+
+```text
+https://video-transcribe.preseen.ai/mcp/<api-key>/
+```
+
+Configure the complete endpoint only in local client configuration. The API key
+is part of the URL, so never commit, log, or paste that configured URL into a
+conversation.
+
 ## Notes
 
 - `source=subtitles` means the service used platform captions.

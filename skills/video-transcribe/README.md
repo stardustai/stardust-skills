@@ -12,5 +12,8 @@ Core boundaries:
   local installed `api_key` file; neither is part of this repository.
 - Private or member-only video access is configured server-side. Never copy
   browser cookies into the request or conversation.
+- MCP-capable clients may use the service's local-keyed MCP endpoint, but the
+  complete endpoint must stay in local client configuration because it embeds
+  the API key.
 
 See [SKILL.md](SKILL.md) for the request contract and usage example.
