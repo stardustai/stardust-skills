@@ -65,6 +65,7 @@ for repo_skill in "${REPO}"/skills/*; do
     --exclude '__pycache__' \
     --exclude '*.pyc' \
     --exclude '.env' \
+    --exclude 'api_key' \
     --exclude 'config.json' \
     --exclude '.storage_state.json' \
     --exclude '.chrome-profile' \

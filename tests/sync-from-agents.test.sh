@@ -36,6 +36,7 @@ mkdir -p "${repo_dir}/skills/existing-skill"
 printf 'new skill body\n' > "${source_dir}/existing-skill/SKILL.md"
 printf 'script body\n' > "${source_dir}/existing-skill/scripts/helper.sh"
 printf 'local config\n' > "${source_dir}/existing-skill/config.json"
+printf 'local API key\n' > "${source_dir}/existing-skill/api_key"
 printf 'old stale file\n' > "${repo_dir}/skills/existing-skill/old.txt"
 printf 'extra body\n' > "${source_dir}/extra-skill/SKILL.md"
 
@@ -45,6 +46,7 @@ assert_file_contains "${repo_dir}/skills/existing-skill/SKILL.md" "new skill bod
 assert_file_contains "${repo_dir}/skills/existing-skill/scripts/helper.sh" "script body"
 assert_missing "${repo_dir}/skills/existing-skill/old.txt"
 assert_missing "${repo_dir}/skills/existing-skill/config.json"
+assert_missing "${repo_dir}/skills/existing-skill/api_key"
 assert_missing "${repo_dir}/skills/extra-skill"
 
 echo "sync-from-agents tests passed"

@@ -27,6 +27,7 @@ RSYNC_EXCLUDES=(
   --exclude '__pycache__'
   --exclude '*.pyc'
   --exclude '.env'
+  --exclude 'api_key'
   --exclude 'config.json'
   --exclude '.storage_state.json'
   --exclude '.chrome-profile'
@@ -47,7 +48,7 @@ sync_filtered() {
 
   set +e
   perl -e 'alarm shift; exec @ARGV' "${RSYNC_TIMEOUT_SECONDS}" \
-    rsync -a --checksum --delete --delete-excluded "${RSYNC_EXCLUDES[@]}" "${source_dir}/" "${dest_dir}/"
+    rsync -a --checksum --delete "${RSYNC_EXCLUDES[@]}" "${source_dir}/" "${dest_dir}/"
   status="$?"
   set -e
 

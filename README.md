@@ -4,7 +4,7 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖 Friday Memory 初始化、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、ASR 转写、融资会议、PRD 测试用例生成、需求规格访谈、Vibe Coding 工程交付、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，音视频转写走 OpenAI 转写模型，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
+当前仓库覆盖 Friday Memory 初始化、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、ASR 转写、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、Vibe Coding 工程交付、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
 
 ## 包含的 Skills
 
@@ -26,8 +26,10 @@
 | `spec-intake` | 把一句话业务需求访谈成 Spec Driven JSON，要求逐步澄清业务证据、交付边界、验收标准、测试标准、运维标准和评审门禁。 |
 | `stardust-interview` | 星尘候选人面试工作流：读取小青候选人材料和岗位画像，按需结合 DWS AI 听记，按 Derek 的证据链标准准备面试建议、结构化面评，并在确认后 dry run + 提交小青面评。 |
 | `stardust-sre` | 为星尘 Web/API/worker 服务生成生产部署包、发布门禁、Kubernetes/Docker 模板、变更单和域名申请材料，并执行部署前安全与运维基线检查。 |
+| `task-management` | 从本机 CEO agent service 只读查询内部项目、TODO、负责人、截止日期、阻塞项和跟进上下文；不通过该 skill 创建或修改任务。 |
 | `transcribe` | 使用 OpenAI 转写模型把音频/视频转成文本，按需支持说话人区分和已知说话人参考音频。 |
 | `veyra-timesheet` | 把一段时间的真实活动核对并补齐到 Veyra 睿策工时系统：采集钉钉侧证据（日程、消息、听记、日志）并与已填记录对账，逐日推断项目归属，小时数以数值·依据·置信度形式提案，经用户确认后写入。支持请假与加班，仅 macOS。 |
+| `video-transcribe` | 通过 Stardust Video Transcribe 服务提取 YouTube 或 Bilibili 视频的字幕或 ASR 文本；视频 URL 与转写内容发送到该服务，服务凭证仅保留在本机。 |
 | `vibe-coding` | 将 `spec-intake` 产出的工程就绪 Spec 自动编排成稳定代码：初始化项目合同，按风险治理架构和技术债，执行 TDD、业务场景 E2E/Eval、独立 Review、Git 交付和可选 SRE 部署。 |
 
 ## 适用场景
@@ -70,6 +72,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 - `node_modules`
 - `__pycache__`
 - `.storage_state.json`
+- `api_key`
 - `.chrome-profile`
 - 导出的 Excel、JSONL、日志和输出目录
 - 运行产物目录 `runs`
@@ -201,8 +204,10 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `spec-intake` | 默认不需要业务系统凭证。若需求涉及现有系统、repo、API、MCP、Memory、Friday 或客户系统，应读取用户授权范围内的本地代码/文档来确认边界；不要提交访谈产物或客户资料。 |
 | `stardust-interview` | 需要可用的 `xiaoqing_interview` MCP OAuth 授权；读取 AI 听记时还需要可用的 `dws minutes` 授权。 |
 | `stardust-sre` | 默认不需要业务系统凭证。它读取用户授权范围内的仓库源码、部署配置和需求材料；生成的发布包、变更单、域名申请和安全检查结果仍需按生产变更流程确认后执行。 |
+| `task-management` | 不需要开放平台 key。需要本机已运行的 CEO agent service 审计 Web API；该 skill 只读查询服务数据库中的任务上下文，不创建或修改任务。 |
 | `transcribe` | 需要本机环境变量 `OPENAI_API_KEY`。仓库不保存 OpenAI API key；音视频文件只在用户指定任务中读取并发送给 OpenAI 转写接口。 |
 | `veyra-timesheet` | 不需要开放平台 key。需要已登录的 `dws`，以及 opencli daemon + Browser Bridge 扩展（Chrome Web Store 安装），且挂扩展的 Chrome profile 已登录 Veyra。首次使用跑 skill 的 init 引导安装；登录态全部留在本机，不进仓库。 |
+| `video-transcribe` | 需要可访问 Stardust Video Transcribe 服务，并在本机通过 `VIDEO_TRANSCRIBE_API_KEY` 或安装后 skill 目录内的 `api_key` 文件提供授权。仓库不保存密钥；视频 URL 和服务返回的转写文本只用于当前用户任务。 |
 | `vibe-coding` | 默认不需要业务系统凭证，但需要用户授权读取和修改目标仓库、运行其测试/Eval 命令并访问已确认的远程仓库。生产数据、Secret、部署和外部系统写入仍由项目权限及 `production-devops-sre` 门禁控制。 |
 
 `dingtang-okr-review` 的 OKR 导出目前不是纯 API 实现。未来如果 `dws okr` 或叮当 OKR 官方 API 可用，才需要根据对应 API 的企业权限、应用授权或服务开通方式配置凭证。
@@ -237,8 +242,10 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 │   ├── spec-intake/
 │   ├── stardust-interview/
 │   ├── stardust-sre/
+│   ├── task-management/
 │   ├── transcribe/
 │   ├── veyra-timesheet/
+│   ├── video-transcribe/
 │   └── vibe-coding/
 └── README.md
 ```

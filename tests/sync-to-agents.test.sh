@@ -50,6 +50,8 @@ mkdir -p "${dest_dir}/existing-skill/scripts"
 printf 'initial skill body\n' > "${dest_dir}/existing-skill/SKILL.md"
 printf 'initial helper\n' > "${dest_dir}/existing-skill/scripts/helper.sh"
 printf 'file removed by remote update\n' > "${dest_dir}/existing-skill/removed.txt"
+printf 'local config must stay local\n' > "${dest_dir}/existing-skill/config.json"
+printf 'local API key must stay local\n' > "${dest_dir}/existing-skill/api_key"
 
 git clone "${remote_dir}" "${work_dir}" >/dev/null
 git -C "${work_dir}" config user.email "test@example.com"
@@ -72,8 +74,9 @@ assert_file_contains "${dest_dir}/existing-skill/SKILL.md" "updated skill body"
 assert_file_contains "${dest_dir}/existing-skill/scripts/helper.sh" "updated helper"
 assert_file_contains "${dest_dir}/new-skill/SKILL.md" "new skill body"
 assert_missing "${dest_dir}/existing-skill/removed.txt"
-assert_missing "${dest_dir}/existing-skill/config.json"
 assert_missing "${dest_dir}/existing-skill/run.log"
+assert_file_contains "${dest_dir}/existing-skill/config.json" "local config must stay local"
+assert_file_contains "${dest_dir}/existing-skill/api_key" "local API key must stay local"
 
 if [ -n "$(git -C "${repo_dir}" status --porcelain)" ]; then
   echo "expected test repository to remain clean" >&2
