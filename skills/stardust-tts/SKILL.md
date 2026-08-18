@@ -9,8 +9,8 @@ metadata:
 
 # Stardust TTS
 
-Use the authenticated Stardust speech endpoint at
-`https://llm-api.preseen.ai/v1/audio/speech`. It serves
+Use the company-authenticated Stardust speech endpoint at
+`https://tts-api.preseen.ai/v1/audio/speech`. It serves
 `qwen3-tts-1.7b-customvoice` and always returns compressed MP3 audio.
 
 ## Workflow
@@ -18,7 +18,11 @@ Use the authenticated Stardust speech endpoint at
 1. Confirm the text to synthesize, destination MP3 path, preset voice, and any
    delivery instructions. If the user does not choose a voice, use `Vivian`.
 2. Resolve the destination to an absolute path ending in `.mp3`.
-3. For short text, run:
+3. On an employee's first request, the client opens Cloudflare Access login.
+   Sign in using the one-time code sent to an `@stardust.ai` mailbox. The
+   short-lived access token stays in memory; the refresh credential is saved
+   only in macOS Keychain.
+4. For short text, run:
 
 ```bash
 python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" \
@@ -28,7 +32,7 @@ python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" \
   --output "/absolute/path/to/speech.mp3"
 ```
 
-4. For long or multiline text, write or use an existing UTF-8 text file and
+5. For long or multiline text, write or use an existing UTF-8 text file and
    pass `--input-file`. Do not place sensitive text in shell history:
 
 ```bash
@@ -39,7 +43,7 @@ python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" \
   --output "/absolute/path/to/narration.mp3"
 ```
 
-5. Verify the command reports a nonzero file. If `ffprobe` is available, check
+6. Verify the command reports a nonzero file. If `ffprobe` is available, check
    the codec and duration. Return the absolute MP3 path to the user; in clients
    that render local audio, provide it as a playable file link.
 
@@ -81,36 +85,49 @@ python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --list-voices
 
 ## Authentication and data boundary
 
-The client reads only `STARDUST_TTS_API_KEY`. Provision a distinct, scoped
-LiteLLM virtual key for each employee or workload; authorize only
-`qwen3-tts-1.7b-customvoice`, attach an employee/workload identity label, and set
-an expiry plus appropriate rate/budget limits. Do not reuse the Open WebUI key,
-the LiteLLM master key, or a generic LLM key.
+Interactive employee access uses Cloudflare Managed OAuth with authorization
+code + PKCE. Access admits only `@stardust.ai` identities. Access tokens last
+15 minutes and are refreshed against company policy for up to seven days. The
+client stores the refresh token only in macOS Keychain; it has no plaintext
+credential fallback. Check or remove the local session with:
 
-The repository and generated command examples never contain a key. Do not print
-environment values or pass a key as a command-line argument. The requested text
-and instructions are sent to the Stardust public TTS service for synthesis. Do
-not synthesize passwords, API keys, private keys, authentication codes, or other
-secrets. If the source contains confidential business or personal data and the
-user has not already authorized this external processing, explain the boundary
-and confirm before sending it.
+```bash
+python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --auth-status
+python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --logout
+```
 
-Publishing this Skill does not grant service access, but a bearer key proves
-only possession, not current employment. To enforce company-only access, place
-the endpoint behind the company's identity-aware edge (for example Cloudflare
-Access with company SSO) or a company-only Tailscale network, and retain the
-per-person LiteLLM key as a second authorization and quota layer. Override
-`STARDUST_TTS_BASE_URL` only when the user explicitly asks to use a different
-compatible deployment.
+For approved headless workloads, set both `CF_ACCESS_CLIENT_ID` and
+`CF_ACCESS_CLIENT_SECRET` from the workload's secret manager. Use a distinct
+Cloudflare service token per workload. Never place these values in this public
+Skill, a command argument, source control, logs, or chat. Setting only one is a
+local error. Service-token mode takes precedence over interactive OAuth.
+
+The repository and generated command examples never contain credentials. The
+requested text and instructions are sent to the Stardust-hosted TTS service for
+synthesis. Do not synthesize passwords, API keys, private keys, authentication
+codes, or other secrets. If the source contains confidential business or
+personal data and the user has not already authorized this processing, explain
+the boundary and confirm before sending it.
+
+Publishing this Skill does not grant service access: Cloudflare Access checks
+company identity before the private origin receives a request. Override
+`STARDUST_TTS_BASE_URL` only when the user explicitly asks to use another
+compatible, trusted deployment.
 
 ## Failure handling
 
-- Missing credentials: ask the user to configure `STARDUST_TTS_API_KEY`; never
-  ask them to paste the key into chat.
+- First employee use: allow the browser login and enter the mailbox code there;
+  never ask the user to paste the code into chat.
+- Headless authentication: require both service-token environment values and
+  ask the platform owner to provision them through a secret manager.
+- Non-macOS interactive use: report that no safe plaintext fallback exists and
+  use an approved workload service token instead.
 - Invalid voice, empty text, over-3000-character text, or non-MP3 output path:
   report the local validation error and do not call the service.
-- HTTP 401: the virtual key is missing, invalid, expired, or lacks access.
-- HTTP 403: the key is authenticated but lacks access to the TTS model.
+- HTTP 401: the Access session or service token is missing, invalid, or expired;
+  retry employee OAuth once, then report the authentication failure.
+- HTTP 403: the authenticated identity does not match company access policy or
+  is not allowed to use this application.
 - HTTP 5xx: report the service failure. Do not silently switch to another TTS
   provider or upload the text elsewhere.
 - Never treat a zero-byte or non-MP3 response as success.

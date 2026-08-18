@@ -12,8 +12,13 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+from access_oauth import auth_headers, keychain_delete, keychain_load
 
-DEFAULT_BASE_URL = "https://llm-api.preseen.ai/v1"
+
+DEFAULT_BASE_URL = "https://tts-api.preseen.ai/v1"
 DEFAULT_MODEL = "qwen3-tts-1.7b-customvoice"
 DEFAULT_VOICE = "Vivian"
 MAX_INPUT_CHARS = 3000
@@ -47,6 +52,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--timeout", type=float, default=900.0)
     parser.add_argument("--list-voices", action="store_true")
+    parser.add_argument("--auth-status", action="store_true")
+    parser.add_argument("--logout", action="store_true")
     return parser
 
 
@@ -84,13 +91,8 @@ def validate_output_path(output: Path | None) -> Path:
     return path
 
 
-def resolve_api_key() -> str:
-    key = os.getenv("STARDUST_TTS_API_KEY") or ""
-    if not key:
-        raise ValueError(
-            "Set STARDUST_TTS_API_KEY to a scoped LiteLLM virtual key"
-        )
-    return key
+def resolve_auth_headers(base_url: str) -> dict[str, str]:
+    return auth_headers(base_url)
 
 
 def build_payload(
@@ -127,7 +129,7 @@ def is_mp3(data: bytes) -> bool:
 def call_speech(
     *,
     base_url: str,
-    api_key: str,
+    auth_headers: dict[str, str],
     payload: dict[str, object],
     timeout: float,
 ) -> bytes:
@@ -139,7 +141,7 @@ def call_speech(
         url,
         data=body,
         headers={
-            "Authorization": f"Bearer {api_key}",
+            **auth_headers,
             "Content-Type": "application/json",
             "User-Agent": USER_AGENT,
         },
@@ -194,6 +196,28 @@ def main(argv: list[str] | None = None) -> int:
     if args.list_voices:
         print("\n".join(VOICES))
         return 0
+    if args.auth_status:
+        service_mode = bool(os.getenv("CF_ACCESS_CLIENT_ID")) and bool(
+            os.getenv("CF_ACCESS_CLIENT_SECRET")
+        )
+        if service_mode:
+            print("Authentication: Cloudflare service token configured")
+            return 0
+        try:
+            record = keychain_load(args.base_url.split("/v1", 1)[0])
+        except RuntimeError as exc:
+            print(f"stardust-tts: {exc}", file=sys.stderr)
+            return 1
+        print("Authentication: employee OAuth available" if record else "Authentication: login required")
+        return 0 if record else 1
+    if args.logout:
+        try:
+            removed = keychain_delete(args.base_url.split("/v1", 1)[0])
+        except RuntimeError as exc:
+            print(f"stardust-tts: {exc}", file=sys.stderr)
+            return 1
+        print("Removed Stardust TTS OAuth session" if removed else "No Stardust TTS OAuth session found")
+        return 0
     try:
         text = resolve_text(args.text, args.input_file)
         output = validate_output_path(args.output)
@@ -204,7 +228,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         audio = call_speech(
             base_url=args.base_url,
-            api_key=resolve_api_key(),
+            auth_headers=resolve_auth_headers(args.base_url),
             payload=payload,
             timeout=args.timeout,
         )

@@ -10,7 +10,7 @@
     {
       "id": 2,
       "prompt": "请把 /absolute/path/to/narration.txt 做成专业清晰的英文旁白，选择 Serena，输出 narration.mp3。",
-      "expected_output": "Uses --input-file for the UTF-8 source, applies Serena and professional delivery instructions, and produces MP3 through the public Stardust endpoint.",
+      "expected_output": "Uses --input-file for the UTF-8 source, applies Serena and professional delivery instructions, authenticates through company Cloudflare Access, and produces MP3 through the Stardust endpoint.",
       "files": []
     },
     {
