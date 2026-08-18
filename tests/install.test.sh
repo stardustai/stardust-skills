@@ -43,6 +43,8 @@ plist_path="${launch_agents_dir}/com.stardust.skills.daily-sync.plist"
 bash "${SCRIPT}" --dest "${dest_dir}"
 
 assert_exists "${dest_dir}/stardust-interview/SKILL.md"
+assert_exists "${dest_dir}/stardust-tts/SKILL.md"
+assert_exists "${dest_dir}/stardust-tts/scripts/synthesize.py"
 assert_missing "${dest_dir}/dingtalk-minutes-access-request/config.json"
 assert_missing "${dest_dir}/video-transcribe/api_key"
 
