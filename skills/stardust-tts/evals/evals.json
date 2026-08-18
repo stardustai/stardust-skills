@@ -1,0 +1,23 @@
+{
+  "skill_name": "stardust-tts",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "把这句产品欢迎语生成中文 MP3：欢迎使用星尘智能服务。用 Vivian，语气温暖自然、语速稍慢，保存到我的下载目录。",
+      "expected_output": "Uses the Stardust TTS client with Vivian and the requested instructions, writes a non-empty .mp3 file, and returns its absolute path without exposing credentials.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "请把 /absolute/path/to/narration.txt 做成专业清晰的英文旁白，选择 Serena，输出 narration.mp3。",
+      "expected_output": "Uses --input-file for the UTF-8 source, applies Serena and professional delivery instructions, and produces MP3 through the public Stardust endpoint.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "给我导出一个 wav 配音，内容有 3500 个字，声音随便。",
+      "expected_output": "Explains that the service is MP3-only and has a 3000-character per-request limit, asks for or performs sensible text segmentation only with user direction, and does not create a mislabeled WAV or send an invalid request.",
+      "files": []
+    }
+  ]
+}
