@@ -5,6 +5,7 @@ metadata:
   requires:
     bins:
       - python3
+      - cloudflared
 ---
 
 # Stardust TTS
@@ -18,10 +19,10 @@ Use the company-authenticated Stardust speech endpoint at
 1. Confirm the text to synthesize, destination MP3 path, preset voice, and any
    delivery instructions. If the user does not choose a voice, use `Vivian`.
 2. Resolve the destination to an absolute path ending in `.mp3`.
-3. On an employee's first request, the client opens Cloudflare Access login.
-   Sign in using the one-time code sent to an `@stardust.ai` mailbox. The
-   short-lived access token stays in memory; the refresh credential is saved
-   only in macOS Keychain.
+3. On an employee's first request the client runs `cloudflared access login`,
+   which opens a browser. Sign in using the one-time code sent to an
+   `@stardust.ai` mailbox. The 24-hour session is cached by `cloudflared`; this
+   skill stores no credential of its own.
 4. For short text, run:
 
 ```bash
@@ -80,16 +81,19 @@ python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --list-voices
 - The client always sends `response_format=mp3`. A requested `.wav` destination
   is an input error; use a `.mp3` path instead.
 - Text must be nonblank and no longer than 3000 Unicode characters.
-- The model may cold-start after being idle. Allow up to 900 seconds; warm
-  requests normally return much faster.
+- The model unloads after five idle minutes, so the first call afterwards
+  takes about a minute; warm calls return in well under a second for a short
+  phrase. Allow up to 900 seconds and do not report a cold start as a failure.
 
 ## Authentication and data boundary
 
-Interactive employee access uses Cloudflare Managed OAuth with authorization
-code + PKCE. Access admits only `@stardust.ai` identities. Access tokens last
-15 minutes and are refreshed against company policy for up to seven days. The
-client stores the refresh token only in macOS Keychain; it has no plaintext
-credential fallback. Check or remove the local session with:
+Interactive employee access uses `cloudflared access login`: a browser
+one-time-PIN flow against Cloudflare Access, which admits only `@stardust.ai`
+identities. The resulting application session lasts 24 hours and is cached by
+`cloudflared` in `~/.cloudflared/`. This client never reads, writes, or stores a
+token, and there is no plaintext credential fallback. Because `cloudflared`
+owns the credential, interactive use works on any platform it runs on rather
+than macOS only. Check or remove the local session with:
 
 ```bash
 python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --auth-status
@@ -100,7 +104,7 @@ For approved headless workloads, set both `CF_ACCESS_CLIENT_ID` and
 `CF_ACCESS_CLIENT_SECRET` from the workload's secret manager. Use a distinct
 Cloudflare service token per workload. Never place these values in this public
 Skill, a command argument, source control, logs, or chat. Setting only one is a
-local error. Service-token mode takes precedence over interactive OAuth.
+local error. Service-token mode takes precedence over the interactive login.
 
 The repository and generated command examples never contain credentials. The
 requested text and instructions are sent to the Stardust-hosted TTS service for
@@ -118,14 +122,17 @@ compatible, trusted deployment.
 
 - First employee use: allow the browser login and enter the mailbox code there;
   never ask the user to paste the code into chat.
+- `cloudflared` missing: report that it is required for sign-in and give the
+  install command. There is no API-key alternative.
 - Headless authentication: require both service-token environment values and
   ask the platform owner to provision them through a secret manager.
-- Non-macOS interactive use: report that no safe plaintext fallback exists and
-  use an approved workload service token instead.
 - Invalid voice, empty text, over-3000-character text, or non-MP3 output path:
   report the local validation error and do not call the service.
 - HTTP 401: the Access session or service token is missing, invalid, or expired;
-  retry employee OAuth once, then report the authentication failure.
+  retry the employee login once, then report the authentication failure.
+- HTTP 403 with `error code: 1010`: Cloudflare's browser-integrity check
+  rejected the client signature before Access was consulted. This is not a
+  login problem and signing in again cannot fix it; report it.
 - HTTP 403: the authenticated identity does not match company access policy or
   is not allowed to use this application.
 - HTTP 5xx: report the service failure. Do not silently switch to another TTS
