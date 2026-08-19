@@ -209,7 +209,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `spec-intake` | 默认不需要业务系统凭证。若需求涉及现有系统、repo、API、MCP、Memory、Friday 或客户系统，应读取用户授权范围内的本地代码/文档来确认边界；不要提交访谈产物或客户资料。 |
 | `stardust-interview` | 需要可用的 `xiaoqing_interview` MCP OAuth 授权；读取 AI 听记时还需要可用的 `dws minutes` 授权。 |
 | `stardust-sre` | 默认不需要业务系统凭证。它读取用户授权范围内的仓库源码、部署配置和需求材料；生成的发布包、变更单、域名申请和安全检查结果仍需按生产变更流程确认后执行。 |
-| `stardust-tts` | 需要可访问 `https://llm-api.preseen.ai/v1`，并在本机通过 `STARDUST_TTS_API_KEY` 提供个人或工作负载专用、仅限 TTS 模型的 LiteLLM 虚拟密钥。不得复用 Open WebUI key、通用 LLM key 或 master key。公开仓库不保存密钥；公司人员身份还应由 Cloudflare Access 公司 SSO 或公司 Tailscale 网络在服务端校验。文本和风格指令只在用户指定的合成任务中发送到该服务。 |
+| `stardust-tts` | 需要可访问 `https://tts-api.preseen.ai/v1/audio/speech`。员工端必须通过公司邮箱 (`@stardust.ai`) 完成 Cloudflare Access 登录（OTP + PKCE）；工作负载端使用成对配置的 `CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET`。公开仓库不保存任何凭据；文本和风格指令只用于当前合成请求。 |
 | `task-management` | 不需要开放平台 key。需要本机已运行的 CEO agent service 审计 Web API；该 skill 只读查询服务数据库中的任务上下文，不创建或修改任务。 |
 | `transcribe` | 需要本机环境变量 `OPENAI_API_KEY`。仓库不保存 OpenAI API key；音视频文件只在用户指定任务中读取并发送给 OpenAI 转写接口。 |
 | `veyra-timesheet` | 不需要开放平台 key。需要已登录的 `dws`，以及 opencli daemon + Browser Bridge 扩展（Chrome Web Store 安装），且挂扩展的 Chrome profile 已登录 Veyra。首次使用跑 skill 的 init 引导安装；登录态全部留在本机，不进仓库。 |
