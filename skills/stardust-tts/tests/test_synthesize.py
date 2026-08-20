@@ -98,7 +98,7 @@ class AccessOAuthTests(unittest.TestCase):
         self._token_file = Path(self._dir.name) / "oauth.json"
         patcher = patch.dict(
             access.os.environ,
-            {"STARDUST_TTS_TOKEN_FILE": str(self._token_file)},
+            {"STARDUST_ACCESS_TOKEN_FILE": str(self._token_file)},
         )
         patcher.start()
         self.addCleanup(patcher.stop)
@@ -246,7 +246,11 @@ class SharedAcrossSkillsTests(unittest.TestCase):
         self.addCleanup(self._dir.cleanup)
         patcher = patch.dict(
             access.os.environ,
-            {"STARDUST_TTS_TOKEN_FILE": str(Path(self._dir.name) / "oauth.json")},
+            {
+                "STARDUST_ACCESS_TOKEN_FILE": str(
+                    Path(self._dir.name) / "oauth.json"
+                )
+            },
         )
         patcher.start()
         self.addCleanup(patcher.stop)
