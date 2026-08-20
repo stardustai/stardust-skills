@@ -9,7 +9,7 @@ metadata:
 
 # OCR
 
-Use the external OCR service at `https://ocr.preseen.ai/v1`. It runs RapidOCR for simplified Chinese and English. The service can be cold after a long idle period, so the first request may take longer while its GPU worker starts.
+Use the Access-protected OCR service at `https://ocr.preseen.ai/v1`. It runs RapidOCR for simplified Chinese and English. The service can be cold after a long idle period, so the first request may take longer while its GPU worker starts.
 
 ## Workflow
 
@@ -52,16 +52,41 @@ python3 "$HOME/.agents/skills/ocr/scripts/ocr.py" \
 
 ## Authentication and configuration
 
-The client resolves credentials at runtime and never prints them. Resolution order:
+The bundled client authenticates through the shared Stardust Cloudflare Access
+client. On the first normal request, it opens the browser for company login;
+sign in with an authorized `@stardust.ai` identity. The refresh token is stored
+locally in the shared owner-only credential store and isolated by service
+origin. It is never printed or copied into the skill.
 
-1. `DOCUMENT_OCR_API_KEY` environment variable.
-2. The selected `document_ocr_providers` entry in the file named by `DOCUMENT_OCR_CONFIG`, or in `$HOME/Documents/Projects/memory-connector/config/providers.yaml` when that repository is present.
+Check login state without starting OCR:
+
+```bash
+python3 "$HOME/.agents/skills/ocr/scripts/ocr.py" --auth-status
+```
+
+Remove only the OCR service session:
+
+```bash
+python3 "$HOME/.agents/skills/ocr/scripts/ocr.py" --logout
+```
+
+Approved headless workloads set both `CF_ACCESS_CLIENT_ID` and
+`CF_ACCESS_CLIENT_SECRET` from their secret manager. Never set only one, and do
+not paste either value into chat, source, logs, or reports.
+
+The selected `document_ocr_providers` entry in `DOCUMENT_OCR_CONFIG`, or in
+`$HOME/Documents/Projects/memory-connector/config/providers.yaml` when present,
+is used only for model and language defaults. Provider API keys are ignored.
 
 The public base URL defaults to `https://ocr.preseen.ai/v1`. Override it only when the user explicitly asks by setting `DOCUMENT_OCR_PUBLIC_BASE_URL` or passing `--base-url`. Do not use the provider registry's loopback `127.0.0.1` address from this machine; that address is only valid inside the OCR server.
 
 The default model and languages come from the selected provider entry. Override them with `--model` or `--languages` only when the service advertises the requested values through `/v1/models` or `/healthz`.
 
 The bundled client uses PyYAML to read the existing provider registry. If `import yaml` fails, install `PyYAML` into the Python environment used to run the script.
+
+The service hostname must have its own Cloudflare Access application and AUD.
+If discovery reports missing protected-resource metadata, that is a server-side
+provisioning problem; repeated login attempts cannot fix it.
 
 ## Failure handling
 

@@ -8,12 +8,14 @@ Core boundaries:
 
 - The video URL and resulting transcript are sent to the Stardust Video
   Transcribe service for the current task.
-- Resolve credentials only at runtime from `VIDEO_TRANSCRIBE_API_KEY` or a
-  local installed `api_key` file; neither is part of this repository.
+- Employees authenticate with an authorized `@stardust.ai` identity through
+  Cloudflare Access on first use. Headless workloads set both
+  `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`.
+- Use the bundled `scripts/video_transcribe.py` client. `--auth-status` checks
+  the Video Transcribe origin and `--logout` removes only that origin's session.
 - Private or member-only video access is configured server-side. Never copy
   browser cookies into the request or conversation.
-- MCP-capable clients may use the service's local-keyed MCP endpoint, but the
-  complete endpoint must stay in local client configuration because it embeds
-  the API key.
+- The service requires its own Cloudflare Access application and AUD; client
+  installation alone does not provision the server-side policy.
 
 See [SKILL.md](SKILL.md) for the request contract and usage example.

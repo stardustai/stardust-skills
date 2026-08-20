@@ -209,7 +209,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `fundflow-investor-meeting` | 需要可用的 FundFlow MCP 授权；融资阶段、投资人状态、会议记录和跟进事实以 FundFlow 为准。DingTalk 群更新只在用户授权后执行，且发送前需要验证群和命令 schema。 |
 | `fxiaoke-crm-cli` | 需要官方 `sharecrm` CLI 及当前使用者在本机建立的有效登录会话。CLI 会话不进入仓库，Agent 不索要、不读取、不共享 token、cookie 或其他凭证；查询、写入权限和审计继承当前登录的 CRM 用户。 |
 | `internal-app-standards` | 不需要开放平台 key。它读取用户授权范围内的本地内部系统源码、配置、数据库迁移、Docker/K8s 文件和 CI/部署脚本，用于技术选型、工程设计和生产就绪评审；不得提交或报告明文密钥、连接串、token、私有域名等敏感值。 |
-| `ocr` | 需要可访问 `https://ocr.preseen.ai/v1`，并通过 `DOCUMENT_OCR_API_KEY` 或本机 `memory-connector` provider 配置取得授权。仓库不保存 OCR 密钥；识别文件只发送到该对外 OCR 服务。 |
+| `ocr` | 需要可访问 `https://ocr.preseen.ai/v1`。员工端通过公司邮箱完成 Cloudflare Access 登录；headless 工作负载使用成对的 `CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET`。本机 provider registry 只提供模型和语言默认值；识别文件只发送到该 OCR 服务。 |
 | `qa-generated-test-case` | 默认不需要业务系统凭证。若需要历史 PRD 上下文，应从用户授权的 memory/document store、私有数据目录或单独数据包检索 top N 片段，不把历史材料提交到仓库。 |
 | `senior-technical-product-evaluation` | 默认不需要业务系统凭证。它需要互联网调研公开资料；简历、内部汇总或候选人陈述只作为线索，不能单独证明产品领先性或候选人贡献。 |
 | `spec-intake` | 默认不需要业务系统凭证。若需求涉及现有系统、repo、API、MCP、Memory、Friday 或客户系统，应读取用户授权范围内的本地代码/文档来确认边界；不要提交访谈产物或客户资料。 |
@@ -219,7 +219,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `task-management` | 不需要开放平台 key。需要本机已运行的 CEO agent service 审计 Web API；该 skill 只读查询服务数据库中的任务上下文，不创建或修改任务。 |
 | `transcribe` | 需要本机环境变量 `OPENAI_API_KEY`。仓库不保存 OpenAI API key；音视频文件只在用户指定任务中读取并发送给 OpenAI 转写接口。 |
 | `veyra-timesheet` | 不需要开放平台 key。需要已登录的 `dws`，以及 opencli daemon + Browser Bridge 扩展（Chrome Web Store 安装），且挂扩展的 Chrome profile 已登录 Veyra。首次使用跑 skill 的 init 引导安装；登录态全部留在本机，不进仓库。 |
-| `video-transcribe` | 需要可访问 Stardust Video Transcribe 服务，并在本机通过 `VIDEO_TRANSCRIBE_API_KEY` 或安装后 skill 目录内的 `api_key` 文件提供授权。仓库不保存密钥；视频 URL 和服务返回的转写文本只用于当前用户任务。 |
+| `video-transcribe` | 需要可访问 `https://video-transcribe.preseen.ai`。员工端通过公司邮箱完成 Cloudflare Access 登录；headless 工作负载使用成对的 `CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET`。视频 URL 和服务返回的转写文本只用于当前用户任务。 |
 | `vibe-coding` | 默认不需要业务系统凭证，但需要用户授权读取和修改目标仓库、运行其测试/Eval 命令并访问已确认的远程仓库。生产数据、Secret、部署和外部系统写入仍由项目权限及 `production-devops-sre` 门禁控制。 |
 
 `dingtang-okr-review` 的 OKR 导出目前不是纯 API 实现。未来如果 `dws okr` 或叮当 OKR 官方 API 可用，才需要根据对应 API 的企业权限、应用授权或服务开通方式配置凭证。

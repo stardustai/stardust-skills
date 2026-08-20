@@ -1,6 +1,10 @@
 ---
 name: video-transcribe
 description: Use when the user asks to transcribe, extract subtitles, summarize a raw transcript, translate, or get text from a YouTube or Bilibili video URL through Stardust Video Transcribe.
+metadata:
+  requires:
+    bins:
+      - python3
 ---
 
 # Video Transcribe
@@ -22,11 +26,21 @@ https://video-transcribe.preseen.ai/openapi.json
 
 ## Authentication
 
-Resolve the API key at runtime from `VIDEO_TRANSCRIBE_API_KEY`. A local
-installation may instead keep it in `api_key` beside this `SKILL.md`; that file
-is excluded from installation and repository synchronization.
+The bundled client authenticates through the shared Stardust Cloudflare Access
+client. The first normal request opens a browser for company login; sign in
+with an authorized `@stardust.ai` identity. Refresh tokens stay in the local
+owner-only store and are isolated by service origin.
 
-Do not print the key. Send it as `X-API-Key` or `Authorization: Bearer`.
+Check or remove the Video Transcribe session without starting a job:
+
+```bash
+python3 "$HOME/.agents/skills/video-transcribe/scripts/video_transcribe.py" --auth-status
+python3 "$HOME/.agents/skills/video-transcribe/scripts/video_transcribe.py" --logout
+```
+
+Approved headless workloads set both `CF_ACCESS_CLIENT_ID` and
+`CF_ACCESS_CLIENT_SECRET` from their secret manager. Never set only one or
+expose either value in chat, source, logs, or reports.
 
 ## Request
 
@@ -43,27 +57,33 @@ Do not print the key. Send it as `X-API-Key` or `Authorization: Bearer`.
 ## Usage
 
 ```bash
-curl -sS -X POST "https://video-transcribe.preseen.ai/transcribe" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: ${VIDEO_TRANSCRIBE_API_KEY}" \
-  -d '{"url":"https://www.youtube.com/watch?v=VIDEO_ID","prefer_subtitles":true}'
+python3 "$HOME/.agents/skills/video-transcribe/scripts/video_transcribe.py" \
+  "https://www.youtube.com/watch?v=VIDEO_ID"
+```
+
+Return the complete response as JSON and save it:
+
+```bash
+python3 "$HOME/.agents/skills/video-transcribe/scripts/video_transcribe.py" \
+  "https://www.bilibili.com/video/BV..." \
+  --format json \
+  --output "/absolute/path/to/transcript.json"
+```
+
+Prefer server-side ASR instead of platform subtitles, or choose language
+patterns explicitly:
+
+```bash
+python3 "$HOME/.agents/skills/video-transcribe/scripts/video_transcribe.py" \
+  "https://www.youtube.com/watch?v=VIDEO_ID" \
+  --no-prefer-subtitles \
+  --lang 'zh.*' \
+  --lang 'en.*'
 ```
 
 Return the `text` field to the user or use it as source material for
 summarization, translation, or analysis. Preserve `source`, `title`, and
 `video_id` in citations when useful.
-
-## Optional MCP
-
-Clients that support remote MCP endpoints may use the service endpoint below:
-
-```text
-https://video-transcribe.preseen.ai/mcp/<api-key>/
-```
-
-Configure the complete endpoint only in local client configuration. The API key
-is part of the URL, so never commit, log, or paste that configured URL into a
-conversation.
 
 ## Notes
 
@@ -71,3 +91,6 @@ conversation.
 - `source=funasr` means the service downloaded audio and ran server-side ASR.
 - For private Bilibili or member videos, configure server-side cookies. Do not
   send browser cookies in chat.
+- The hostname needs its own Cloudflare Access application and AUD. Missing
+  protected-resource metadata is a server-side provisioning problem, not a bad
+  employee login.
