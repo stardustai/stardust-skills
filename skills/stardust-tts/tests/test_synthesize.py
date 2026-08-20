@@ -15,7 +15,7 @@ assert SPEC and SPEC.loader
 tts = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tts)
 
-AUTH_SCRIPT = Path(__file__).parents[1] / "scripts" / "access_login.py"
+AUTH_SCRIPT = Path(__file__).parents[1] / "scripts" / "access_oauth.py"
 AUTH_SPEC = importlib.util.spec_from_file_location("stardust_tts_access", AUTH_SCRIPT)
 assert AUTH_SPEC and AUTH_SPEC.loader
 access = importlib.util.module_from_spec(AUTH_SPEC)
@@ -89,54 +89,121 @@ class InputValidationTests(unittest.TestCase):
                 tts.resolve_auth_headers("https://tts-api.preseen.ai/v1")
 
 
-class AccessLoginTests(unittest.TestCase):
-    """cloudflared owns the credential; this client never stores one."""
+class AccessOAuthTests(unittest.TestCase):
+    """The skill runs the browser login itself; nothing else is installed."""
+
+    def setUp(self):
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        self._token_file = Path(self._dir.name) / "oauth.json"
+        patcher = patch.dict(
+            access.os.environ,
+            {"STARDUST_TTS_TOKEN_FILE": str(self._token_file)},
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_origin_is_derived_from_the_api_base_url(self):
         self.assertEqual(
             "https://tts-api.preseen.ai",
-            access.origin("https://tts-api.preseen.ai/v1"),
+            access._origin("https://tts-api.preseen.ai/v1"),
         )
 
-    def test_fresh_cached_session_is_reused_without_a_new_login(self):
-        import time
+    def test_refresh_token_round_trips_and_is_owner_only(self):
+        import os as _os
+        import stat as _stat
 
-        token = _jwt(time.time() + 3600)
-        with patch.object(access.shutil, "which", return_value="cloudflared"), patch.object(
-            access.subprocess,
-            "run",
-            return_value=SimpleNamespace(returncode=0, stdout=token),
-        ) as run:
-            self.assertEqual(token, access.cached_token("https://tts-api.preseen.ai"))
-        self.assertEqual(1, run.call_count)
+        access.store_record({"client_id": "c", "refresh_token": "r"})
+        self.assertEqual(
+            {"client_id": "c", "refresh_token": "r"}, access.load_record()
+        )
+        mode = _stat.S_IMODE(_os.stat(self._token_file).st_mode)
+        self.assertEqual(0o600, mode)
 
-    def test_nearly_expired_session_is_discarded(self):
-        # A token that dies mid-flight produces a confusing 403 after a wait
-        # that can be most of a minute; log in again instead.
-        import time
+    def test_session_status_is_a_bool_so_the_exit_code_is_right(self):
+        # It feeds `return 0 if active else 1`; a message string is always
+        # truthy and would report "signed in" forever.
+        self.assertIs(False, access.session_status("https://tts-api.preseen.ai/v1"))
+        access.store_record({"client_id": "c", "refresh_token": "r"})
+        self.assertIs(True, access.session_status("https://tts-api.preseen.ai/v1"))
 
-        token = _jwt(time.time() + 5)
-        with patch.object(access.shutil, "which", return_value="cloudflared"), patch.object(
-            access.subprocess,
-            "run",
-            return_value=SimpleNamespace(returncode=0, stdout=token),
+    def test_logout_is_idempotent_and_account_scoped(self):
+        access.store_record({"client_id": "c", "refresh_token": "r"})
+        access.store_record(
+            {"client_id": "o", "refresh_token": "r2"}, "https://other.example"
+        )
+        self.assertTrue(access.logout("https://tts-api.preseen.ai/v1"))
+        self.assertFalse(access.logout("https://tts-api.preseen.ai/v1"))
+        self.assertIsNotNone(access.load_record("https://other.example"))
+
+    def test_corrupt_credential_file_says_what_to_do(self):
+        self._token_file.write_text("{ not json", encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "sign in again"):
+            access.load_record()
+
+    def test_pkce_challenge_is_sha256_of_the_verifier(self):
+        import base64 as _b64
+        import hashlib as _hashlib
+
+        verifier, challenge = access._pkce()
+        expected = (
+            _b64.urlsafe_b64encode(_hashlib.sha256(verifier.encode()).digest())
+            .decode()
+            .rstrip("=")
+        )
+        self.assertEqual(expected, challenge)
+        self.assertNotEqual(verifier, challenge)
+
+    def test_service_token_env_bypasses_the_browser_entirely(self):
+        with patch.dict(
+            access.os.environ,
+            {"CF_ACCESS_CLIENT_ID": "id", "CF_ACCESS_CLIENT_SECRET": "secret"},
         ):
-            self.assertIsNone(access.cached_token("https://tts-api.preseen.ai"))
-
-    def test_missing_cloudflared_says_there_is_no_key_alternative(self):
-        with patch.object(access.shutil, "which", return_value=None):
-            with self.assertRaisesRegex(RuntimeError, "company-login only"):
-                access.auth_headers("https://tts-api.preseen.ai/v1")
-
-    def test_employee_headers_carry_the_token_in_both_accepted_forms(self):
-        import time
-
-        token = _jwt(time.time() + 3600)
-        with patch.dict(access.__dict__.get("os", __import__("os")).environ, {}, clear=True):
-            with patch.object(access, "employee_token", return_value=token):
+            with patch.object(access, "oauth_access_token") as never:
                 headers = access.auth_headers("https://tts-api.preseen.ai/v1")
-        self.assertEqual(token, headers["cf-access-token"])
-        self.assertEqual(f"CF_Authorization={token}", headers["Cookie"])
+        never.assert_not_called()
+        self.assertEqual("id", headers["CF-Access-Client-Id"])
+        self.assertEqual("secret", headers["CF-Access-Client-Secret"])
+
+    def test_employee_headers_carry_a_bearer_access_token(self):
+        with patch.dict(access.os.environ, {}, clear=False):
+            access.os.environ.pop("CF_ACCESS_CLIENT_ID", None)
+            access.os.environ.pop("CF_ACCESS_CLIENT_SECRET", None)
+            with patch.object(access, "oauth_access_token", return_value="tok"):
+                headers = access.auth_headers("https://tts-api.preseen.ai/v1")
+        self.assertEqual("Bearer tok", headers["Authorization"])
+
+    def test_a_stored_refresh_token_is_reused_instead_of_a_new_login(self):
+        access.store_record({"client_id": "c", "refresh_token": "r"})
+        metadata = {
+            "token_endpoint": "https://issuer.example/token",
+            "resource": "https://tts-api.preseen.ai",
+        }
+        with patch.object(access, "discover", return_value=metadata), patch.object(
+            access, "_refresh", return_value={"access_token": "new", "refresh_token": "r2"}
+        ), patch.object(access, "_interactive_tokens") as browser:
+            token = access.oauth_access_token("https://tts-api.preseen.ai/v1")
+        browser.assert_not_called()
+        self.assertEqual("new", token)
+        self.assertEqual("r2", access.load_record()["refresh_token"])
+
+    def test_a_rejected_refresh_falls_back_to_the_browser(self):
+        access.store_record({"client_id": "c", "refresh_token": "expired"})
+        metadata = {
+            "token_endpoint": "https://issuer.example/token",
+            "resource": "https://tts-api.preseen.ai",
+        }
+        with patch.object(access, "discover", return_value=metadata), patch.object(
+            access, "_refresh", side_effect=RuntimeError("invalid_grant")
+        ), patch.object(
+            access,
+            "_interactive_tokens",
+            return_value=("c2", {"access_token": "a", "refresh_token": "r3"}),
+        ) as browser:
+            token = access.oauth_access_token("https://tts-api.preseen.ai/v1")
+        browser.assert_called_once()
+        self.assertEqual("a", token)
+        self.assertEqual("c2", access.load_record()["client_id"])
 
 
 class ServiceClientTests(unittest.TestCase):

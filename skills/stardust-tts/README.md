@@ -5,18 +5,19 @@ CustomVoice endpoint.
 
 ## Setup
 
-Install `cloudflared`; it performs the sign-in and owns the credential.
+Nothing to install beyond Python 3. On first use the skill opens a browser
+itself, you sign in with an `@stardust.ai` mailbox and the emailed one-time
+code, and that is it.
 
-```bash
-brew install cloudflared          # macOS
-```
+The flow is standard OAuth for native apps (RFC 8252): dynamic client
+registration, authorization code with PKCE, and a loopback redirect on a random
+port. The refresh token is stored in a `0600` file under your config directory
+— `~/.config/stardust-tts/oauth.json`, or `%APPDATA%\stardust-tts\oauth.json`
+on Windows. Set `STARDUST_TTS_TOKEN_FILE` to move it. Sign out with
+`--logout`.
 
-Linux builds: <https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/>
-
-On first use the client runs `cloudflared access login`, which opens a browser.
-Sign in with an `@stardust.ai` mailbox and enter the emailed one-time code
-there. The session lasts 24 hours and `cloudflared` caches it in
-`~/.cloudflared/`; this skill never reads, writes, or stores a token itself.
+Because the redirect lands on `127.0.0.1`, the browser has to be on the same
+machine as the skill. Over SSH the sign-in URL is printed instead of opened.
 
 Approved headless workloads use a distinct Cloudflare service token supplied
 by their secret manager:
