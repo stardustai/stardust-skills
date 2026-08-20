@@ -17,6 +17,24 @@ from typing import Any
 import yaml
 
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+_SHARED = SCRIPT_DIR.parents[2] / "lib" / "stardust_access"
+if not _SHARED.is_dir():
+    _SHARED = (
+        Path(os.getenv("STARDUST_AGENTS_HOME", Path.home() / ".agents"))
+        / "lib"
+        / "stardust_access"
+    )
+if not _SHARED.is_dir():
+    raise SystemExit(
+        f"ocr: shared Access client not found at {_SHARED}. "
+        "Re-run ./install.sh from the stardust-skills checkout."
+    )
+if str(_SHARED) not in sys.path:
+    sys.path.insert(0, str(_SHARED))
+from access_oauth import auth_headers, logout, session_status
+
+
 DEFAULT_BASE_URL = "https://ocr.preseen.ai/v1"
 DEFAULT_CONFIG_PATH = Path(
     os.getenv("DOCUMENT_OCR_CONFIG")
@@ -29,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Extract text from local images or PDFs with the external OCR service."
     )
-    parser.add_argument("files", nargs="+", type=Path, help="Local image or PDF paths")
+    parser.add_argument("files", nargs="*", type=Path, help="Local image or PDF paths")
     parser.add_argument("--format", choices=("text", "markdown", "json"), default="markdown")
     parser.add_argument("--output", type=Path, help="Write output to this path")
     parser.add_argument("--pages", help="One-based PDF pages, for example 1,3-5")
@@ -39,6 +57,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--profile", default=os.getenv("DOCUMENT_OCR_PROFILE", "rapidocr_gpu4"))
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG_PATH)
     parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--auth-status", action="store_true")
+    parser.add_argument("--logout", action="store_true")
     return parser
 
 
@@ -115,19 +135,31 @@ def build_payload(
 
 
 def call_ocr(
-    *, base_url: str, api_key: str, payload: dict[str, Any], timeout: float
+    *,
+    base_url: str,
+    auth_headers: dict[str, str],
+    payload: dict[str, Any],
+    timeout: float,
 ) -> dict[str, Any]:
     url = base_url.rstrip("/") + "/ocr"
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    headers = {"Content-Type": "application/json", "User-Agent": USER_AGENT}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
+    headers = {
+        **auth_headers,
+        "Content-Type": "application/json",
+        "User-Agent": USER_AGENT,
+    }
     request = urllib.request.Request(url, data=body, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.load(response)
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 403 and "1010" in detail:
+            raise RuntimeError(
+                "Cloudflare rejected the client signature (error 1010) before "
+                "Access saw the request. The sign-in is fine; report this as a "
+                "service-host configuration or client-network issue."
+            ) from exc
         raise RuntimeError(f"OCR service returned HTTP {exc.code}: {detail}") from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Could not reach OCR service at {url}: {exc.reason}") from exc
@@ -178,9 +210,49 @@ def render(response: dict[str, Any], output_format: str) -> str:
     return render_markdown(response)
 
 
+def resolve_auth_headers(base_url: str) -> dict[str, str]:
+    return auth_headers(base_url)
+
+
+def service_token_configured() -> bool:
+    client_id = os.getenv("CF_ACCESS_CLIENT_ID") or ""
+    client_secret = os.getenv("CF_ACCESS_CLIENT_SECRET") or ""
+    if bool(client_id) != bool(client_secret):
+        raise ValueError(
+            "Set both CF_ACCESS_CLIENT_ID and CF_ACCESS_CLIENT_SECRET, or neither"
+        )
+    return bool(client_id)
+
+
+def resolve_base_url(explicit: str | None) -> str:
+    return explicit or os.getenv("DOCUMENT_OCR_PUBLIC_BASE_URL") or DEFAULT_BASE_URL
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        base_url = resolve_base_url(args.base_url)
+        if args.auth_status:
+            if service_token_configured():
+                print("Authentication: Cloudflare service token configured")
+                return 0
+            active = session_status(base_url)
+            print(
+                "Authentication: Cloudflare Access session active"
+                if active
+                else "Authentication: login required"
+            )
+            return 0 if active else 1
+        if args.logout:
+            removed = logout(base_url)
+            print(
+                "Removed Stardust OCR Access session"
+                if removed
+                else "No Stardust OCR Access session found"
+            )
+            return 0
+        if not args.files:
+            raise ValueError("Provide at least one image or PDF file")
         profile = load_profile(args.config, args.profile)
         languages = (
             [value.strip() for value in args.languages.split(",") if value.strip()]
@@ -188,12 +260,6 @@ def main(argv: list[str] | None = None) -> int:
             else list(profile.get("languages") or ["ch_sim", "en"])
         )
         model = args.model or profile.get("model") or "rapidocr:ch_sim+en"
-        api_key = os.getenv("DOCUMENT_OCR_API_KEY") or profile.get("api_key") or ""
-        base_url = (
-            args.base_url
-            or os.getenv("DOCUMENT_OCR_PUBLIC_BASE_URL")
-            or DEFAULT_BASE_URL
-        )
         payload = build_payload(
             args.files,
             model=str(model),
@@ -202,7 +268,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         response = call_ocr(
             base_url=base_url,
-            api_key=str(api_key),
+            auth_headers=resolve_auth_headers(base_url),
             payload=payload,
             timeout=args.timeout,
         )

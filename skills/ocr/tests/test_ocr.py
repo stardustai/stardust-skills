@@ -36,7 +36,7 @@ def test_build_payload_encodes_image(tmp_path: Path) -> None:
     ]
 
 
-def test_call_ocr_sends_bearer_without_exposing_it(monkeypatch) -> None:
+def test_call_ocr_sends_shared_access_headers(monkeypatch) -> None:
     captured = {}
 
     class Response:
@@ -59,15 +59,72 @@ def test_call_ocr_sends_bearer_without_exposing_it(monkeypatch) -> None:
 
     result = ocr.call_ocr(
         base_url="https://ocr.example/v1",
-        api_key="secret",
+        auth_headers={"Authorization": "Bearer access-token"},
         payload={"inputs": []},
         timeout=12,
     )
 
     assert result["object"] == "list"
     assert captured["url"] == "https://ocr.example/v1/ocr"
-    assert captured["headers"]["Authorization"] == "Bearer secret"
+    assert captured["headers"]["Authorization"] == "Bearer access-token"
+    assert "X-API-Key" not in captured["headers"]
     assert captured["timeout"] == 12
+
+
+def test_resolve_auth_headers_delegates_to_shared_client(monkeypatch) -> None:
+    monkeypatch.setattr(ocr, "auth_headers", lambda url: {"Authorization": url})
+
+    assert ocr.resolve_auth_headers("https://ocr.example/v1") == {
+        "Authorization": "https://ocr.example/v1"
+    }
+
+
+def test_auth_status_and_logout_are_origin_scoped(monkeypatch, capsys) -> None:
+    monkeypatch.delenv("CF_ACCESS_CLIENT_ID", raising=False)
+    monkeypatch.delenv("CF_ACCESS_CLIENT_SECRET", raising=False)
+    monkeypatch.setattr(ocr, "session_status", lambda url: url.endswith("/v1"))
+
+    assert (
+        ocr.main(
+            ["--base-url", "https://ocr.example/v1", "--auth-status"]
+        )
+        == 0
+    )
+    assert "session active" in capsys.readouterr().out
+
+    monkeypatch.setattr(ocr, "logout", lambda url: url.endswith("/v1"))
+    assert ocr.main(["--base-url", "https://ocr.example/v1", "--logout"]) == 0
+    assert "Removed" in capsys.readouterr().out
+
+
+def test_auth_status_reports_complete_service_token_without_session_lookup(
+    monkeypatch, capsys
+) -> None:
+    monkeypatch.setenv("CF_ACCESS_CLIENT_ID", "id")
+    monkeypatch.setenv("CF_ACCESS_CLIENT_SECRET", "secret")
+
+    def fail_session_lookup(_url):
+        raise AssertionError("session_status must not run in service-token mode")
+
+    monkeypatch.setattr(ocr, "session_status", fail_session_lookup)
+
+    assert ocr.main(["--auth-status"]) == 0
+    assert "service token configured" in capsys.readouterr().out
+
+
+def test_auth_status_rejects_partial_service_token(monkeypatch, capsys) -> None:
+    monkeypatch.setenv("CF_ACCESS_CLIENT_ID", "id")
+    monkeypatch.delenv("CF_ACCESS_CLIENT_SECRET", raising=False)
+
+    assert ocr.main(["--auth-status"]) == 1
+    assert "Set both CF_ACCESS_CLIENT_ID" in capsys.readouterr().err
+
+
+def test_legacy_ocr_api_key_resolution_is_absent() -> None:
+    source = SCRIPT.read_text(encoding="utf-8")
+
+    assert "DOCUMENT_OCR_API_KEY" not in source
+    assert 'profile.get("api_key")' not in source
 
 
 def test_render_markdown_preserves_page_quality_signals() -> None:
