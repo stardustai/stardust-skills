@@ -161,6 +161,20 @@ EOF
 
 mkdir -p "${DEST}"
 
+# Code shared by several skills (currently the Cloudflare Access client) lives
+# outside skills/ so that ${DEST} contains only real skills — a directory in
+# there without a SKILL.md is a risk to every skill, not just its own.  Skills
+# resolve it as <parents[2]>/lib, which is the repository root in a checkout
+# and ${AGENTS_HOME} once installed, so both trees must mirror each other.
+if [ -d "${ROOT}/lib" ]; then
+  mkdir -p "${AGENTS_HOME}/lib"
+  rsync -a --delete \
+    --exclude '__pycache__' \
+    --exclude '*.pyc' \
+    "${ROOT}/lib/" "${AGENTS_HOME}/lib/"
+  echo "installed shared lib -> ${AGENTS_HOME}/lib"
+fi
+
 for skill in "${ROOT}"/skills/*; do
   [ -d "${skill}" ] || continue
   name="$(basename "${skill}")"

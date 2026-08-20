@@ -15,7 +15,7 @@ assert SPEC and SPEC.loader
 tts = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tts)
 
-AUTH_SCRIPT = Path(__file__).parents[1] / "scripts" / "access_oauth.py"
+AUTH_SCRIPT = Path(__file__).parents[3] / "lib" / "stardust_access" / "access_oauth.py"
 AUTH_SPEC = importlib.util.spec_from_file_location("stardust_tts_access", AUTH_SCRIPT)
 assert AUTH_SPEC and AUTH_SPEC.loader
 access = importlib.util.module_from_spec(AUTH_SPEC)
@@ -204,6 +204,51 @@ class AccessOAuthTests(unittest.TestCase):
         browser.assert_called_once()
         self.assertEqual("a", token)
         self.assertEqual("c2", access.load_record()["client_id"])
+
+
+class SharedAcrossSkillsTests(unittest.TestCase):
+    """One client, one credential file, many Access-protected services."""
+
+    def setUp(self):
+        self._dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self._dir.cleanup)
+        patcher = patch.dict(
+            access.os.environ,
+            {"STARDUST_TTS_TOKEN_FILE": str(Path(self._dir.name) / "oauth.json")},
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_every_entry_point_takes_a_base_url(self):
+        # This is what makes the client reusable: nothing is hard-coded to TTS.
+        import inspect
+
+        for fn in (access.auth_headers, access.oauth_access_token,
+                   access.session_status, access.logout):
+            self.assertIn(
+                "base_url", inspect.signature(fn).parameters, f"{fn.__name__}"
+            )
+
+    def test_two_services_keep_separate_credentials_in_one_file(self):
+        tts = "https://tts-api.preseen.ai/v1"
+        ocr = "https://ocr-api.preseen.ai/v1"
+        access.store_record({"client_id": "t", "refresh_token": "rt"}, access._origin(tts))
+        access.store_record({"client_id": "o", "refresh_token": "ro"}, access._origin(ocr))
+
+        self.assertTrue(access.session_status(tts))
+        self.assertTrue(access.session_status(ocr))
+        self.assertEqual("t", access.load_record(access._origin(tts))["client_id"])
+        self.assertEqual("o", access.load_record(access._origin(ocr))["client_id"])
+
+    def test_signing_out_of_one_service_leaves_the_other_signed_in(self):
+        tts = "https://tts-api.preseen.ai/v1"
+        ocr = "https://ocr-api.preseen.ai/v1"
+        access.store_record({"client_id": "t", "refresh_token": "rt"}, access._origin(tts))
+        access.store_record({"client_id": "o", "refresh_token": "ro"}, access._origin(ocr))
+
+        self.assertTrue(access.logout(tts))
+        self.assertFalse(access.session_status(tts))
+        self.assertTrue(access.session_status(ocr))
 
 
 class ServiceClientTests(unittest.TestCase):
