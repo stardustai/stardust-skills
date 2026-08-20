@@ -1,0 +1,30 @@
+{
+  "skill_name": "daily-frontier-tech-discovery",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我生成今天的每日前沿技术洞察，重点关注 agent memory、OpenReview、GitHub 新项目，并发送到钉钉群。",
+      "expected_output": "A Chinese Markdown DingTalk-ready report under 500 Chinese characters, with URLs, after filtering and deduplication. Each item includes a recommendation reason tied to local meeting notes or project documents."
+    },
+    {
+      "id": 2,
+      "prompt": "扫描 arXiv、Hugging Face Papers 和 GitHub，找 5 条对 Friday 的 memory 和 agent runtime 有启发的新技术，不要重复上次发过的。",
+      "expected_output": "A deduplicated technical brief with canonical keys considered before scoring and links for every item. Each candidate is checked against local Friday or related project docs before final selection. The generated report is archived under the resolved report directory below the current user's memory root."
+    },
+    {
+      "id": 3,
+      "prompt": "找几条今天值得发到技术群的 AI eval / benchmark 前沿，但每条都要说明它和我们本地会议纪要或项目文档里的哪个问题有关。",
+      "expected_output": "A brief that only includes items with a local person, project, problem, or artifact connection and gives a recommendation reason based on that connection."
+    },
+    {
+      "id": 4,
+      "prompt": "今天如果发现一个以前推荐过的 GitHub 项目有新 benchmark 结果，也可以发，但要说明之前哪天推荐过，以及这次增量是什么，并把报告存档。",
+      "expected_output": "A report item for the repeated project only if it has a real novelty_delta; the item states the previous recommendation date and the new delta, and the report is saved to the daily frontier report archive directory."
+    },
+    {
+      "id": 5,
+      "prompt": "重新生成今天的前沿技术日报，只要最近两三天新出的内容，旧论文和旧项目不要放，除非它这两天有新 release 或新 benchmark。",
+      "expected_output": "A DingTalk-ready report containing only items with verifiable freshness evidence from the last 72 hours, or older canonical items with a fresh technical delta in that window."
+    }
+  ]
+}

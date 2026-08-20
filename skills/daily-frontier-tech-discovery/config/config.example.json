@@ -1,0 +1,4 @@
+{
+  "webhook": "<dingtalk-robot-webhook>",
+  "secret": "<dingtalk-robot-secret>"
+}
