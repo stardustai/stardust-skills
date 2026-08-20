@@ -170,7 +170,10 @@ def discover(base_url: str) -> dict[str, Any]:
         if "HTTP 404" in str(exc):
             raise RuntimeError(
                 f"Cloudflare Access metadata is missing for {resource_origin}; "
-                "the service-side Access application and AUD must be configured."
+                "either the service-side Access application/AUD is not configured, "
+                "or a local DNS/fake-IP proxy prevented the request from reaching "
+                "the correct Cloudflare edge. Check whether DNS resolves to "
+                "198.18.x.x before changing the service."
             ) from exc
         raise
     authorization_servers = protected.get("authorization_servers") or []

@@ -132,14 +132,17 @@ class AccessOAuthTests(unittest.TestCase):
         self.assertEqual("stardust-access-client/1.0", access.USER_AGENT)
         self.assertEqual("Stardust Service Access", access.CLIENT_NAME)
 
-    def test_missing_protected_resource_metadata_identifies_server_prerequisite(self):
+    def test_missing_protected_resource_metadata_reports_both_known_causes(self):
         with patch.object(
             access,
             "request_json",
             side_effect=RuntimeError("OAuth endpoint returned HTTP 404"),
         ):
-            with self.assertRaisesRegex(RuntimeError, "service-side Access"):
+            with self.assertRaises(RuntimeError) as caught:
                 access.discover("https://ocr.example/v1")
+        message = str(caught.exception)
+        self.assertIn("service-side Access", message)
+        self.assertIn("fake-IP", message)
 
     def test_refresh_token_round_trips_and_is_owner_only(self):
         import os as _os

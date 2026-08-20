@@ -141,7 +141,7 @@ def call_transcribe(
             ) from exc
         raise RuntimeError(
             f"Video Transcribe service returned HTTP {exc.code}: "
-            f"{detail or exc.reason}"
+            f"{exc.reason}"
         ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(

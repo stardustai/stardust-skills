@@ -160,7 +160,9 @@ def call_ocr(
                 "Access saw the request. The sign-in is fine; report this as a "
                 "service-host configuration or client-network issue."
             ) from exc
-        raise RuntimeError(f"OCR service returned HTTP {exc.code}: {detail}") from exc
+        raise RuntimeError(
+            f"OCR service returned HTTP {exc.code}: {exc.reason}"
+        ) from exc
     except urllib.error.URLError as exc:
         raise RuntimeError(f"Could not reach OCR service at {url}: {exc.reason}") from exc
 

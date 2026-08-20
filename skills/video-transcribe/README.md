@@ -15,7 +15,8 @@ Core boundaries:
   the Video Transcribe origin and `--logout` removes only that origin's session.
 - Private or member-only video access is configured server-side. Never copy
   browser cookies into the request or conversation.
-- The service requires its own Cloudflare Access application and AUD; client
-  installation alone does not provision the server-side policy.
+- The service requires its own Cloudflare Access application and AUD. If Access
+  metadata is missing, rule out a local `198.18.x.x` fake-IP/proxy path before
+  changing the service-side policy.
 
 See [SKILL.md](SKILL.md) for the request contract and usage example.

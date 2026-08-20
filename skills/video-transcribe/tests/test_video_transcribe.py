@@ -167,6 +167,32 @@ def test_http_errors_do_not_echo_authorization_header(monkeypatch) -> None:
     assert "HTTP 403" in str(caught.value)
 
 
+def test_http_errors_redact_auth_value_echoed_by_upstream(monkeypatch) -> None:
+    error = urllib.error.HTTPError(
+        "https://video.example/transcribe",
+        500,
+        "Internal Server Error",
+        {},
+        io.BytesIO(b"debug authorization=Bearer REVIEW_SECRET"),
+    )
+
+    def fail_urlopen(_request, timeout):
+        raise error
+
+    monkeypatch.setattr(video.urllib.request, "urlopen", fail_urlopen)
+
+    with pytest.raises(RuntimeError) as caught:
+        video.call_transcribe(
+            base_url="https://video.example",
+            auth_headers={"Authorization": "Bearer REVIEW_SECRET"},
+            payload={"url": "https://example/video"},
+            timeout=30,
+        )
+
+    assert "REVIEW_SECRET" not in str(caught.value)
+    assert "HTTP 500" in str(caught.value)
+
+
 def test_cloudflare_1010_is_not_reported_as_bad_login(monkeypatch) -> None:
     error = urllib.error.HTTPError(
         "https://video.example/transcribe",

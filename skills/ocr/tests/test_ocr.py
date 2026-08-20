@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
+import urllib.error
 from pathlib import Path
+
+import pytest
 
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "ocr.py"
@@ -69,6 +73,32 @@ def test_call_ocr_sends_shared_access_headers(monkeypatch) -> None:
     assert captured["headers"]["Authorization"] == "Bearer access-token"
     assert "X-API-Key" not in captured["headers"]
     assert captured["timeout"] == 12
+
+
+def test_http_errors_redact_auth_value_echoed_by_upstream(monkeypatch) -> None:
+    error = urllib.error.HTTPError(
+        "https://ocr.example/v1/ocr",
+        500,
+        "Internal Server Error",
+        {},
+        io.BytesIO(b"debug authorization=Bearer REVIEW_SECRET"),
+    )
+
+    def fail_urlopen(_request, timeout):
+        raise error
+
+    monkeypatch.setattr(ocr.urllib.request, "urlopen", fail_urlopen)
+
+    with pytest.raises(RuntimeError) as caught:
+        ocr.call_ocr(
+            base_url="https://ocr.example/v1",
+            auth_headers={"Authorization": "Bearer REVIEW_SECRET"},
+            payload={"inputs": []},
+            timeout=12,
+        )
+
+    assert "REVIEW_SECRET" not in str(caught.value)
+    assert "HTTP 500" in str(caught.value)
 
 
 def test_resolve_auth_headers_delegates_to_shared_client(monkeypatch) -> None:

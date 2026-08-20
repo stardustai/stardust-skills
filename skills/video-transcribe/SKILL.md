@@ -91,6 +91,6 @@ summarization, translation, or analysis. Preserve `source`, `title`, and
 - `source=funasr` means the service downloaded audio and ran server-side ASR.
 - For private Bilibili or member videos, configure server-side cookies. Do not
   send browser cookies in chat.
-- The hostname needs its own Cloudflare Access application and AUD. Missing
-  protected-resource metadata is a server-side provisioning problem, not a bad
-  employee login.
+- The hostname needs its own Cloudflare Access application and AUD. If metadata
+  is missing, rule out a local `198.18.x.x` fake-IP/proxy path before treating
+  it as a service-side configuration problem.

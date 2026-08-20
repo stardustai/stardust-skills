@@ -85,8 +85,9 @@ The default model and languages come from the selected provider entry. Override 
 The bundled client uses PyYAML to read the existing provider registry. If `import yaml` fails, install `PyYAML` into the Python environment used to run the script.
 
 The service hostname must have its own Cloudflare Access application and AUD.
-If discovery reports missing protected-resource metadata, that is a server-side
-provisioning problem; repeated login attempts cannot fix it.
+If discovery reports missing protected-resource metadata, first rule out a
+local `198.18.x.x` fake-IP/proxy path; otherwise the service-side Access
+application or AUD still needs configuration.
 
 ## Failure handling
 
