@@ -53,6 +53,18 @@ The entry points import:
 - `session_status(base_url)` for `--auth-status`
 - `logout(base_url)` for `--logout`
 
+## Shared client service-neutral cleanup
+
+The shared module was moved out of `stardust-tts`, but its OAuth client name, callback text, User-Agent, validation errors, and credential-file errors still say "TTS". Before adding consumers, make those messages service-neutral so an OCR or Video Transcribe login is not mislabeled.
+
+Credential storage remains backward compatible:
+
+- `STARDUST_ACCESS_TOKEN_FILE` becomes the preferred override.
+- Existing `STARDUST_TTS_TOKEN_FILE` remains a supported fallback.
+- The current default file remains `~/.config/stardust-tts/oauth.json` in this change so existing TTS sessions are not silently lost; the store already separates records by service origin.
+
+This cleanup must not change the OAuth protocol, token record shape, origin isolation, TTS request behavior, or existing stored sessions.
+
 ## OCR changes
 
 ### Request path
@@ -145,6 +157,7 @@ Live endpoint validation is separate from client correctness. If the two service
 ## Acceptance criteria
 
 - OCR and Video Transcribe use `lib/stardust_access` for every authenticated request.
+- Shared OAuth prompts and errors are service-neutral, while the existing TTS token-file override and default store remain backward compatible.
 - Every direct Stardust/PreSeen GPU inference service integration found in the repository audit is either migrated in this change or already covered by shared Access; no unclassified direct GPU-service client remains.
 - Employee mode, complete service-token mode, session status, and origin-scoped logout are documented and tested.
 - Neither skill reads, documents, or sends its legacy API key.
