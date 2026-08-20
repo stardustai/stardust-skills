@@ -13,8 +13,25 @@ import urllib.request
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+
+# The Cloudflare Access client is shared by every skill that talks to an
+# Access-protected service, so it lives in lib/stardust_access rather than in
+# any one skill.  parents[3] is the repository root in a checkout and
+# ~/.agents when installed, because install.sh mirrors both trees.
+_SHARED = SCRIPT_DIR.parents[2] / "lib" / "stardust_access"
+if not _SHARED.is_dir():
+    _SHARED = (
+        Path(os.getenv("STARDUST_AGENTS_HOME", Path.home() / ".agents"))
+        / "lib"
+        / "stardust_access"
+    )
+if not _SHARED.is_dir():
+    raise SystemExit(
+        f"stardust-tts: shared Access client not found at {_SHARED}. "
+        "Re-run ./install.sh from the stardust-skills checkout."
+    )
+if str(_SHARED) not in sys.path:
+    sys.path.insert(0, str(_SHARED))
 from access_oauth import auth_headers, logout, session_status
 
 
