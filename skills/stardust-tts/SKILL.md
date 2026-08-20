@@ -5,7 +5,6 @@ metadata:
   requires:
     bins:
       - python3
-      - cloudflared
 ---
 
 # Stardust TTS
@@ -19,10 +18,10 @@ Use the company-authenticated Stardust speech endpoint at
 1. Confirm the text to synthesize, destination MP3 path, preset voice, and any
    delivery instructions. If the user does not choose a voice, use `Vivian`.
 2. Resolve the destination to an absolute path ending in `.mp3`.
-3. On an employee's first request the client runs `cloudflared access login`,
-   which opens a browser. Sign in using the one-time code sent to an
-   `@stardust.ai` mailbox. The 24-hour session is cached by `cloudflared`; this
-   skill stores no credential of its own.
+3. On an employee's first request the client opens a browser itself. Sign in
+   using the one-time code sent to an `@stardust.ai` mailbox. Nothing has to be
+   installed alongside the skill. Later runs reuse a stored refresh token and
+   do not prompt.
 4. For short text, run:
 
 ```bash
@@ -87,13 +86,11 @@ python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --list-voices
 
 ## Authentication and data boundary
 
-Interactive employee access uses `cloudflared access login`: a browser
-one-time-PIN flow against Cloudflare Access, which admits only `@stardust.ai`
-identities. The resulting application session lasts 24 hours and is cached by
-`cloudflared` in `~/.cloudflared/`. This client never reads, writes, or stores a
-token, and there is no plaintext credential fallback. Because `cloudflared`
-owns the credential, interactive use works on any platform it runs on rather
-than macOS only. Check or remove the local session with:
+Interactive employee access uses Cloudflare Access Managed OAuth: a browser
+opens for a one-time code sent to an `@stardust.ai` mailbox, using authorization
+code with PKCE and a loopback redirect (RFC 8252). The refresh token is written
+to a `0600` file under the user's config directory (`STARDUST_TTS_TOKEN_FILE`
+overrides the path). There is no plaintext API-key fallback.
 
 ```bash
 python3 "$HOME/.agents/skills/stardust-tts/scripts/synthesize.py" --auth-status
@@ -122,7 +119,9 @@ compatible, trusted deployment.
 
 - First employee use: allow the browser login and enter the mailbox code there;
   never ask the user to paste the code into chat.
-- `cloudflared` missing: report that it is required for sign-in and give the
+- Browser cannot open (SSH or headless): the client prints the sign-in URL.
+  The callback still has to reach this machine's loopback, so the browser must
+  run on the same host.
   install command. There is no API-key alternative.
 - Headless authentication: require both service-token environment values and
   ask the platform owner to provision them through a secret manager.

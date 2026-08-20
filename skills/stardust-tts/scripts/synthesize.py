@@ -15,7 +15,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
-from access_login import auth_headers, logout, session_status
+from access_oauth import auth_headers, logout, session_status
 
 
 DEFAULT_BASE_URL = "https://tts-api.preseen.ai/v1"
