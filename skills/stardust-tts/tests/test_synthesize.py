@@ -15,11 +15,20 @@ assert SPEC and SPEC.loader
 tts = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(tts)
 
-AUTH_SCRIPT = Path(__file__).parents[1] / "scripts" / "access_oauth.py"
-AUTH_SPEC = importlib.util.spec_from_file_location("stardust_tts_oauth", AUTH_SCRIPT)
+AUTH_SCRIPT = Path(__file__).parents[1] / "scripts" / "access_login.py"
+AUTH_SPEC = importlib.util.spec_from_file_location("stardust_tts_access", AUTH_SCRIPT)
 assert AUTH_SPEC and AUTH_SPEC.loader
-oauth = importlib.util.module_from_spec(AUTH_SPEC)
-AUTH_SPEC.loader.exec_module(oauth)
+access = importlib.util.module_from_spec(AUTH_SPEC)
+AUTH_SPEC.loader.exec_module(access)
+
+
+def _jwt(exp: float) -> str:
+    import base64
+
+    payload = base64.urlsafe_b64encode(
+        json.dumps({"exp": exp}).encode("utf-8")
+    ).decode("ascii").rstrip("=")
+    return f"header.{payload}.signature"
 
 
 class InputValidationTests(unittest.TestCase):
@@ -80,48 +89,54 @@ class InputValidationTests(unittest.TestCase):
                 tts.resolve_auth_headers("https://tts-api.preseen.ai/v1")
 
 
-class OAuthTests(unittest.TestCase):
-    def test_keychain_secret_is_sent_on_stdin_not_argv(self):
-        calls = []
+class AccessLoginTests(unittest.TestCase):
+    """cloudflared owns the credential; this client never stores one."""
 
-        def fake_run(args, **kwargs):
-            calls.append((args, kwargs))
-            return SimpleNamespace(returncode=0, stdout="")
-
-        with patch.object(oauth.platform, "system", return_value="Darwin"), patch.object(
-            oauth.subprocess, "run", side_effect=fake_run
-        ):
-            oauth.keychain_store({"client_id": "public-id", "refresh_token": "secret"})
-
-        argv, options = calls[0]
-        self.assertNotIn("secret", " ".join(argv))
-        self.assertIn("secret", options["input"])
-
-    def test_non_macos_has_no_plaintext_token_fallback(self):
-        with patch.object(oauth.platform, "system", return_value="Linux"):
-            with self.assertRaisesRegex(RuntimeError, "macOS Keychain"):
-                oauth.keychain_store({"refresh_token": "secret"})
-
-    def test_discovery_follows_protected_resource_to_authorization_server(self):
-        responses = {
-            "https://tts-api.preseen.ai/.well-known/cloudflare-access-protected-resource/": {
-                "resource": "https://tts-api.preseen.ai",
-                "authorization_servers": ["https://stardust.cloudflareaccess.com"],
-            },
-            "https://stardust.cloudflareaccess.com/.well-known/oauth-authorization-server": {
-                "authorization_endpoint": "https://stardust.cloudflareaccess.com/authorize",
-                "token_endpoint": "https://stardust.cloudflareaccess.com/token",
-                "registration_endpoint": "https://stardust.cloudflareaccess.com/register",
-            },
-        }
-        with patch.object(oauth, "request_json", side_effect=lambda url, **_: responses[url]):
-            metadata = oauth.discover("https://tts-api.preseen.ai/v1")
-
-        self.assertEqual("https://tts-api.preseen.ai", metadata["resource"])
+    def test_origin_is_derived_from_the_api_base_url(self):
         self.assertEqual(
-            "https://stardust.cloudflareaccess.com/register",
-            metadata["registration_endpoint"],
+            "https://tts-api.preseen.ai",
+            access.origin("https://tts-api.preseen.ai/v1"),
         )
+
+    def test_fresh_cached_session_is_reused_without_a_new_login(self):
+        import time
+
+        token = _jwt(time.time() + 3600)
+        with patch.object(access.shutil, "which", return_value="cloudflared"), patch.object(
+            access.subprocess,
+            "run",
+            return_value=SimpleNamespace(returncode=0, stdout=token),
+        ) as run:
+            self.assertEqual(token, access.cached_token("https://tts-api.preseen.ai"))
+        self.assertEqual(1, run.call_count)
+
+    def test_nearly_expired_session_is_discarded(self):
+        # A token that dies mid-flight produces a confusing 403 after a wait
+        # that can be most of a minute; log in again instead.
+        import time
+
+        token = _jwt(time.time() + 5)
+        with patch.object(access.shutil, "which", return_value="cloudflared"), patch.object(
+            access.subprocess,
+            "run",
+            return_value=SimpleNamespace(returncode=0, stdout=token),
+        ):
+            self.assertIsNone(access.cached_token("https://tts-api.preseen.ai"))
+
+    def test_missing_cloudflared_says_there_is_no_key_alternative(self):
+        with patch.object(access.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "company-login only"):
+                access.auth_headers("https://tts-api.preseen.ai/v1")
+
+    def test_employee_headers_carry_the_token_in_both_accepted_forms(self):
+        import time
+
+        token = _jwt(time.time() + 3600)
+        with patch.dict(access.__dict__.get("os", __import__("os")).environ, {}, clear=True):
+            with patch.object(access, "employee_token", return_value=token):
+                headers = access.auth_headers("https://tts-api.preseen.ai/v1")
+        self.assertEqual(token, headers["cf-access-token"])
+        self.assertEqual(f"CF_Authorization={token}", headers["Cookie"])
 
 
 class ServiceClientTests(unittest.TestCase):

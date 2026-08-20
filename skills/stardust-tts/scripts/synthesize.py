@@ -15,7 +15,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
-from access_oauth import auth_headers, keychain_delete, keychain_load
+from access_login import auth_headers, logout, session_status
 
 
 DEFAULT_BASE_URL = "https://tts-api.preseen.ai/v1"
@@ -153,6 +153,15 @@ def call_speech(
             audio = response.read()
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 403 and "1010" in detail:
+            # Cloudflare's browser-integrity check, not Access. Reporting this
+            # as an authentication failure sends the user into re-login
+            # attempts that cannot help.
+            raise RuntimeError(
+                "Cloudflare rejected the client signature (error 1010) before "
+                "Access saw the request. The sign-in is fine; the User-Agent "
+                "was refused. Report this rather than signing in again."
+            ) from exc
         raise RuntimeError(
             f"TTS service returned HTTP {exc.code}: {detail or exc.reason}"
         ) from exc
@@ -204,19 +213,27 @@ def main(argv: list[str] | None = None) -> int:
             print("Authentication: Cloudflare service token configured")
             return 0
         try:
-            record = keychain_load(args.base_url.split("/v1", 1)[0])
+            active = session_status(args.base_url)
         except RuntimeError as exc:
             print(f"stardust-tts: {exc}", file=sys.stderr)
             return 1
-        print("Authentication: employee OAuth available" if record else "Authentication: login required")
-        return 0 if record else 1
+        print(
+            "Authentication: Cloudflare Access session active"
+            if active
+            else "Authentication: login required"
+        )
+        return 0 if active else 1
     if args.logout:
         try:
-            removed = keychain_delete(args.base_url.split("/v1", 1)[0])
+            removed = logout(args.base_url)
         except RuntimeError as exc:
             print(f"stardust-tts: {exc}", file=sys.stderr)
             return 1
-        print("Removed Stardust TTS OAuth session" if removed else "No Stardust TTS OAuth session found")
+        print(
+            "Removed Stardust TTS Access session"
+            if removed
+            else "No Stardust TTS Access session found"
+        )
         return 0
     try:
         text = resolve_text(args.text, args.input_file)

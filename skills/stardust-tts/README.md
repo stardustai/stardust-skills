@@ -5,9 +5,18 @@ CustomVoice endpoint.
 
 ## Setup
 
-On first use, the client opens Cloudflare Access login. Sign in with an
-`@stardust.ai` mailbox and enter the emailed one-time code in the browser. The
-refresh token is stored only in macOS Keychain.
+Install `cloudflared`; it performs the sign-in and owns the credential.
+
+```bash
+brew install cloudflared          # macOS
+```
+
+Linux builds: <https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/>
+
+On first use the client runs `cloudflared access login`, which opens a browser.
+Sign in with an `@stardust.ai` mailbox and enter the emailed one-time code
+there. The session lasts 24 hours and `cloudflared` caches it in
+`~/.cloudflared/`; this skill never reads, writes, or stores a token itself.
 
 Approved headless workloads use a distinct Cloudflare service token supplied
 by their secret manager:
@@ -44,6 +53,9 @@ The client has no third-party Python dependencies. It validates the nine preset
 voices, the 3000-character input limit, MP3 output, authentication, response
 content type, and MP3 file signature.
 
+The first call after the model has been idle for five minutes pays a cold start
+of about a minute. That is expected; do not treat it as a failure.
+
 Inspect or revoke the employee session:
 
 ```bash
@@ -54,7 +66,7 @@ python3 scripts/synthesize.py --logout
 ## Validation
 
 ```bash
-python3 -m unittest discover -s skills/stardust-tts/tests -v
+cd skills/stardust-tts && python3 -m unittest tests.test_synthesize -v
 python3 skills/stardust-tts/scripts/synthesize.py --list-voices
 ```
 
