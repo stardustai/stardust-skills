@@ -25,10 +25,14 @@ headers = auth_headers("https://your-service.preseen.ai/v1")
 ```
 
 That is the whole integration. Every entry point takes `base_url`, and refresh
-tokens are stored per origin in one `0600` file
-(`~/.config/stardust-tts/oauth.json`, or `STARDUST_TTS_TOKEN_FILE`), so signing
-in to one service does not sign you in to another and signing out of one leaves
-the rest alone.
+tokens are stored per origin in one `0600` file, so signing in to one service
+does not sign you in to another and signing out of one leaves the rest alone.
+
+Set `STARDUST_ACCESS_TOKEN_FILE` to override the credential-store location.
+`STARDUST_TTS_TOKEN_FILE` remains a compatibility alias. The default stays at
+`~/.config/stardust-tts/oauth.json` so existing TTS sessions continue to work;
+despite the legacy directory name, records inside the file are isolated by
+service origin.
 
 Headless workloads set `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` and the
 browser is never opened.

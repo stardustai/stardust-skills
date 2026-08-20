@@ -109,6 +109,38 @@ class AccessOAuthTests(unittest.TestCase):
             access._origin("https://tts-api.preseen.ai/v1"),
         )
 
+    def test_generic_token_file_override_precedes_legacy_override(self):
+        with patch.dict(
+            access.os.environ,
+            {
+                "STARDUST_ACCESS_TOKEN_FILE": "/tmp/generic.json",
+                "STARDUST_TTS_TOKEN_FILE": "/tmp/legacy.json",
+            },
+            clear=True,
+        ):
+            self.assertEqual(Path("/tmp/generic.json"), access.token_path())
+
+    def test_legacy_tts_token_file_override_remains_supported(self):
+        with patch.dict(
+            access.os.environ,
+            {"STARDUST_TTS_TOKEN_FILE": "/tmp/legacy.json"},
+            clear=True,
+        ):
+            self.assertEqual(Path("/tmp/legacy.json"), access.token_path())
+
+    def test_shared_client_identity_is_service_neutral(self):
+        self.assertEqual("stardust-access-client/1.0", access.USER_AGENT)
+        self.assertEqual("Stardust Service Access", access.CLIENT_NAME)
+
+    def test_missing_protected_resource_metadata_identifies_server_prerequisite(self):
+        with patch.object(
+            access,
+            "request_json",
+            side_effect=RuntimeError("OAuth endpoint returned HTTP 404"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "service-side Access"):
+                access.discover("https://ocr.example/v1")
+
     def test_refresh_token_round_trips_and_is_owner_only(self):
         import os as _os
         import stat as _stat

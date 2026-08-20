@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cloudflare Access Managed OAuth client for the Stardust TTS skill.
+"""Cloudflare Access Managed OAuth client for Stardust internal services.
 
 Standard RFC 8252 native-app flow: dynamic client registration, a loopback
 redirect on a random port, authorization code with PKCE, and refresh.  The
@@ -35,13 +35,14 @@ LOGIN_TIMEOUT_S = 300
 # urllib's default "Python-urllib/3.x" is refused by Cloudflare's
 # browser-integrity check with 403 "error code: 1010" before Access is ever
 # consulted.  Every request this module makes needs an identifiable agent.
-USER_AGENT = "stardust-tts-skill/1.0"
+USER_AGENT = "stardust-access-client/1.0"
+CLIENT_NAME = "Stardust Service Access"
 
 
 def _origin(base_url: str) -> str:
     parsed = urllib.parse.urlsplit(base_url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
-        raise ValueError("TTS base URL must be an absolute HTTP(S) URL")
+        raise ValueError("Service base URL must be an absolute HTTP(S) URL")
     return f"{parsed.scheme}://{parsed.netloc}"
 
 
@@ -50,7 +51,9 @@ def _origin(base_url: str) -> str:
 
 def token_path() -> Path:
     """Where the refresh token lives.  Honours an override for tests."""
-    override = os.getenv("STARDUST_TTS_TOKEN_FILE")
+    override = os.getenv("STARDUST_ACCESS_TOKEN_FILE") or os.getenv(
+        "STARDUST_TTS_TOKEN_FILE"
+    )
     if override:
         return Path(override)
     if os.name == "nt":
@@ -72,7 +75,7 @@ def _read_all() -> dict[str, Any]:
         value = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise RuntimeError(
-            f"Stored Stardust TTS credentials at {path} are not valid JSON. "
+            f"Stored Stardust Access credentials at {path} are not valid JSON. "
             "Delete the file and sign in again."
         ) from exc
     return value if isinstance(value, dict) else {}
@@ -159,9 +162,17 @@ def request_json(
 
 def discover(base_url: str) -> dict[str, Any]:
     resource_origin = _origin(base_url)
-    protected = request_json(
-        resource_origin + "/.well-known/cloudflare-access-protected-resource/"
-    )
+    try:
+        protected = request_json(
+            resource_origin + "/.well-known/cloudflare-access-protected-resource/"
+        )
+    except RuntimeError as exc:
+        if "HTTP 404" in str(exc):
+            raise RuntimeError(
+                f"Cloudflare Access metadata is missing for {resource_origin}; "
+                "the service-side Access application and AUD must be configured."
+            ) from exc
+        raise
     authorization_servers = protected.get("authorization_servers") or []
     if not authorization_servers:
         raise RuntimeError("OAuth resource metadata has no authorization server")
@@ -188,7 +199,7 @@ def _register(metadata: dict[str, Any], redirect_uri: str) -> str:
         metadata["registration_endpoint"],
         method="POST",
         payload={
-            "client_name": "Stardust TTS Skill",
+            "client_name": CLIENT_NAME,
             "redirect_uris": [redirect_uri],
             "grant_types": ["authorization_code"],
             "response_types": ["code"],
@@ -213,9 +224,9 @@ def _interactive_tokens(metadata: dict[str, Any]) -> tuple[str, dict[str, Any]]:
                 if values.get(key):
                     result[key] = values[key][0]
             message = (
-                "Stardust TTS authentication complete. You can close this window."
+                "Stardust Access authentication complete. You can close this window."
                 if result.get("code")
-                else "Stardust TTS authentication failed. Return to the terminal."
+                else "Stardust Access authentication failed. Return to the terminal."
             )
             body = message.encode("utf-8")
             self.send_response(200)
