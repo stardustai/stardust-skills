@@ -6,6 +6,24 @@ Move the `ocr` and `video-transcribe` skills from local API-key authentication t
 
 The OpenAI-backed `transcribe` skill is explicitly outside this change.
 
+## Repository-wide GPU service audit
+
+The expanded scope requires every direct Stardust/PreSeen GPU inference service in this repository to use shared Access authentication. A repository-wide scan of service URLs, API-key variables, HTTP clients, and skill documentation found three direct GPU-backed service integrations:
+
+| Skill | Service | GPU work | Current Access state | Required action |
+| --- | --- | --- | --- | --- |
+| `ocr` | `https://ocr.preseen.ai/v1` | RapidOCR document/image inference | Legacy API key | Migrate in this change |
+| `video-transcribe` | `https://video-transcribe.preseen.ai` | Subtitle extraction with server-side FunASR fallback | Legacy API key | Migrate in this change |
+| `stardust-tts` | `https://tts-api.preseen.ai/v1` | Qwen3-TTS synthesis | Shared Access already integrated | Regression-test only |
+
+No additional direct Stardust GPU service client exists in the current repository. The following are intentionally excluded:
+
+- `transcribe` calls OpenAI with `OPENAI_API_KEY`; it is a third-party API, not a Stardust Access application.
+- `stardust-interview` and `fundflow-investor-meeting` use separately authenticated MCP products; they do not contain a direct GPU-service HTTP client in this repository.
+- DingTalk, Veyra, web discovery sources, local browser/CDP endpoints, and localhost task management are unrelated service classes.
+
+Future direct `*.preseen.ai` GPU service clients should use `lib/stardust_access` by default and must document their own Access application/AUD prerequisite.
+
 ## Current state
 
 - `lib/stardust_access/access_oauth.py` provides Managed OAuth login with PKCE, per-origin refresh-token storage, session status, logout, and service-token headers.
@@ -127,6 +145,7 @@ Live endpoint validation is separate from client correctness. If the two service
 ## Acceptance criteria
 
 - OCR and Video Transcribe use `lib/stardust_access` for every authenticated request.
+- Every direct Stardust/PreSeen GPU inference service integration found in the repository audit is either migrated in this change or already covered by shared Access; no unclassified direct GPU-service client remains.
 - Employee mode, complete service-token mode, session status, and origin-scoped logout are documented and tested.
 - Neither skill reads, documents, or sends its legacy API key.
 - The installed layout resolves the shared library correctly.
