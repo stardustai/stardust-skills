@@ -1,0 +1,7 @@
+interface:
+  display_name: "项目交付文档收集"
+  short_description: "编制、核验并归档项目结项资料"
+  default_prompt: "使用 $project-delivery-document-collection 梳理项目结项所需文档并生成缺口清单。"
+
+policy:
+  allow_implicit_invocation: true

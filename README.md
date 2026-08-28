@@ -4,7 +4,7 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖 Friday Memory 初始化、每日技术前沿发现、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、TTS 语音合成、ASR 转写、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、Vibe Coding 工程交付、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，每日技术前沿发现先扫描可信聚合源和一手技术资料，再结合内部人物、会议和项目上下文筛选并归档；钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，文本转 MP3 走 Stardust 对外 Qwen3-TTS 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
+当前仓库覆盖 Friday Memory 初始化、每日技术前沿发现、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、TTS 语音合成、ASR 转写、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、项目交付结项资料收集、Vibe Coding 工程交付、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，每日技术前沿发现先扫描可信聚合源和一手技术资料，再结合内部人物、会议和项目上下文筛选并归档；钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，文本转 MP3 走 Stardust 对外 Qwen3-TTS 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；项目交付结项类 skill 主要盘点、核验和组织资料，不替代财务、法务、数据安全或正式结项审批；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
 
 ## 包含的 Skills
 
@@ -22,6 +22,7 @@
 | `fxiaoke-crm-cli` | 使用官方 `sharecrm` CLI 查询纷享销客 CRM 合同、商机、客户、联系人、交付、回款和跟进，按明确口径输出指标，并在 CRM 写操作前要求最终确认。 |
 | `internal-app-standards` | 统一 AI 编码生成的企业内部系统标准，覆盖技术栈选型、工程设计、React + Ant Design 前端、TypeScript/NestJS 后端、PostgreSQL/Prisma、迁移、Docker/Kubernetes 部署、生产就绪检查和代码评审门禁。 |
 | `ocr` | 调用 Stardust 对外 OCR 服务识别图片、截图和扫描 PDF，支持中英文、批量输入、指定 PDF 页码，以及 text、Markdown 和 JSON 输出。 |
+| `project-delivery-document-collection` | 面向已交付或待结项项目，自动盘点、补充、核验并归档结项资料，输出项目结项文档目录、交付完成报告、缺口清单、复盘报告和知识库沉淀清单。 |
 | `qa-generated-test-case` | 根据 PRD 生成标准 7 列 QA 测试用例，支持外部历史材料索引的 top N 检索、CSV/XLSX 导出和格式校验。 |
 | `senior-technical-product-evaluation` | 评估 CTO、技术总监、架构师、资深 AI/工程负责人等高级技术候选人的产品经历，要求互联网调研、产品事实卡、候选人责任边界推断、技术深度评分和目标岗位匹配判断。 |
 | `spec-intake` | 把一句话业务需求访谈成 Spec Driven JSON，要求逐步澄清业务证据、交付边界、验收标准、测试标准、运维标准和评审门禁。 |
@@ -40,6 +41,7 @@
 - 你使用 `~/.agents/skills` 作为本机 skills 安装目录。
 - 你希望把星尘内部反复使用的业务流程版本化，而不是每次临时写提示词。
 - 你希望 Agent 能继承统一的审阅规则、证据标准、提交协议和输出格式。
+- 你希望在项目交付后自动盘点结项资料、识别缺口、生成结项报告，并把可复用经验沉淀到知识库。
 - 你希望对内部系统做源码级安全审计，并沉淀可复查的风险证据和整改验收标准。
 - 你希望 AI 生成或改造的内部管理系统遵循统一的技术栈、工程设计、目录边界、数据库迁移、部署脚本和生产就绪门禁。
 - 你已经有可用的业务工具授权，例如 `dws`、官方 `sharecrm` CLI 登录会话、`xiaoqing_interview` MCP、浏览器登录态或本地开放平台配置。
@@ -173,6 +175,10 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 ```
 
 ```text
+用 project-delivery-document-collection 盘点这个已交付项目的结项资料，先输出文档清单和缺口清单
+```
+
+```text
 把这个一句话需求访谈成工程可以评审的 Spec Driven JSON
 ```
 
@@ -210,6 +216,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `fxiaoke-crm-cli` | 需要官方 `sharecrm` CLI 及当前使用者在本机建立的有效登录会话。CLI 会话不进入仓库，Agent 不索要、不读取、不共享 token、cookie 或其他凭证；查询、写入权限和审计继承当前登录的 CRM 用户。 |
 | `internal-app-standards` | 不需要开放平台 key。它读取用户授权范围内的本地内部系统源码、配置、数据库迁移、Docker/K8s 文件和 CI/部署脚本，用于技术选型、工程设计和生产就绪评审；不得提交或报告明文密钥、连接串、token、私有域名等敏感值。 |
 | `ocr` | 需要可访问 `https://ocr.preseen.ai/v1`。员工端通过公司邮箱完成 Cloudflare Access 登录；headless 工作负载使用成对的 `CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET`。本机 provider registry 只提供模型和语言默认值；识别文件只发送到该 OCR 服务。 |
+| `project-delivery-document-collection` | 默认不需要开放平台 key。若需要读取或归档钉钉文档、知识库、云盘、审批、项目群或在线表格，应使用用户已授权的 `dws`、浏览器登录态或指定平台工具；不得把涉密数据、客户敏感附件、明文下载链接或受控数据包提交到仓库。 |
 | `qa-generated-test-case` | 默认不需要业务系统凭证。若需要历史 PRD 上下文，应从用户授权的 memory/document store、私有数据目录或单独数据包检索 top N 片段，不把历史材料提交到仓库。 |
 | `senior-technical-product-evaluation` | 默认不需要业务系统凭证。它需要互联网调研公开资料；简历、内部汇总或候选人陈述只作为线索，不能单独证明产品领先性或候选人贡献。 |
 | `spec-intake` | 默认不需要业务系统凭证。若需求涉及现有系统、repo、API、MCP、Memory、Friday 或客户系统，应读取用户授权范围内的本地代码/文档来确认边界；不要提交访谈产物或客户资料。 |
@@ -250,6 +257,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 │   ├── fxiaoke-crm-cli/
 │   ├── internal-app-standards/
 │   ├── ocr/
+│   ├── project-delivery-document-collection/
 │   ├── qa-generated-test-case/
 │   ├── senior-technical-product-evaluation/
 │   ├── spec-intake/
