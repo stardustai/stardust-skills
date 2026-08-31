@@ -1,0 +1,4 @@
+interface:
+  display_name: "Startask I/O 契约审计"
+  short_description: "核对导入导出契约、定位跨层冲突并判定客户交付验证等级"
+  default_prompt: "Use $startask-io-contract-audit to audit this Startask import/export task and produce an evidence manifest, contract matrix, conflict register, implementation boundary, and verification readiness statement."

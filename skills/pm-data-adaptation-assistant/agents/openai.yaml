@@ -1,0 +1,4 @@
+interface:
+  display_name: "PM 数据适配问答"
+  short_description: "面向 PM 的导入导出与 Conflux 问答边界"
+  default_prompt: "Use $pm-data-adaptation-assistant to answer PM questions about data import/export, delivery checks, or Conflux usage."
