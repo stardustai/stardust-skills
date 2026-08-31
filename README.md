@@ -4,7 +4,7 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖 Friday Memory 初始化、每日技术前沿发现、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、TTS 语音合成、ASR 转写、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、项目交付结项资料收集、PM 数据适配和 Conflux 问答、Startask/Stardust I/O 契约审计、Vibe Coding 工程交付、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，每日技术前沿发现先扫描可信聚合源和一手技术资料，再结合内部人物、会议和项目上下文筛选并归档；钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，文本转 MP3 走 Stardust 对外 Qwen3-TTS 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；项目交付结项类 skill 主要盘点、核验和组织资料，不替代财务、法务、数据安全或正式结项审批；PM 数据适配问答类 skill 主要用项目经理能理解的语言解释导入/导出、平台错误、PM-check、交付校验和 Conflux 概念，不替代开发根因确认或客户交付审批；Startask/Stardust 契约审计类 skill 主要核对客户规格、真实样例、operator/schema、平台记录、适配代码和校验器，不替代平台端或客户验收；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
+当前仓库覆盖 Friday Memory 初始化、每日技术前沿发现、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、TTS 语音合成、ASR 转写、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、项目交付结项资料收集、PM 数据适配和 Conflux 问答、Startask/Stardust I/O 契约审计、Vibe Coding 工程交付、Vibe Coding 项目救援、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，每日技术前沿发现先扫描可信聚合源和一手技术资料，再结合内部人物、会议和项目上下文筛选并归档；钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，文本转 MP3 走 Stardust 对外 Qwen3-TTS 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；项目交付结项类 skill 主要盘点、核验和组织资料，不替代财务、法务、数据安全或正式结项审批；PM 数据适配问答类 skill 主要用项目经理能理解的语言解释导入/导出、平台错误、PM-check、交付校验和 Conflux 概念，不替代开发根因确认或客户交付审批；Startask/Stardust 契约审计类 skill 主要核对客户规格、真实样例、operator/schema、平台记录、适配代码和校验器，不替代平台端或客户验收；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；`vibe-coding-rescue` 面向 AI 生成或遗留项目的启动、构建、测试、环境、契约、迁移、CI/部署和 README 漂移救援，不替代正式需求交付或生产变更审批；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
 
 ## 包含的 Skills
 
@@ -36,6 +36,7 @@
 | `veyra-timesheet` | 把一段时间的真实活动核对并补齐到 Veyra 睿策工时系统：采集钉钉侧证据（日程、消息、听记、日志）并与已填记录对账，逐日推断项目归属，小时数以数值·依据·置信度形式提案，经用户确认后写入。支持请假与加班，仅 macOS。 |
 | `video-transcribe` | 通过 Stardust Video Transcribe 服务提取 YouTube 或 Bilibili 视频的字幕或 ASR 文本；视频 URL 与转写内容发送到该服务，服务凭证仅保留在本机。 |
 | `vibe-coding` | 将 `spec-intake` 产出的工程就绪 Spec 自动编排成稳定代码：初始化项目合同，按风险治理架构和技术债，执行 TDD、业务场景 E2E/Eval、独立 Review、Git 交付和可选 SRE 部署。 |
+| `vibe-coding-rescue` | 抢救 AI 生成、Vibe Coding 产出或历史遗留项目的启动、构建、测试、环境、API 契约、数据库迁移、CI/部署和 README 漂移问题，输出根因链、最小修复计划和新鲜验证证据。 |
 
 ## 适用场景
 
@@ -46,6 +47,7 @@
 - 你希望在项目交付后自动盘点结项资料、识别缺口、生成结项报告，并把可复用经验沉淀到知识库。
 - 你希望项目经理能用统一口径理解数据适配导入/导出、平台报错、PM-check、交付校验和 Conflux 使用边界。
 - 你希望在 Startask/Stardust 导入、预标、导出、回流或交付前审计客户契约、字段映射、平台记录、适配代码和验证边界。
+- 你希望把 AI 生成或遗留项目从“跑不起来 / 测试红 / README 不可信 / CI 失败”救回到可验证工程基线。
 - 你希望对内部系统做源码级安全审计，并沉淀可复查的风险证据和整改验收标准。
 - 你希望 AI 生成或改造的内部管理系统遵循统一的技术栈、工程设计、目录边界、数据库迁移、部署脚本和生产就绪门禁。
 - 你已经有可用的业务工具授权，例如 `dws`、官方 `sharecrm` CLI 登录会话、`xiaoqing_interview` MCP、浏览器登录态或本地开放平台配置。
@@ -199,6 +201,10 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 ```
 
 ```text
+用 vibe-coding-rescue 抢救这个 AI 生成项目，先复现 README 启动失败和测试失败，再输出根因链、最小修复计划和验证命令
+```
+
+```text
 统计今年已签约合同金额、平均成单周期、商机转换率、交付量和回款额，列出每项指标的口径
 ```
 
@@ -242,6 +248,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `veyra-timesheet` | 不需要开放平台 key。需要已登录的 `dws`，以及 opencli daemon + Browser Bridge 扩展（Chrome Web Store 安装），且挂扩展的 Chrome profile 已登录 Veyra。首次使用跑 skill 的 init 引导安装；登录态全部留在本机，不进仓库。 |
 | `video-transcribe` | 需要可访问 `https://video-transcribe.preseen.ai`。员工端通过公司邮箱完成 Cloudflare Access 登录；headless 工作负载使用成对的 `CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET`。视频 URL 和服务返回的转写文本只用于当前用户任务。 |
 | `vibe-coding` | 默认不需要业务系统凭证，但需要用户授权读取和修改目标仓库、运行其测试/Eval 命令并访问已确认的远程仓库。生产数据、Secret、部署和外部系统写入仍由项目权限及 `production-devops-sre` 门禁控制。 |
+| `vibe-coding-rescue` | 默认不需要业务系统凭证。它读取用户授权范围内的目标仓库、README、manifest、lockfile、env 模板、CI/部署、迁移和测试材料；运行 install/build/test/start/deploy 或推送前遵循用户授权和项目风险边界，不得提交 `.env`、token、cookie、私有 URL、数据库内容、日志敏感片段或本机状态。 |
 
 `dingtang-okr-review` 的 OKR 导出目前不是纯 API 实现。未来如果 `dws okr` 或叮当 OKR 官方 API 可用，才需要根据对应 API 的企业权限、应用授权或服务开通方式配置凭证。
 
@@ -284,7 +291,8 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 │   ├── transcribe/
 │   ├── veyra-timesheet/
 │   ├── video-transcribe/
-│   └── vibe-coding/
+│   ├── vibe-coding/
+│   └── vibe-coding-rescue/
 └── README.md
 ```
 

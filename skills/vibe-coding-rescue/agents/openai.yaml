@@ -1,0 +1,4 @@
+interface:
+  display_name: "Vibe Coding Rescue"
+  short_description: "抢救 AI 项目启动、测试、契约和 README 漂移"
+  default_prompt: "Use $vibe-coding-rescue to diagnose this AI-built project failure, produce the smallest repair plan, and verify the original command."
