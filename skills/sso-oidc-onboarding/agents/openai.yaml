@@ -1,0 +1,3 @@
+interface:
+  display_name: "SSO OIDC Onboarding"
+  short_description: "Auto-generate SSO OIDC integration code and register clients"
