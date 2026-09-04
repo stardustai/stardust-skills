@@ -6,7 +6,7 @@ Default issuer:
 https://sso.corpintra.rosettalab.top
 ```
 
-OIDC endpoints:
+OIDC endpoints. Generated clients must fetch discovery first and use the returned endpoint metadata, especially `jwks_uri`, instead of hardcoding JWKS as the primary source:
 
 ```text
 Discovery: /.well-known/openid-configuration
@@ -15,7 +15,7 @@ Token: /oauth/token
 UserInfo: /oauth/userinfo
 Introspection: /oauth/introspect
 Logout: /oauth/logout
-JWKS: /api/sso/v1/jwks
+JWKS fallback: /api/sso/v1/jwks
 ```
 
 ## Admin-Managed Company Project
@@ -108,7 +108,9 @@ Response has `integration.clientId` and, for confidential clients, `integration.
 
 Callback URLs are exact string matches. Register every environment callback separately; do not use wildcards.
 
-Confidential token exchange:
+Local development callbacks may use loopback HTTP URLs such as `http://localhost:3000/sso/callback`; these are development-only and visible only to the requesting user. Production clients must be registered separately with the real HTTPS service URL and HTTPS callback URL.
+
+Confidential token exchange must default to `client_secret_basic`:
 
 ```http
 POST /oauth/token
@@ -119,3 +121,9 @@ grant_type=authorization_code&code=<code>&redirect_uri=<exact-uri>&code_verifier
 ```
 
 Public clients must use PKCE S256 and send `client_id` plus `code_verifier`; they do not receive or store a secret.
+
+Before token exchange, validate `code_verifier` locally:
+
+- Length must be 43-128 characters.
+- Characters must be limited to `[A-Za-z0-9._~-]`.
+- Reject invalid verifier values before calling `/oauth/token`.
