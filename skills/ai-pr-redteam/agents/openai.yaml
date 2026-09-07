@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI PR Redteam"
+  short_description: "审查 AI PR 的 fake/fallback、弱测试和语言级工程质量风险"
+  default_prompt: "Use $ai-pr-redteam to review this AI-generated PR or diff for fake logic, fallback success, weak tests, contract drift, language-specific engineering quality, and merge readiness."
