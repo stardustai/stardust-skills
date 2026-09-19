@@ -56,8 +56,16 @@ request-minutes-access discovered=N requested=N already_requested=N readable=N u
 - `unresolved` means the console had not resolved an owner to ask yet. Those are
   retried on the next run; nothing is wrong.
 - `session_expires_in_days` counts down the signed-in console session. When the
-  command prints `session-renewal-required`, tell Derek to sign in again — the
-  session lasts about a month and only he can renew it.
+  command prints `session-renewal-required`, ask Derek to run
+
+  ```bash
+  ceo-agent renew-minutes-session
+  ```
+
+  It opens a browser on its own profile at the console, waits for him to sign
+  in, and saves the session where this command reads it. Only the sign-in needs
+  a person; every run after it is headless until the session expires, about a
+  month later.
 - Asking failing never stops the archive: they are separate tasks.
 - Without the 听记 admin role the console serves no listing and this task cannot
   work at all. That is reported as its own failure, distinct from an expired
@@ -85,16 +93,18 @@ It is not a failure and needs no action.
 
 ## What needs a person
 
-- the console session needs renewing — only Derek can sign in, and the command
-  prints `session-renewal-required` while there is still time
+- the console session needs renewing — only Derek can sign in, with
+  `ceo-agent renew-minutes-session`, and the command prints
+  `session-renewal-required` while there is still time
 - `sync-minutes-once` failed, which fails the whole run
 - the same minute has failed to archive on several consecutive runs
 
 ## Boundaries
 
 - Never send an access request any other way. `dws minutes +apply-permission`
-  answers `requested: true` for a request its owner never receives; only the
-  minute's page, read back afterwards, is evidence.
+  answers `requested: true` for a request its owner never receives. A request
+  counts only when the minute's page reads back `Applied, waiting for
+  processing`; the click itself is not evidence.
 - Never write archive files yourself. `sync-minutes-once` owns the layout, the
   cursor and the deduplication.
 - Reading a minute's content for other work goes through `dingtalk-minutes`,
