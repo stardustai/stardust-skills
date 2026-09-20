@@ -91,6 +91,31 @@ FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_SESSION_FIL
 [[ "$(<"$counter_file")" == 2 ]]
 echo "new-capacity-failure retry test passed"
 
+history_root="$tmp_dir/history-sessions"
+history_state="$tmp_dir/history-state.json"
+history_counter="$tmp_dir/history-counter"
+history_id="019ed90c-3b33-7922-92ad-6e61d74ca9d1"
+mkdir -p "$history_root"
+history_old="$history_root/rollout-old.jsonl"
+history_new="$history_root/rollout-new.jsonl"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$history_id\"}}" > "$history_old"
+printf '%s\n' '{"timestamp":"2026-09-20T09:14:00.000Z","ordinal":10,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"429 model at capacity"}}}' >> "$history_old"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$history_id\"}}" > "$history_new"
+printf '%s\n' '{"timestamp":"2026-09-20T09:14:01.000Z","ordinal":11,"type":"event_msg","payload":{"type":"task_started","turn_id":"new-turn"}}' >> "$history_new"
+printf '%s\n' 0 > "$history_counter"
+history_codex="$tmp_dir/history-codex.sh"
+cat > "$history_codex" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+attempt=$(( $(<"$HISTORY_COUNTER") + 1 ))
+printf '%s\n' "$attempt" > "$HISTORY_COUNTER"
+EOF
+chmod +x "$history_codex"
+HISTORY_COUNTER="$history_counter" python3 "$scanner" --once --session-root "$history_root" \
+  --state-file "$history_state" --codex-bin "$history_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
+[[ "$(<"$history_counter")" == 0 ]]
+echo "historical rollout suppression test passed"
+
 daemon_root="$tmp_dir/daemon-sessions"
 daemon_state="$tmp_dir/daemon-state.json"
 daemon_log="$tmp_dir/daemon.log"

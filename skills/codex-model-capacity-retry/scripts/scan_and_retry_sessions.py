@@ -143,20 +143,44 @@ def read_session_id(path: Path) -> str | None:
     return None
 
 
-def latest_capacity_failure(path: Path) -> CapacityFailure | None:
+def retry_boundary(path: Path) -> tuple[str, Path, dict] | None:
     session_id = read_session_id(path)
     if not session_id:
         return None
 
-    latest_completion: dict | None = None
+    latest_boundary: dict | None = None
     for record in read_json_lines(path):
         if record.get("type") != "event_msg":
             continue
         payload = record.get("payload", {})
-        if isinstance(payload, dict) and payload.get("type") == "task_complete":
-            latest_completion = record
+        if not isinstance(payload, dict):
+            continue
+        if payload.get("type") not in {"task_started", "task_complete", "turn_aborted"}:
+            continue
+        if latest_boundary is None or event_sort_key(record, path) > event_sort_key(latest_boundary, path):
+            latest_boundary = record
 
-    if latest_completion is None:
+    if latest_boundary is None:
+        return None
+    return session_id, path, latest_boundary
+
+
+def event_sort_key(record: dict, path: Path) -> tuple[str, int, float]:
+    try:
+        ordinal = int(record.get("ordinal", -1))
+    except (TypeError, ValueError):
+        ordinal = -1
+    try:
+        modified = path.stat().st_mtime
+    except OSError:
+        modified = 0
+    return str(record.get("timestamp", "")), ordinal, modified
+
+
+def capacity_failure_from_completion(
+    session_id: str, path: Path, latest_completion: dict
+) -> CapacityFailure | None:
+    if latest_completion.get("payload", {}).get("type") != "task_complete":
         return None
 
     payload = latest_completion.get("payload", {})
@@ -210,14 +234,26 @@ def candidate_failures(root: Path, max_age_seconds: float) -> list[CapacityFailu
     if not root.is_dir():
         return []
     cutoff = time.time() - max_age_seconds if max_age_seconds > 0 else 0
-    candidates: list[CapacityFailure] = []
+    latest_by_session: dict[str, tuple[Path, dict]] = {}
     for path in root.rglob("rollout-*.jsonl"):
         try:
             if cutoff and path.stat().st_mtime < cutoff:
                 continue
         except OSError:
             continue
-        failure = latest_capacity_failure(path)
+        boundary = retry_boundary(path)
+        if boundary is None:
+            continue
+        session_id, boundary_path, latest_event = boundary
+        current = latest_by_session.get(session_id)
+        if current is None or event_sort_key(latest_event, boundary_path) > event_sort_key(
+            current[1], current[0]
+        ):
+            latest_by_session[session_id] = (boundary_path, latest_event)
+
+    candidates: list[CapacityFailure] = []
+    for session_id, (path, latest_event) in latest_by_session.items():
+        failure = capacity_failure_from_completion(session_id, path, latest_event)
         if failure:
             candidates.append(failure)
     return sorted(candidates, key=lambda item: item.path.stat().st_mtime)

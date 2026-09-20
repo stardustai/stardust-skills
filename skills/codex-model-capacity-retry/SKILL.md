@@ -21,7 +21,7 @@ The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and i
 
 ## What it scans
 
-The scanner reads only the latest completion record from each recent session JSONL file. It retries only messages matching capacity symptoms (`Selected model is at capacity`, `model at capacity`, `server_overloaded`, `429`, or `too many requests`). It must never retry an authentication, permission, validation, tool, or business-logic failure.
+The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion; an older capacity failure is ignored while a newer turn is running or has completed. Capacity symptoms include `Selected model is at capacity`, `model at capacity`, `server_overloaded`, `429`, or `too many requests`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
 
 For a CLI-owned session it runs:
 
@@ -60,6 +60,6 @@ Run the bundled regression test:
 bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_scanner.sh
 ```
 
-The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, and Desktop writer-conflict routing through same-thread queue.
+The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, historical rollout suppression, and Desktop writer-conflict routing through same-thread queue.
 
 It also verifies that `--daemon --once` returns control to the launching process, preserves the launch working directory for `codex exec resume`, and exits cleanly.
