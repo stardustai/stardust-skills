@@ -36,7 +36,7 @@ output="$(FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_S
 
 [[ "$output" == *"$session_id"* ]]
 [[ "$(<"$counter_file")" == 1 ]]
-[[ "$(<"$args_file")" == *"exec resume --json $session_id"* ]]
+[[ "$(<"$args_file")" == *"exec resume --json --skip-git-repo-check $session_id"* ]]
 [[ "$(<"$args_file")" != *"model_reasoning_effort"* ]]
 [[ "$(<"$args_file")" != *"--model"* ]]
 [[ "$(tail -n 1 "$session_file")" == *"resumed successfully"* ]]
@@ -95,13 +95,28 @@ daemon_root="$tmp_dir/daemon-sessions"
 daemon_state="$tmp_dir/daemon-state.json"
 daemon_log="$tmp_dir/daemon.log"
 daemon_pid="$tmp_dir/daemon.pid"
+daemon_workdir="$tmp_dir/daemon-workdir"
+daemon_cwd_file="$tmp_dir/daemon-cwd"
 mkdir -p "$daemon_root"
-python3 "$scanner" --daemon --once --session-root "$daemon_root" --state-file "$daemon_state" \
-  --log-file "$daemon_log" --pid-file "$daemon_pid" --retry-delay-seconds 0 --max-age-seconds 0
+mkdir -p "$daemon_workdir"
+daemon_session_id="019ed90c-3b33-7922-92ad-6e61d74ca9e1"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$daemon_session_id\"}}" > "$daemon_root/rollout-daemon.jsonl"
+printf '%s\n' '{"timestamp":"2026-09-20T09:13:44.000Z","ordinal":1,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"429 model at capacity"}}}' >> "$daemon_root/rollout-daemon.jsonl"
+daemon_codex="$tmp_dir/daemon-codex.sh"
+cat > "$daemon_codex" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+pwd > "$DAEMON_CWD_FILE"
+EOF
+chmod +x "$daemon_codex"
+(cd "$daemon_workdir" && DAEMON_CWD_FILE="$daemon_cwd_file" python3 "$scanner" --daemon --once \
+  --session-root "$daemon_root" --state-file "$daemon_state" --log-file "$daemon_log" \
+  --pid-file "$daemon_pid" --codex-bin "$daemon_codex" --retry-delay-seconds 0 --max-age-seconds 0)
 for _ in $(seq 1 20); do
-  [[ -f "$daemon_log" ]] && [[ "$(grep -c 'daemon started' "$daemon_log" || true)" == 1 ]] && break
+  [[ -f "$daemon_cwd_file" ]] && [[ -f "$daemon_log" ]] && [[ "$(grep -c 'daemon started' "$daemon_log" || true)" == 1 ]] && break
   sleep 0.1
 done
 [[ -f "$daemon_log" ]]
 [[ "$(grep -c 'daemon started' "$daemon_log")" == 1 ]]
+[[ "$(<"$daemon_cwd_file")" == "$daemon_workdir" ]]
 echo "detached daemon test passed"

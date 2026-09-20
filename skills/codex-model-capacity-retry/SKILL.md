@@ -26,10 +26,10 @@ The scanner reads only the latest completion record from each recent session JSO
 For a CLI-owned session it runs:
 
 ```text
-codex exec resume SESSION_ID "Please retry the interrupted turn exactly as-is."
+codex exec resume --json --skip-git-repo-check SESSION_ID "Please retry the interrupted turn exactly as-is."
 ```
 
-The command keeps the original session ID and does not pass `--model`, `--thinking`, `model_reasoning_effort`, or an effort override.
+The command keeps the original session ID, allows the detached watcher to run independently of the launching directory, and does not pass `--model`, `--thinking`, `model_reasoning_effort`, or an effort override.
 
 ## Desktop-owned tasks
 
@@ -62,4 +62,4 @@ bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_s
 
 The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, and Desktop writer-conflict routing through same-thread queue.
 
-It also verifies that `--daemon --once` returns control to the launching process while the detached child writes its startup record and exits cleanly.
+It also verifies that `--daemon --once` returns control to the launching process, preserves the launch working directory for `codex exec resume`, and exits cleanly.

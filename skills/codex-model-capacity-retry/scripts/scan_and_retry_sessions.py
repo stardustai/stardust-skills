@@ -240,7 +240,15 @@ def resume_session(
     resume_prompt: str,
 ) -> int:
     status, output = run_command(
-        [codex_bin, "exec", "resume", "--json", failure.session_id, resume_prompt]
+        [
+            codex_bin,
+            "exec",
+            "resume",
+            "--json",
+            "--skip-git-repo-check",
+            failure.session_id,
+            resume_prompt,
+        ]
     )
     if status == 0:
         return 0
@@ -300,7 +308,6 @@ def detach_from_terminal(log_file: Path, pid_file: Path) -> bool:
         print(f"could not detach watcher: {error}", file=sys.stderr)
         raise
 
-    os.chdir("/")
     os.umask(0o027)
     log_file.parent.mkdir(parents=True, exist_ok=True)
     pid_file.parent.mkdir(parents=True, exist_ok=True)
