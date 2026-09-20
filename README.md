@@ -12,6 +12,7 @@
 | --- | --- |
 | `ai-pr-redteam` | 审查 AI 生成、Vibe Coding 产出或 Agent 大比例参与的 PR / diff，识别 fake/mock/fallback 假完成、弱测试、契约漂移，以及按 TypeScript、Python、Go、Java 等语言范式判断的工程质量、包边界、抽象复用和合入风险，并输出针对性优化建议、owner、验收标准和 proof command。 |
 | `build-work-memory` | 引导用户首次初始化 Friday Memory：按用户确认的范围读取本地文档、钉钉知识库 / 文档、钉钉 AI 听记和其他指定钉钉数据，标准化来源信息后提交到 Memory 后台处理。 |
+| `codex-model-capacity-retry` | 发现已有 Codex task/session 的模型容量、429 或 server overload 失败后，保持原 task、模型和 effort，等待 5 秒并持续续写；同时覆盖 CLI session 与 Desktop app-server writer 冲突。 |
 | `daily-frontier-tech-discovery` | 扫描最近 72 小时的技术聚合源、一手博客、GitHub、评测与高影响论文，结合内部人物、会议和项目上下文筛选，归档完整候选分析，并生成可直接发送到钉钉的中文技术日报。 |
 | `dengbao-code-audit` | 从等保三级 / MLPS 2.0 视角检查源码、配置、部署文件和项目文档，覆盖登录认证、权限控制、安全审计、数据安全、接口安全、传输安全、运维暴露面、备份恢复、发布变更和文档材料，并输出 Markdown 风险报告和整改路线图。 |
 | `dingtang-okr-review` | 从叮当 OKR 页面导出 OKR Excel，并按 CEO 视角在 KR 层级做证据核实、打分和超时折扣。 |
