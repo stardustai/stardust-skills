@@ -37,6 +37,11 @@ class CapacityFailure:
 
 def parse_args() -> argparse.Namespace:
     home = Path.home()
+    excluded_session_ids = [
+        value
+        for value in os.environ.get("CODEX_RETRY_EXCLUDE_SESSION_IDS", "").split(",")
+        if value
+    ]
     parser = argparse.ArgumentParser(
         description="Scan existing Codex session files and resume capacity-failed sessions."
     )
@@ -80,6 +85,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--resume-prompt",
         default="Please retry the interrupted turn exactly as-is.",
+    )
+    parser.add_argument(
+        "--exclude-session-id",
+        dest="excluded_session_ids",
+        action="append",
+        default=excluded_session_ids,
+        help=(
+            "Skip a controller/session ID so a watcher cannot queue a new visible turn "
+            "into the task that owns the watcher; repeatable"
+        ),
     )
     parser.add_argument(
         "--daemon",
@@ -304,6 +319,12 @@ def resume_session(
 def scan_once(args: argparse.Namespace, state: dict) -> int:
     retry_count = 0
     for failure in candidate_failures(args.session_root, args.max_age_seconds):
+        if failure.session_id in args.excluded_session_ids:
+            print(
+                f"Skipping excluded controller session {failure.session_id}.",
+                flush=True,
+            )
+            continue
         if state["sessions"].get(failure.session_id) == failure.signature:
             continue
 

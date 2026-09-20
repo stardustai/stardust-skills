@@ -116,6 +116,15 @@ HISTORY_COUNTER="$history_counter" python3 "$scanner" --once --session-root "$hi
 [[ "$(<"$history_counter")" == 0 ]]
 echo "historical rollout suppression test passed"
 
+excluded_state="$tmp_dir/excluded-state.json"
+excluded_counter="$tmp_dir/excluded-counter"
+printf '%s\n' 0 > "$excluded_counter"
+HISTORY_COUNTER="$excluded_counter" python3 "$scanner" --once --session-root "$session_root" \
+  --state-file "$excluded_state" --codex-bin "$history_codex" --retry-delay-seconds 0 \
+  --max-age-seconds 0 --exclude-session-id "$desktop_session_id" >/dev/null
+[[ "$(<"$excluded_counter")" == 0 ]]
+echo "controller-session exclusion test passed"
+
 daemon_root="$tmp_dir/daemon-sessions"
 daemon_state="$tmp_dir/daemon-state.json"
 daemon_log="$tmp_dir/daemon.log"
