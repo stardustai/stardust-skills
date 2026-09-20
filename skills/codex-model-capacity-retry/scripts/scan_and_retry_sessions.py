@@ -81,6 +81,25 @@ def parse_args() -> argparse.Namespace:
         "--resume-prompt",
         default="Please retry the interrupted turn exactly as-is.",
     )
+    parser.add_argument(
+        "--daemon",
+        action="store_true",
+        help="Detach from the invoking terminal and keep the watcher alive",
+    )
+    parser.add_argument(
+        "--log-file",
+        type=Path,
+        default=Path(
+            os.environ.get("CODEX_RETRY_LOG_FILE", home / ".codex/codex-capacity-retry.log")
+        ),
+    )
+    parser.add_argument(
+        "--pid-file",
+        type=Path,
+        default=Path(
+            os.environ.get("CODEX_RETRY_PID_FILE", home / ".codex/codex-capacity-retry.pid")
+        ),
+    )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--watch", action="store_true", help="Keep scanning until interrupted")
     mode.add_argument("--once", action="store_true", help="Scan and retry once, then exit")
@@ -265,27 +284,80 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
     return retry_count
 
 
+def detach_from_terminal(log_file: Path, pid_file: Path) -> bool:
+    """Detach the watcher and redirect its standard streams to a log file.
+
+    The first process returns to the invoking shell. The grandchild owns the
+    lock and continues independently of the terminal or PTY that launched it.
+    """
+    try:
+        if os.fork() > 0:
+            return False
+        os.setsid()
+        if os.fork() > 0:
+            os._exit(0)
+    except OSError as error:
+        print(f"could not detach watcher: {error}", file=sys.stderr)
+        raise
+
+    os.chdir("/")
+    os.umask(0o027)
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    pid_file.parent.mkdir(parents=True, exist_ok=True)
+    pid_file.write_text(f"{os.getpid()}\n", encoding="utf-8")
+
+    with log_file.open("a", encoding="utf-8", buffering=1) as log_stream:
+        with open(os.devnull, "r", encoding="utf-8") as devnull:
+            os.dup2(devnull.fileno(), sys.stdin.fileno())
+        os.dup2(log_stream.fileno(), sys.stdout.fileno())
+        os.dup2(log_stream.fileno(), sys.stderr.fileno())
+    print(f"daemon started pid={os.getpid()}", flush=True)
+    return True
+
+
+def remove_pid_file(pid_file: Path, pid: int) -> None:
+    try:
+        if pid_file.read_text(encoding="utf-8").strip() == str(pid):
+            pid_file.unlink()
+    except (FileNotFoundError, OSError):
+        pass
+
+
 def main() -> int:
     args = parse_args()
     if args.retry_delay_seconds < 0 or args.scan_interval_seconds < 0 or args.max_age_seconds < 0:
         print("retry delay, scan interval, and max age must be non-negative", file=sys.stderr)
         return 64
 
-    lock_path = args.state_file.with_name(f".{args.state_file.name}.lock")
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    with lock_path.open("w", encoding="utf-8") as lock:
-        try:
-            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError:
-            print("another session scanner is already running", file=sys.stderr)
-            return 0
+    for path_name in ("session_root", "state_file", "log_file", "pid_file"):
+        path = getattr(args, path_name)
+        setattr(args, path_name, path.expanduser().resolve())
 
-        state = load_state(args.state_file)
-        while True:
-            scan_once(args, state)
-            if args.once:
+    daemon_pid: int | None = None
+    if args.daemon:
+        if not detach_from_terminal(args.log_file, args.pid_file):
+            return 0
+        daemon_pid = os.getpid()
+
+    try:
+        lock_path = args.state_file.with_name(f".{args.state_file.name}.lock")
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+        with lock_path.open("w", encoding="utf-8") as lock:
+            try:
+                fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                print("another session scanner is already running", file=sys.stderr)
                 return 0
-            time.sleep(args.scan_interval_seconds)
+
+            state = load_state(args.state_file)
+            while True:
+                scan_once(args, state)
+                if args.once:
+                    return 0
+                time.sleep(args.scan_interval_seconds)
+    finally:
+        if daemon_pid is not None:
+            remove_pid_file(args.pid_file, daemon_pid)
 
 
 if __name__ == "__main__":

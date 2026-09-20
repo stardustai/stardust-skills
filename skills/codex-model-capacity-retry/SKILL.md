@@ -12,10 +12,12 @@ Use this skill for a provider-capacity interruption, not for a normal task failu
 A skill loaded inside the failed turn cannot intercept the request that already failed. Start the watcher from an independent terminal process:
 
 ```bash
-python3 /Users/derek/.agents/skills/codex-model-capacity-retry/scripts/scan_and_retry_sessions.py --watch
+python3 /Users/derek/.agents/skills/codex-model-capacity-retry/scripts/scan_and_retry_sessions.py --watch --daemon
 ```
 
-It waits five seconds after detecting a capacity error, then retries indefinitely. Stop it only when the user asks or when the original task has completed. There is no fixed attempt limit. The watcher remembers the exact failed completion, so it does not duplicate one failure; a later capacity failure appended to the same task has a new signature and is retried again.
+`--daemon` detaches the watcher from the terminal, shell, or Codex tool session that started it. This is required when the launching terminal may close; without it, the operating system may reap the watcher with that terminal. It waits five seconds after detecting a capacity error, then retries indefinitely. Stop it only when the user asks or when the original task has completed. There is no fixed attempt limit. The watcher remembers the exact failed completion, so it does not duplicate one failure; a later capacity failure appended to the same task has a new signature and is retried again.
+
+The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and its output to `~/.codex/codex-capacity-retry.log`. The state-file lock prevents a second watcher from duplicating retries.
 
 ## What it scans
 
@@ -59,3 +61,5 @@ bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_s
 ```
 
 The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, and Desktop writer-conflict routing through same-thread queue.
+
+It also verifies that `--daemon --once` returns control to the launching process while the detached child writes its startup record and exits cleanly.

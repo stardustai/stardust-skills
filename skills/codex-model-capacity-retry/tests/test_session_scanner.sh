@@ -90,3 +90,18 @@ FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_SESSION_FIL
   --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
 [[ "$(<"$counter_file")" == 2 ]]
 echo "new-capacity-failure retry test passed"
+
+daemon_root="$tmp_dir/daemon-sessions"
+daemon_state="$tmp_dir/daemon-state.json"
+daemon_log="$tmp_dir/daemon.log"
+daemon_pid="$tmp_dir/daemon.pid"
+mkdir -p "$daemon_root"
+python3 "$scanner" --daemon --once --session-root "$daemon_root" --state-file "$daemon_state" \
+  --log-file "$daemon_log" --pid-file "$daemon_pid" --retry-delay-seconds 0 --max-age-seconds 0
+for _ in $(seq 1 20); do
+  [[ -f "$daemon_log" ]] && [[ "$(grep -c 'daemon started' "$daemon_log" || true)" == 1 ]] && break
+  sleep 0.1
+done
+[[ -f "$daemon_log" ]]
+[[ "$(grep -c 'daemon started' "$daemon_log")" == 1 ]]
+echo "detached daemon test passed"
