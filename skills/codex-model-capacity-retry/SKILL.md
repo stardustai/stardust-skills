@@ -24,7 +24,7 @@ The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and i
 
 ## What it scans
 
-The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion; an older capacity failure is ignored while a newer turn is running or has completed. Capacity symptoms include `Selected model is at capacity`, `model at capacity`, `server_overloaded`, `429`, or `too many requests`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
+The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion; an older capacity failure is ignored while a newer turn is running or has completed. Capacity symptoms are evaluated only from the completion's direct terminal-error fields: `message`, `codex_error_info`, `error.message`, and `error.codex_error_info`. It never evaluates `last_agent_message`, which is normal answer text and can legitimately mention a status code or an amount such as `$429.06`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
 
 If the rollout metadata marks the record as a `source.subagent`, the scanner uses its existing `parent_thread_id` as the retry target. Multi-agent v2 subagent sessions cannot be resumed directly after they are unloaded; continuing the parent task preserves the original task and avoids repeatedly producing the `resume the parent first` error.
 
@@ -67,6 +67,6 @@ Run the bundled regression test:
 bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_scanner.sh
 ```
 
-The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, historical rollout suppression, controller-session exclusion, and Desktop writer-conflict routing through same-thread queue.
+The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and Desktop writer-conflict routing through same-thread queue.
 
 It also verifies that `--daemon --once` returns control to the launching process, preserves the launch working directory for `codex exec resume`, and exits cleanly.

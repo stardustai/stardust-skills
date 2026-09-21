@@ -230,7 +230,6 @@ def capacity_failure_from_completion(
     message_parts = [
         str(payload.get("message", "")),
         str(payload.get("codex_error_info", "")),
-        str(payload.get("last_agent_message", "")),
         str(error.get("message", "")),
         str(error.get("codex_error_info", "")),
     ]

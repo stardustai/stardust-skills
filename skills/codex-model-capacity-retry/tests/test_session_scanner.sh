@@ -132,6 +132,23 @@ HISTORY_COUNTER="$history_counter" python3 "$scanner" --once --session-root "$hi
 [[ "$(<"$history_counter")" == 0 ]]
 echo "historical rollout suppression test passed"
 
+normal_answer_root="$tmp_dir/normal-answer-sessions"
+normal_answer_state="$tmp_dir/normal-answer-state.json"
+normal_answer_counter="$tmp_dir/normal-answer-counter"
+normal_answer_id="019ed90c-3b33-7922-92ad-6e61d74ca9d2"
+normal_answer_file="$normal_answer_root/rollout-normal-answer.jsonl"
+mkdir -p "$normal_answer_root"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$normal_answer_id\"}}" > "$normal_answer_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:14:02.000Z","ordinal":12,"type":"event_msg","payload":{"type":"task_complete","last_agent_message":"Cost estimate: gpt-5.6-terra: $429.06."}}' >> "$normal_answer_file"
+printf '%s\n' 0 > "$normal_answer_counter"
+HISTORY_COUNTER="$normal_answer_counter" python3 "$scanner" --once --session-root "$normal_answer_root" \
+  --state-file "$normal_answer_state" --codex-bin "$history_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
+if [[ "$(<"$normal_answer_counter")" != 0 ]]; then
+  echo "normal task text containing a 429 amount was retried" >&2
+  exit 1
+fi
+echo "normal-answer 429 amount suppression test passed"
+
 excluded_state="$tmp_dir/excluded-state.json"
 excluded_counter="$tmp_dir/excluded-counter"
 printf '%s\n' 0 > "$excluded_counter"
