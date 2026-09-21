@@ -26,6 +26,8 @@ The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and i
 
 The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion; an older capacity failure is ignored while a newer turn is running or has completed. Capacity symptoms include `Selected model is at capacity`, `model at capacity`, `server_overloaded`, `429`, or `too many requests`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
 
+If the rollout metadata marks the record as a `source.subagent`, the scanner uses its existing `parent_thread_id` as the retry target. Multi-agent v2 subagent sessions cannot be resumed directly after they are unloaded; continuing the parent task preserves the original task and avoids repeatedly producing the `resume the parent first` error.
+
 For a CLI-owned session it runs:
 
 ```text

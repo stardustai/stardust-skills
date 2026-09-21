@@ -173,6 +173,43 @@ AUTH_CALLS="$auth_calls" AUTH_QUEUE_CALLS="$auth_queue_calls" python3 "$scanner"
 [[ ! -f "$auth_queue_calls" || "$(wc -l < "$auth_queue_calls")" == 0 ]]
 echo "authentication failure suppression test passed"
 
+subagent_root="$tmp_dir/subagent-sessions"
+subagent_state="$tmp_dir/subagent-state.json"
+subagent_calls="$tmp_dir/subagent-calls"
+mkdir -p "$subagent_root"
+subagent_id="019ed90c-3b33-7922-92ad-6e61d74ca9e3"
+parent_id="019ed90c-3b33-7922-92ad-6e61d74ca9e4"
+subagent_file="$subagent_root/rollout-subagent.jsonl"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$subagent_id\",\"parent_thread_id\":\"$parent_id\",\"source\":{\"subagent\":{\"thread_spawn\":{\"parent_thread_id\":\"$parent_id\"}}}}}" > "$subagent_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:16:00.000Z","ordinal":1,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"429 model at capacity"}}}' >> "$subagent_file"
+subagent_codex="$tmp_dir/subagent-codex.sh"
+cat > "$subagent_codex" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" >> "$SUBAGENT_CALLS"
+if [[ "$*" == *" 019ed90c-3b33-7922-92ad-6e61d74ca9e4 continue"* ]]; then
+  exit 0
+fi
+printf '%s\n' 'thread/resume failed: cannot resume an unloaded multi-agent v2 sub-agent through its parent; resume the parent first' >&2
+exit 1
+EOF
+chmod +x "$subagent_codex"
+SUBAGENT_CALLS="$subagent_calls" python3 "$scanner" --once --session-root "$subagent_root" \
+  --state-file "$subagent_state" --codex-bin "$subagent_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
+if [[ "$(wc -l < "$subagent_calls" | tr -d ' ')" != 1 ]]; then
+  echo "expected one parent retry call" >&2
+  exit 1
+fi
+if ! grep -Fqx "exec resume --json --skip-git-repo-check $parent_id continue" "$subagent_calls"; then
+  echo "subagent retry did not target its parent" >&2
+  exit 1
+fi
+if grep -Fq "$subagent_id" "$subagent_calls"; then
+  echo "subagent itself was resumed instead of its parent" >&2
+  exit 1
+fi
+echo "multi-agent subagent parent retry test passed"
+
 daemon_root="$tmp_dir/daemon-sessions"
 daemon_state="$tmp_dir/daemon-state.json"
 daemon_log="$tmp_dir/daemon.log"

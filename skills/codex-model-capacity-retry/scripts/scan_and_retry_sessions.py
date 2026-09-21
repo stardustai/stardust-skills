@@ -35,6 +35,7 @@ TAIL_BYTES = 1_048_576
 @dataclass(frozen=True)
 class CapacityFailure:
     session_id: str
+    retry_session_id: str
     path: Path
     signature: str
     message: str
@@ -146,7 +147,7 @@ def read_json_lines(path: Path) -> list[dict]:
     return records
 
 
-def read_session_id(path: Path) -> str | None:
+def read_session_metadata(path: Path) -> tuple[str, str | None] | None:
     try:
         with path.open("r", encoding="utf-8") as stream:
             record = json.loads(stream.readline())
@@ -159,14 +160,31 @@ def read_session_id(path: Path) -> str | None:
     for key in ("id", "session_id", "thread_id"):
         value = payload.get(key)
         if isinstance(value, str) and value:
-            return value
-    return None
-
-
-def retry_boundary(path: Path) -> tuple[str, Path, dict] | None:
-    session_id = read_session_id(path)
-    if not session_id:
+            session_id = value
+            break
+    else:
         return None
+
+    parent_thread_id = payload.get("parent_thread_id")
+    source = payload.get("source")
+    if isinstance(source, dict):
+        subagent = source.get("subagent")
+        if isinstance(subagent, dict):
+            thread_spawn = subagent.get("thread_spawn")
+            if isinstance(thread_spawn, dict):
+                parent_thread_id = thread_spawn.get("parent_thread_id", parent_thread_id)
+    if payload.get("thread_source") == "subagent" and isinstance(parent_thread_id, str):
+        return session_id, parent_thread_id
+    if isinstance(source, dict) and isinstance(source.get("subagent"), dict):
+        return session_id, parent_thread_id if isinstance(parent_thread_id, str) else None
+    return session_id, None
+
+
+def retry_boundary(path: Path) -> tuple[str, str | None, Path, dict] | None:
+    metadata = read_session_metadata(path)
+    if metadata is None:
+        return None
+    session_id, retry_session_id = metadata
 
     latest_boundary: dict | None = None
     for record in read_json_lines(path):
@@ -182,7 +200,7 @@ def retry_boundary(path: Path) -> tuple[str, Path, dict] | None:
 
     if latest_boundary is None:
         return None
-    return session_id, path, latest_boundary
+    return session_id, retry_session_id, path, latest_boundary
 
 
 def event_sort_key(record: dict, path: Path) -> tuple[str, int, float]:
@@ -198,7 +216,7 @@ def event_sort_key(record: dict, path: Path) -> tuple[str, int, float]:
 
 
 def capacity_failure_from_completion(
-    session_id: str, path: Path, latest_completion: dict
+    session_id: str, retry_session_id: str | None, path: Path, latest_completion: dict
 ) -> CapacityFailure | None:
     if latest_completion.get("payload", {}).get("type") != "task_complete":
         return None
@@ -230,7 +248,7 @@ def capacity_failure_from_completion(
             str(error.get("codex_error_info", "")),
         ]
     )
-    return CapacityFailure(session_id, path, signature, message)
+    return CapacityFailure(session_id, retry_session_id or session_id, path, signature, message)
 
 
 def load_state(path: Path) -> dict:
@@ -254,7 +272,7 @@ def candidate_failures(root: Path, max_age_seconds: float) -> list[CapacityFailu
     if not root.is_dir():
         return []
     cutoff = time.time() - max_age_seconds if max_age_seconds > 0 else 0
-    latest_by_session: dict[str, tuple[Path, dict]] = {}
+    latest_by_session: dict[str, tuple[str | None, Path, dict]] = {}
     for path in root.rglob("rollout-*.jsonl"):
         try:
             if cutoff and path.stat().st_mtime < cutoff:
@@ -264,16 +282,18 @@ def candidate_failures(root: Path, max_age_seconds: float) -> list[CapacityFailu
         boundary = retry_boundary(path)
         if boundary is None:
             continue
-        session_id, boundary_path, latest_event = boundary
+        session_id, retry_session_id, boundary_path, latest_event = boundary
         current = latest_by_session.get(session_id)
         if current is None or event_sort_key(latest_event, boundary_path) > event_sort_key(
-            current[1], current[0]
+            current[2], current[1]
         ):
-            latest_by_session[session_id] = (boundary_path, latest_event)
+            latest_by_session[session_id] = (retry_session_id, boundary_path, latest_event)
 
     candidates: list[CapacityFailure] = []
-    for session_id, (path, latest_event) in latest_by_session.items():
-        failure = capacity_failure_from_completion(session_id, path, latest_event)
+    for session_id, (retry_session_id, path, latest_event) in latest_by_session.items():
+        failure = capacity_failure_from_completion(
+            session_id, retry_session_id, path, latest_event
+        )
         if failure:
             candidates.append(failure)
     return sorted(candidates, key=lambda item: item.path.stat().st_mtime)
@@ -302,7 +322,7 @@ def resume_session(
             "resume",
             "--json",
             "--skip-git-repo-check",
-            failure.session_id,
+            failure.retry_session_id,
             resume_prompt,
         ]
     )
@@ -322,7 +342,7 @@ def resume_session(
         flush=True,
     )
     queue_status, queue_output = run_command(
-        [queue_bin, "queue", "--thread", failure.session_id, "--message", resume_prompt]
+        [queue_bin, "queue", "--thread", failure.retry_session_id, "--message", resume_prompt]
     )
     if AUTH_FAILURE_RE.search(queue_output):
         print(
@@ -336,7 +356,10 @@ def resume_session(
 def scan_once(args: argparse.Namespace, state: dict) -> int:
     retry_count = 0
     for failure in candidate_failures(args.session_root, args.max_age_seconds):
-        if failure.session_id in args.excluded_session_ids:
+        if (
+            failure.session_id in args.excluded_session_ids
+            or failure.retry_session_id in args.excluded_session_ids
+        ):
             print(
                 f"Skipping excluded controller session {failure.session_id}.",
                 flush=True,
@@ -348,6 +371,7 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
         retry_count += 1
         print(
             f"Found capacity failure in existing session {failure.session_id}; "
+            f"retry target is {failure.retry_session_id}; "
             f"retrying after {args.retry_delay_seconds:g}s.",
             flush=True,
         )
