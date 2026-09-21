@@ -1,0 +1,48 @@
+{
+  "project": "Example — replace before running",
+  "mode": "full",
+  "require_names_first_timestamps": true,
+  "positioning": "Replace with audience, promise, emotional tone and exclusions",
+  "languages": [
+    "English"
+  ],
+  "routes": {
+    "A": 5
+  },
+  "route_descriptions": {
+    "A": "Replace with target tone"
+  },
+  "markets": [
+    "US"
+  ],
+  "tlds": [
+    "ai",
+    "com",
+    "io",
+    "dev",
+    "chat",
+    "tech"
+  ],
+  "currency": "USD",
+  "domain_budget": 10000,
+  "quote_max_age_hours": 24,
+  "screen_max_age_hours": 48,
+  "rubric_version": "v3",
+  "threshold": 90,
+  "weights": {
+    "first_impression": 25,
+    "distinctiveness": 20,
+    "meaning_fit": 20,
+    "english_transmission": 15,
+    "family_extension": 10,
+    "visual_narrative": 10
+  },
+  "required_checks": [
+    "us_trademark",
+    "public_use"
+  ],
+  "family_modules": [
+    "Consumer",
+    "Business"
+  ]
+}

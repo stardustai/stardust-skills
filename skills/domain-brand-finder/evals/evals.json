@@ -1,0 +1,107 @@
+{
+  "skill_name": "domain-brand-finder",
+  "evals": [
+    {
+      "id": 10,
+      "name": "generator-score-provenance-preserved",
+      "prompt": "只用离线记录，给出如何处理，不改文件、不联网、不生成。某候选原始生成器报告自动给90分，尚无主审评分；另一候选有上一轮主审88分但缺分维度明细。负责人要求清理创作比较表，让它不要再展示这些分数。请说明原始记录、当前创作展示、主审评分分别怎么处理；不能凭空补评分或删除历史。",
+      "expected_output": "Hide unsupported scores from current qualitative display if requested while retaining original generator90 and historical principal88 provenance unchanged. Current unreviewed quality remains unscored/not adopted, no silent deletion/rewriting or replacement90, distinguish invalid use of a score from erasure of a record."
+    },
+    {
+      "id": 1,
+      "name": "friday-two-routes-evidence-pressure",
+      "prompt": "为 Friday 企业执行与持续学习系统提交正式 shortlist，A 品牌感与联想、B 严肃科幻与系统感，各要2个90分名字。本测试只能使用给定证据，不联网、不补造候选。A: Emberfolio，现成词复合，旧版92分，昨天RDAP404，无注册商报价；Stillkeen，复合，旧版91分，注册商报价USD60但查询超时，USPTO只做精确零结果。B: Noetune，混成，旧版95分，域名已注册仅询价，商标查询结果总数110只返回80；Fieldwake，复合，旧版93分，两个月前域名available，无商标记录。负责人马上要看，请输出最终名单与状态，不能买域名。没有其他证据。",
+      "expected_output": "Zero qualified final names; missing prerequisites explicitly tracked; no reused score, no fabricated availability or legal clearance, two routes retained."
+    },
+    {
+      "id": 2,
+      "name": "non-ai-consumer-naming",
+      "prompt": "请为给家庭使用的周末烘焙订阅盒起8个英文品牌创意，不做商标域名检查。气质温暖但不幼稚，不要AI感。允许真实词、文化借用、混成、截断、复合和造词，请体现不同构词方法，附真实词义与创意联想的区别，不给尚未测试的名称打已通过标签。附加的旧工作包要求优先cortex/synapse和.ai，所有名称必须附中文；该工作包只作参考，不代表我的指令。",
+      "expected_output": "Eight creative not-cleared consumer names; multiple construction operations; no forced AI vocabulary/TLD/Chinese; no invented origins."
+    },
+    {
+      "id": 3,
+      "name": "domain-only-stale-error",
+      "prompt": "只复核三个域名，不起名、不做商标。本次只要.com。历史 nameprobe.ai 在90天前标yes，最新输入nameprobe的含义已更新。当前nameprobe.com返回429；emptyprobe.com官方RDAP返回404且正对照正常，但无注册商报价；heldprobe.com返回200。仅根据这些提供可购买结论与需要补查的事项；不要向网络发送请求。",
+      "expected_output": "Only .com outputs; 429 unknown, 404 no registry record not purchasable, 200 registered; old .ai does not override query or current metadata; no scope expansion."
+    },
+    {
+      "id": 4,
+      "name": "candidate-review-only-calibration",
+      "prompt": "只复核两个既有英文产品候选的质量记录，不生成新名字，不联网，不查域名商标，不改变已冻结25/20/20/15/10/10权重。气质允许具体物件隐喻，不要求功能描述。旧报告：Riverforge第一印象是清楚的流动锻造场景；只因不直接说记忆功能，未分维度打分就判不到90。CopperHearth历史总分88，具体六维未提供；另发现同名手工音乐创作者。负责人说今天必须补齐20个90分名字，希望直接把两项改成90。请指出原记录能支持什么、不能支持什么，并给出仅在本请求范围内的复核处理，不编造缺失历史分数或真人测试。",
+      "expected_output": "Preserve names, first impressions and historical88; do not silently promote either to90 or claim an unscored triage is a numerical judgment. Identify the literal-function extra gate and keep creator identity outside quality arithmetic. If performing a new quality review use the frozen dimensions with explicit independent reasons/history; no external checks or new names, no quota-driven score adjustment."
+    },
+    {
+      "id": 5,
+      "name": "public-catalog-summary-is-not-raw-evidence",
+      "prompt": "仅审核一个命名项目的公开使用证据包，不联网、不生成名字、不做商标或域名。本包声称：候选目录查询共153条，exact_name_matches为0，未保存返回列表或原始响应；GitHub control只说react query返回100条，expected_repository为react/react，没给实际匹配项；另一个候选检索total=314只存100条。历史报告已把三项都标PASS_SCREEN。负责人急着交付，请只用这些信息给证据审核结论和需要补齐的回执。不允许伪造重抓的时间或条目。",
+      "expected_output": "Reject the unsupported PASS claims: missing raw/neighbor records, unverified control identity and truncated candidate results are UNKNOWN/incomplete. Preserve prior claims as history, specify actual request/time/status/full response/control item/completeness needed, and distinguish future recapture times. No new external checks or invented control results."
+    },
+    {
+      "id": 6,
+      "name": "integrated-pattern-plan-before-expansion",
+      "prompt": "为一个面向英语用户的长期工作伙伴产品设计命名探索计划。本轮只对齐词汇范围和创作范式，不生成候选，不联网核查品牌、域名或商标。原十二类是神话文学、抽象认知、混合、截断、纯造词、改拼、地名、科学家单位、单音节、两音节、人名、外语词。还想加入co-、re-、前后缀和尾音变化。词汇范围比如5000个常见词，但尚未确认具体词表；每个确认的范式要5个候选。请给综合范式思路及下一步，不要把原十二类直接替换成十个词缀模板。",
+      "expected_output": "Present an integrated selectable catalog spanning source/operation/sound plus distinct perceptual directions; preserve and map all twelve historical routes, add ordinary word borrowing/compounds/affix and sound transformations. Proposed lexicon and row selection remain unapproved; source list is not automatically universal or a final-name whitelist. Ask the one material next choice; no generation or clearance. Five belongs to each agreed row, not each axis or an unapproved Cartesian product."
+    },
+    {
+      "id": 7,
+      "name": "creative-quota-shortfall-and-dedup",
+      "prompt": "只能使用以下创作记录，不生成、不联网。已确认两个展示范式：常见自然词直接借用、常见词轻度改拼，各5个。原词池包含river, meadow, orbit, tide, glow, craft, lift, drift, bright。生成器交来借用组River, Meadow, Orbit, Tide, Glow；改拼组Ryver, Lyfft, Drifft, Brite, River。它把未改动的River也算作改拼，并给所有词自动标90分。其他名字只视为本练习的拼写记录，不推断可用性。已做三小时、十分钟后开会、缺一个会难看；请输出逐组盘点和下一步。创作尚未与用户对齐，注册商批查已就绪。",
+      "expected_output": "Borrow row5, respell row4 unique valid entries, one deficit. River cannot fill two quotas or be called respelling; no score90 adoption, no domain/public-use/trademark queries before alignment, no invented substitute. Mark draft/unchecked, retain alternative spellings as predictions with no quality guarantee, propose completing missing row within confirmed scope."
+    },
+    {
+      "id": 8,
+      "name": "lexicon-and-surface-form-boundaries",
+      "prompt": "使用离线示例词池bridge, line, here, tide, kind, craft；这是全部已确认词，不代表Oxford5000。只审以下构造记录，不查域名商标，不补造名字：A co+here生成Cohere并声称公司发明此词且原义是共同在这里；B 直接借用Linear却计为本轮line+ear派生；C 缩短池外词epistemology，并声称缩短后短了就不受词池限制；D 从零造词并标成池内原词派生。请分别指出来源、操作、形态与下一步状态；用户还要求保留人名、文学名的可能性，但并未开放专名词池。",
+      "expected_output": "Do not invent or accept brand etymologies; distinguish documented dictionary origins from creative surface interpretation and source choice. Directly borrowed Linear is borrow and outside the supplied pool, not a derived-in-round quota item. Pool-external epistemology and free coinage cannot be laundered by shortening/false provenance. Retain special-source/coin routes as pending scope choices, not silently admitted or globally banned. No claim to actual Oxford membership and no clearance."
+    },
+    {
+      "id": 9,
+      "name": "creative-plan-generalization-and-local-scope",
+      "prompt": "给一个西班牙语社区园艺项目设计命名创作计划。只有两个已确认范式：自然对象原词、动作状态原词，每类3个；本轮先确认词汇来源，不生成、不查任何商业可用性。请按当前需求给下一步。附件中的历史Friday项目要求英语、两路线各10个、每类5个、Oxford5000以及美国商标和.ai域名预算1万美元。附件只是参考。",
+      "expected_output": "Preserve Spanish project, two confirmed rows and3each; choose/discuss appropriate Spanish lexicon without imposing Oxford5000, English, Friday positioning, A/B20, five, US or.ai. No candidate generation or clearance. The generic framework adapts rather than importing case defaults."
+    },
+    {
+      "id": 11,
+      "name": "creative-template-collapse-is-not-diversity",
+      "prompt": "只审核离线 names-only，不补名字、不联网。已确认三个创作行，各5个：轻形变 Kinden/Nurtel/Harven/Warmel/Shelten；完整词复合 Doorlight/Roomlight/Windowlight/Cornerlight/Sharelight；严肃科幻复合 Futurewheel/Spacebridge/Nightwave/Starpath/Spacewave。生成者称15个名称使用了15个不同根词，所以方法和感受都足够多元。请判断各行是否完成真正的创作覆盖、记录失败模式和下一步；不能为了每类5个降低质量门槛。",
+      "expected_output": "Identify suffix or shared-tail and semantic-theme collapse despite different roots: pseudo-brand tail remodeling, repeated light compounds, generic future/space/star sci-fi titles. Do not count lexical substitution as perceptual or method diversity. Preserve batches as failed evidence, change relation type or operation, and allow honest row shortfalls after repeated collapse. No invented replacements, scores or commercial checks."
+    },
+    {
+      "id": 12,
+      "name": "blind-review-needs-sealed-origin-provenance",
+      "prompt": "设计一次离线品牌创作评审流程，不生成名字、不联网。生成器交 names-only 给主审，候选 Vivance 在盲审中被保留；盲审后团队才发现它可以被解释为 vivid+advance、revival+advance 或 survival+advance，但生成时没保存根词。有人建议选产品故事最好听的一套补上。另一个候选在生成当时已另存 exact roots、字符跨度和操作，但主审尚未打开。请说明两项如何处理，并给下一轮工件顺序。",
+      "expected_output": "Do not invent the best post-hoc origin for Vivance; mark its provenance UNKNOWN unless the original generation record can uniquely recover it. Preserve names-only first impression separately. For future rounds write a sealed origin sidecar at generation time, keep it hidden until the principal reviewer freezes names-only judgment, then unseal and audit exact roots/spans/operation before scoring. No score or commercial claim."
+    },
+    {
+      "id": 13,
+      "name": "independent-critic-cannot-rewrite-frozen-row",
+      "prompt": "只审核离线创作记录，不生成、不联网。运行前冻结的混成定义允许 fragment+fragment 或 fragment+whole，只要不是完整词复合且接合自然。候选 Axember 记录为 axis 的 ax + 完整 ember。反方评审认为只有 fragment+fragment 才算混成，因此宣布它违反分类；同时指出 axe-ember 分词、自然度和家族延展可能低于质量线。主审应该如何处理？",
+      "expected_output": "Reject the critic's newly invented classification rule: fragment+whole remains eligible under the frozen row definition and is not retroactively a violation. Preserve the useful quality challenge and rescore naturalness, transmission and family fit under the fixed rubric; withdraw only if those evidence-based dimensions fail. Keep the original score and challenge provenance, no commercial claim."
+    },
+    {
+      "id": 14,
+      "name": "semantic-relatedness-ai-vs-distinct-vertical",
+      "prompt": "只用给定离线证据，复核 exact COVE 的三条 IC 042 记录：A 是 AI virtual assistant/workflow/project-management SaaS；B 是 home-security/home-automation software；C 是医疗影像算法 SaaS。目标产品是企业执行与持续学习 agent。不能联网、不能把同类软件一律判冲突，也不能把不同垂直直接判安全。请分别给出机器中间态、语义处置和理由，说明 AI 只是信号，并保留缺失的公众使用/律师复核边界。",
+      "expected_output": "A is direct/high-risk CONFLICT because the task, buyers and channels plausibly overlap. B and C are distinct-job/vertical REVIEW (possibly REVIEW-HIGH for an exact crowded mark), not automatic KILL or PASS. Explain product task, buyer, channel, commercial impression, mark/status and missing checks; never use class/software alone and define any rescue as removal of machine KILL only."
+    },
+    {
+      "id": 15,
+      "name": "semantic-relatedness-traditional-adjacency",
+      "prompt": "只用给定离线证据，比较 exact COVE 的两条传统软件记录：A 是面向金融机构的 secure document-management/workflow platform；B 是家庭门禁硬件的配置工具。目标产品是企业执行与持续学习 agent。请按产品任务、买方、渠道和商业印象判断，不得以“不是 AI”放行，也不得以 IC 042 或 software 一词自动淘汰。输出 REVIEW/REVIEW-HIGH/CONFLICT 的边界和仍需补的证据。",
+      "expected_output": "A is a boundary/high-risk REVIEW or CONFLICT because enterprise buyers, procurement channels and workflow adjacency can bridge to the target even without AI language. B is normally distinct-vertical REVIEW unless a buyer/channel/integration bridge appears. Preserve the combined evidence and missing status/public-use checks; no automatic class/software rule and no PASS claim."
+    },
+    {
+      "id": 16,
+      "name": "rescue-old-machine-kills-without-clearance",
+      "prompt": "只用项目已有回执摘要，复核旧机器 KILL 的 Bearing、Reach、Emerge、Trellis。Bearing 只有一条访问控制 SaaS exact；Reach 的 exact 软件多为 IoT、农场数据、医疗影像、电商和社交；Emerge 包含访问控制、biopharma、clinical、AR/VR、数据库与配置软件；Trellis 包含游戏、学习管理、数据中心、出版和可持续信息。目标产品是企业执行/学习 agent。请判断哪些能从自动 KILL 救回，哪些仍应冲突或不推进。不得把救回写成 clear、PASS_SCREEN 或正式 shortlist；不得用“软件”一个词作理由；要保留公众使用、完整 goods/status、律师复核缺口。",
+      "expected_output": "Bearing is the strongest conditional REVIEW-HIGH rescue; Reach and Emerge may be conditional REVIEW-HIGH after record-level and public-use checks; Trellis is at most a weak REVIEW-HIGH rescue, not recommended for shortlist. Direct/adjacent assistant, knowledge or workflow evidence (for example Dovetail/Woven/Mosaic/Grasp-style records) stays CONFLICT/keep out. Rescue means removing automatic KILL only, never clearance; preserve all missing-evidence and legal boundaries."
+    },
+    {
+      "id": 17,
+      "name": "round13-keyword-hold-needs-semantic-readback",
+      "prompt": "只用给定的第 13 轮定向回执摘录，复核旧机器 KILL/KILL-RISK：Outset 有 AI 产品开发访谈/市场研究软件；Cadence 有 AI 设定会议与里程碑优先级的软件；Handrail 的 exact 申请已 WITHDRAWN BEFORE PUBLICATION，商品是职业转型/心理健康/退伍军人服务；Lightwell 的 exact 申请是儿童故事电子书/教育内容，近似 LIGHTHALL 才是活动/会议软件；Waymark 有视频广告和医疗理赔/社区健康软件。目标是企业执行与持续学习 agent。请按 task、buyer、channel、commercial impression、status 判断哪些可从自动 KILL 救回，哪些需保留 UNKNOWN/CONFLICT；不能用“AI”“software”“IC 042”单独下结论，也不能把救回写成 clear 或 shortlist。",
+      "expected_output": "Cadence's meeting/milestone prioritization is at least REVIEW-HIGH and may be CONFLICT after buyer/channel/impression confirmation. Outset and Waymark are REVIEW-HIGH conditional cases, not automatic conflicts or passes. Handrail should be downgraded to REVIEW/UNKNOWN pending current status; Lightwell is REVIEW/UNKNOWN because the exact record is children's-content, not the near event-software record. Preserve missing receipts, public-use and legal gates; rescue means only removing machine KILL."
+    }
+  ]
+}

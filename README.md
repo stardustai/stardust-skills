@@ -12,6 +12,8 @@
 | --- | --- |
 | `ai-pr-redteam` | 审查 AI 生成、Vibe Coding 产出或 Agent 大比例参与的 PR / diff，识别 fake/mock/fallback 假完成、弱测试、契约漂移，以及按 TypeScript、Python、Go、Java 等语言范式判断的工程质量、包边界、抽象复用和合入风险，并输出针对性优化建议、owner、验收标准和 proof command。 |
 | `build-work-memory` | 引导用户首次初始化 Friday Memory：按用户确认的范围读取本地文档、钉钉知识库 / 文档、钉钉 AI 听记和其他指定钉钉数据，标准化来源信息后提交到 Memory 后台处理。 |
+| `ceo-sales-weekly-report` | 从当前目标和纷享销客 CRM 实际数据生成按需销售周报，区分目标、实际、预测和缺失数据，不修改 CRM 或自动发送报告。 |
+| `ceo-weekly-report` | 从钉钉会议、消息、听记、公司 OKR 和业务线材料整理证据化 CEO 周报，保留问题追踪、版本保护和写后读回门禁。 |
 | `daily-frontier-tech-discovery` | 扫描最近 72 小时的技术聚合源、一手博客、GitHub、评测与高影响论文，结合内部人物、会议和项目上下文筛选，归档完整候选分析，并生成可直接发送到钉钉的中文技术日报。 |
 | `dengbao-code-audit` | 从等保三级 / MLPS 2.0 视角检查源码、配置、部署文件和项目文档，覆盖登录认证、权限控制、安全审计、数据安全、接口安全、传输安全、运维暴露面、备份恢复、发布变更和文档材料，并输出 Markdown 风险报告和整改路线图。 |
 | `dingtang-okr-review` | 从叮当 OKR 页面导出 OKR Excel，并按 CEO 视角在 KR 层级做证据核实、打分和超时折扣。 |
@@ -19,6 +21,7 @@
 | `dingtalk-knowledge-organize` | 对钉钉知识库做盘点、分类、移动、重命名、去重和 CSV 审批式整理。底层操作优先走 `dws doc` / `dws wiki`。 |
 | `dingtalk-minutes-access-request` | 只处理钉钉 AI 听记权限申请、权限复查和阻塞诊断。听记正文、摘要、转写读取应走 `dws minutes`。 |
 | `dingtalk-oa-approval` | 审阅钉钉 OA 审批，要求读完整审批详情、流水、附件、链接文档和依据材料后再给审批意见。 |
+| `domain-brand-finder` | 按已确认的命名范式和词汇边界生成、评审和筛选产品/公司名称，并分别记录域名、商标初筛和软件近似使用证据；不替代购买或法律申请。 |
 | `fundflow-investor-meeting` | 准备 FundFlow/融管通投资人会议、会后复盘、投资人问题和风格分析、跟进建议，以及融资群更新。 |
 | `fxiaoke-crm-cli` | 使用官方 `sharecrm` CLI 查询纷享销客 CRM 合同、商机、客户、联系人、交付、回款和跟进，按明确口径输出指标，并在 CRM 写操作前要求最终确认。 |
 | `internal-app-standards` | 统一 AI 编码生成的企业内部系统标准，覆盖技术栈选型、工程设计、React + Ant Design 前端、TypeScript/NestJS 后端、PostgreSQL/Prisma、迁移、Docker/Kubernetes 部署、生产就绪检查和代码评审门禁。 |
