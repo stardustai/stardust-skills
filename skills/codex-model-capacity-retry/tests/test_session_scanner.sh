@@ -125,6 +125,38 @@ HISTORY_COUNTER="$excluded_counter" python3 "$scanner" --once --session-root "$s
 [[ "$(<"$excluded_counter")" == 0 ]]
 echo "controller-session exclusion test passed"
 
+auth_root="$tmp_dir/auth-sessions"
+auth_state="$tmp_dir/auth-state.json"
+auth_calls="$tmp_dir/auth-calls"
+auth_queue_calls="$tmp_dir/auth-queue-calls"
+mkdir -p "$auth_root"
+auth_session_id="019ed90c-3b33-7922-92ad-6e61d74ca9e2"
+auth_file="$auth_root/rollout-auth.jsonl"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$auth_session_id\"}}" > "$auth_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:15:00.000Z","ordinal":1,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"429 model at capacity"}}}' >> "$auth_file"
+auth_codex="$tmp_dir/auth-codex.sh"
+cat > "$auth_codex" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" >> "$AUTH_CALLS"
+if [[ "$1 $2" == "queue --thread" ]]; then
+  printf '%s\n' 1 >> "$AUTH_QUEUE_CALLS"
+fi
+printf '%s\n' '{"error":{"message":"Encountered invalidated oauth token for user, failing request","code":"token_revoked"},"status":401}' >&2
+printf '%s\n' 'thread-store conflict: thread already has an active writer' >&2
+exit 1
+EOF
+chmod +x "$auth_codex"
+AUTH_CALLS="$auth_calls" AUTH_QUEUE_CALLS="$auth_queue_calls" python3 "$scanner" --once \
+  --session-root "$auth_root" --state-file "$auth_state" --codex-bin "$auth_codex" \
+  --queue-bin "$auth_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
+AUTH_CALLS="$auth_calls" AUTH_QUEUE_CALLS="$auth_queue_calls" python3 "$scanner" --once \
+  --session-root "$auth_root" --state-file "$auth_state" --codex-bin "$auth_codex" \
+  --queue-bin "$auth_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
+[[ "$(wc -l < "$auth_calls")" == 1 ]]
+[[ ! -f "$auth_queue_calls" || "$(wc -l < "$auth_queue_calls")" == 0 ]]
+echo "authentication failure suppression test passed"
+
 daemon_root="$tmp_dir/daemon-sessions"
 daemon_state="$tmp_dir/daemon-state.json"
 daemon_log="$tmp_dir/daemon.log"

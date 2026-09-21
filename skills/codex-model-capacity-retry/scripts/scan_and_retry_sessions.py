@@ -24,6 +24,11 @@ DESKTOP_WRITER_RE = re.compile(
     r"thread-store conflict|already has an active writer",
     re.IGNORECASE,
 )
+AUTH_FAILURE_RE = re.compile(
+    r"invalidated oauth token|token_revoked|unauthorized|authentication(?: failed| error)|"
+    r"\"status\"\s*:\s*401|\bHTTP\s+401\b",
+    re.IGNORECASE,
+)
 TAIL_BYTES = 1_048_576
 
 
@@ -289,7 +294,7 @@ def resume_session(
     queue_bin: str,
     failure: CapacityFailure,
     resume_prompt: str,
-) -> int:
+) -> tuple[int, bool]:
     status, output = run_command(
         [
             codex_bin,
@@ -302,18 +307,30 @@ def resume_session(
         ]
     )
     if status == 0:
-        return 0
+        return 0, False
+    if AUTH_FAILURE_RE.search(output):
+        print(
+            f"Session {failure.session_id} returned an authentication failure; not retrying.",
+            flush=True,
+        )
+        return status, False
     if not DESKTOP_WRITER_RE.search(output):
-        return status
+        return status, bool(CAPACITY_RE.search(output))
 
     print(
         f"Session {failure.session_id} is Desktop-owned; queueing the same prompt to that thread.",
         flush=True,
     )
-    queue_status, _ = run_command(
+    queue_status, queue_output = run_command(
         [queue_bin, "queue", "--thread", failure.session_id, "--message", resume_prompt]
     )
-    return queue_status
+    if AUTH_FAILURE_RE.search(queue_output):
+        print(
+            f"Session {failure.session_id} returned an authentication failure; not retrying.",
+            flush=True,
+        )
+        return queue_status, False
+    return queue_status, True
 
 
 def scan_once(args: argparse.Namespace, state: dict) -> int:
@@ -335,11 +352,13 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
             flush=True,
         )
         time.sleep(args.retry_delay_seconds)
-        status = resume_session(args.codex_bin, args.queue_bin, failure, args.resume_prompt)
-        if status == 0:
+        status, retry_on_failure = resume_session(
+            args.codex_bin, args.queue_bin, failure, args.resume_prompt
+        )
+        if status == 0 or not retry_on_failure:
             state["sessions"][failure.session_id] = failure.signature
         else:
-            # Leave the signature unrecorded so the next watch cycle retries it again.
+            # Leave a retryable signature unrecorded so the next watch cycle retries it.
             state["sessions"].pop(failure.session_id, None)
         save_state(args.state_file, state)
         print(
