@@ -29,7 +29,7 @@ The scanner groups rollout files by session and uses the newest turn boundary ac
 For a CLI-owned session it runs:
 
 ```text
-codex exec resume --json --skip-git-repo-check SESSION_ID "Please retry the interrupted turn exactly as-is."
+codex exec resume --json --skip-git-repo-check SESSION_ID "continue"
 ```
 
 The command keeps the original session ID, allows the detached watcher to run independently of the launching directory, and does not pass `--model`, `--thinking`, `model_reasoning_effort`, or an effort override.
@@ -39,7 +39,7 @@ The command keeps the original session ID, allows the detached watcher to run in
 Desktop tasks can appear in the app-server as a failed/system-error turn even when no new `task_complete` record is appended to the JSONL file. If `codex exec resume` reports `thread-store conflict` or `already has an active writer`, the script queues the same follow-up to the same thread through the shared app-server:
 
 ```text
-codex queue --thread SESSION_ID --message "Please retry the interrupted turn exactly as-is."
+codex queue --thread SESSION_ID --message "continue"
 ```
 
 This is a continuation of the existing task, not a new exec session, and it deliberately omits model and reasoning settings. If the app-server is not reachable, inspect the last turn with the Codex app thread tools and use `send_message_to_thread` on the same thread ID, omitting `model` and `thinking`.

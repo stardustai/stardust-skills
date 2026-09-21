@@ -37,6 +37,14 @@ output="$(FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_S
 [[ "$output" == *"$session_id"* ]]
 [[ "$(<"$counter_file")" == 1 ]]
 [[ "$(<"$args_file")" == *"exec resume --json --skip-git-repo-check $session_id"* ]]
+if [[ "$(<"$args_file")" != *" continue" ]]; then
+  echo "resume prompt was not continue" >&2
+  exit 1
+fi
+if [[ "$(<"$args_file")" == *"Please retry the interrupted turn exactly as-is."* ]]; then
+  echo "legacy resume prompt is still present" >&2
+  exit 1
+fi
 [[ "$(<"$args_file")" != *"model_reasoning_effort"* ]]
 [[ "$(<"$args_file")" != *"--model"* ]]
 [[ "$(tail -n 1 "$session_file")" == *"resumed successfully"* ]]
@@ -72,6 +80,14 @@ desktop_output="$(DESKTOP_CALLS="$desktop_calls" python3 "$scanner" --once --ses
 [[ "$(wc -l < "$desktop_calls")" == 2 ]]
 [[ "$(sed -n '1p' "$desktop_calls")" == *"exec resume --json $desktop_session_id"* ]]
 [[ "$(sed -n '2p' "$desktop_calls")" == *"queue --thread $desktop_session_id"* ]]
+if [[ "$(sed -n '2p' "$desktop_calls")" != *"--message continue"* ]]; then
+  echo "Desktop queue prompt was not continue" >&2
+  exit 1
+fi
+if [[ "$(sed -n '2p' "$desktop_calls")" == *"Please retry the interrupted turn exactly as-is."* ]]; then
+  echo "legacy Desktop queue prompt is still present" >&2
+  exit 1
+fi
 [[ "$(sed -n '2p' "$desktop_calls")" != *"--model"* ]]
 echo "desktop-owned same-thread queue test passed"
 

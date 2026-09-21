@@ -89,7 +89,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--resume-prompt",
-        default="Please retry the interrupted turn exactly as-is.",
+        default="continue",
     )
     parser.add_argument(
         "--exclude-session-id",
