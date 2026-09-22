@@ -54,6 +54,31 @@ python3 "$scanner" --once --session-root "$session_root" --state-file "$state_fi
 [[ "$(<"$counter_file")" == 1 ]]
 echo "existing-session scanner test passed"
 
+# A provider stream ending before the turn completes is recoverable: preserve
+# the existing session and deliver the same continue prompt.
+transport_root="$tmp_dir/transport-sessions"
+transport_session_file="$transport_root/rollout-transport.jsonl"
+transport_state_file="$tmp_dir/transport-state.json"
+transport_counter_file="$tmp_dir/transport-counter"
+transport_args_file="$tmp_dir/transport-args"
+transport_session_id="019ed90c-3b33-7922-92ad-6e61d74ca9f1"
+mkdir -p "$transport_root"
+printf '%s\n' 0 > "$transport_counter_file"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$transport_session_id\"}}" > "$transport_session_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:10:44.000Z","ordinal":10,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"stream disconnected before completion: An error occurred while processing your request."}}}' >> "$transport_session_file"
+FAKE_CODEX_COUNTER="$transport_counter_file" FAKE_CODEX_ARGS="$transport_args_file" FAKE_SESSION_FILE="$transport_session_file" \
+  python3 "$scanner" --once --session-root "$transport_root" --state-file "$transport_state_file" \
+  --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
+if [[ "$(<"$transport_counter_file")" != 1 ]]; then
+  echo "stream-disconnected completion was not resumed" >&2
+  exit 1
+fi
+if ! grep -Fq "exec resume --json --skip-git-repo-check $transport_session_id continue" "$transport_args_file"; then
+  echo "stream-disconnected completion did not preserve its session or prompt" >&2
+  exit 1
+fi
+echo "stream-disconnected recovery test passed"
+
 desktop_session_file="$session_root/2026/09/20/rollout-desktop.jsonl"
 desktop_state_file="$tmp_dir/desktop-state.json"
 desktop_session_id="019ed90c-3b33-7922-bc18-4f83044ba267"
@@ -311,3 +336,42 @@ done
 [[ "$(grep -c 'daemon started' "$daemon_log")" == 1 ]]
 [[ "$(<"$daemon_cwd_file")" == "$daemon_workdir" ]]
 echo "detached daemon test passed"
+
+# A rejected duplicate daemon must not erase the PID record of the watcher
+# that already owns the state lock.
+duplicate_state="$tmp_dir/duplicate-state.json"
+duplicate_lock="$tmp_dir/.duplicate-state.json.lock"
+duplicate_log="$tmp_dir/duplicate.log"
+duplicate_pid="$tmp_dir/duplicate.pid"
+duplicate_ready="$tmp_dir/duplicate-lock-ready"
+printf '%s\n' 777 > "$duplicate_pid"
+python3 - "$duplicate_lock" "$duplicate_ready" <<'PY' &
+import fcntl
+import pathlib
+import sys
+import time
+
+with pathlib.Path(sys.argv[1]).open("w", encoding="utf-8") as lock:
+    fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+    pathlib.Path(sys.argv[2]).touch()
+    time.sleep(2)
+PY
+duplicate_holder=$!
+for _ in $(seq 1 20); do
+  [[ -f "$duplicate_ready" ]] && break
+  sleep 0.1
+done
+[[ -f "$duplicate_ready" ]]
+python3 "$scanner" --daemon --once --session-root "$daemon_root" --state-file "$duplicate_state" \
+  --log-file "$duplicate_log" --pid-file "$duplicate_pid" --codex-bin "$daemon_codex" \
+  --retry-delay-seconds 0 --max-age-seconds 0
+for _ in $(seq 1 20); do
+  [[ -f "$duplicate_log" ]] && grep -Fq 'another session scanner is already running' "$duplicate_log" && break
+  sleep 0.1
+done
+wait "$duplicate_holder"
+if [[ ! -f "$duplicate_pid" ]] || [[ "$(cat "$duplicate_pid")" != 777 ]]; then
+  echo "duplicate daemon erased the existing watcher PID" >&2
+  exit 1
+fi
+echo "duplicate daemon preserves existing PID test passed"

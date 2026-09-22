@@ -5,7 +5,7 @@ description: Use when an existing Codex task or session ends with “Selected mo
 
 # Codex model-capacity retry
 
-Use this skill for a provider-capacity interruption, not for a normal task failure. The important invariant is to continue the existing task: do not create a new `codex exec` task, do not choose a replacement model, and do not set reasoning effort.
+Use this skill for a provider-capacity interruption, or the specific provider transport failure `stream disconnected before completion`, not for a normal task failure. The important invariant is to continue the existing task: do not create a new `codex exec` task, do not choose a replacement model, and do not set reasoning effort.
 
 ## Start an independent watcher
 
@@ -24,7 +24,7 @@ The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and i
 
 ## What it scans
 
-The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion; an older capacity failure is ignored while a newer turn is running or has completed. Capacity symptoms are evaluated only from the completion's direct terminal-error fields: `message`, `codex_error_info`, `error.message`, and `error.codex_error_info`. It never evaluates `last_agent_message`, which is normal answer text and can legitimately mention a status code or an amount such as `$429.06`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
+The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion or a completion whose direct error states `stream disconnected before completion`; an older retryable failure is ignored while a newer turn is running or has completed. Symptoms are evaluated only from the completion's direct terminal-error fields: `message`, `codex_error_info`, `error.message`, and `error.codex_error_info`. It never evaluates `last_agent_message`, which is normal answer text and can legitimately mention a status code or an amount such as `$429.06`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
 
 If the rollout metadata marks the record as a `source.subagent`, the scanner uses its existing `parent_thread_id` as the retry target. Multi-agent v2 subagent sessions cannot be resumed directly after they are unloaded; continuing the parent task preserves the original task and avoids repeatedly producing the `resume the parent first` error.
 
@@ -48,7 +48,7 @@ When checking a Desktop task manually, inspect only the newest turn first. A tas
 
 - Preserve the original task/session/thread ID and the original model settings.
 - Retry continuously at five-second intervals until the task produces a non-capacity completion or the watcher is stopped.
-- Do not retry semantic evaluation failures, Buildkite test regressions, missing fixtures, provider authentication failures, or ordinary tool errors.
+- Do not retry semantic evaluation failures, Buildkite test regressions, missing fixtures, provider authentication failures, ordinary tool errors, or generic stream errors other than `stream disconnected before completion`.
 - Do not use a new `codex exec` invocation as a substitute for resume.
 - The default scan age is six hours; set `CODEX_RETRY_MAX_AGE_SECONDS=0` to scan all session files.
 - Use the state file to coordinate multiple watchers; a lock prevents duplicate watchers from retrying the same task.

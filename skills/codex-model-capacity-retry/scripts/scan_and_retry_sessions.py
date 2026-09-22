@@ -20,6 +20,10 @@ CAPACITY_RE = re.compile(
     r"too many requests|(?<![0-9])429(?![0-9])",
     re.IGNORECASE,
 )
+RECOVERABLE_TRANSPORT_RE = re.compile(
+    r"stream disconnected before completion",
+    re.IGNORECASE,
+)
 DESKTOP_WRITER_RE = re.compile(
     r"thread-store conflict|already has an active writer",
     re.IGNORECASE,
@@ -229,7 +233,7 @@ def capacity_failure_from_completion(
         str(error.get("codex_error_info", "")),
     ]
     message = " ".join(part for part in message_parts if part)
-    if not CAPACITY_RE.search(message):
+    if not (CAPACITY_RE.search(message) or RECOVERABLE_TRANSPORT_RE.search(message)):
         return None
 
     signature = "|".join(
@@ -334,7 +338,7 @@ def resume_session(
             flush=True,
         )
         return status, False
-    return status, bool(CAPACITY_RE.search(output))
+    return status, bool(CAPACITY_RE.search(output) or RECOVERABLE_TRANSPORT_RE.search(output))
 
 
 def scan_once(args: argparse.Namespace, state: dict) -> int:
@@ -376,7 +380,7 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
     return retry_count
 
 
-def detach_from_terminal(log_file: Path, pid_file: Path) -> bool:
+def detach_from_terminal(log_file: Path) -> bool:
     """Detach the watcher and redirect its standard streams to a log file.
 
     The first process returns to the invoking shell. The grandchild owns the
@@ -394,15 +398,11 @@ def detach_from_terminal(log_file: Path, pid_file: Path) -> bool:
 
     os.umask(0o027)
     log_file.parent.mkdir(parents=True, exist_ok=True)
-    pid_file.parent.mkdir(parents=True, exist_ok=True)
-    pid_file.write_text(f"{os.getpid()}\n", encoding="utf-8")
-
     with log_file.open("a", encoding="utf-8", buffering=1) as log_stream:
         with open(os.devnull, "r", encoding="utf-8") as devnull:
             os.dup2(devnull.fileno(), sys.stdin.fileno())
         os.dup2(log_stream.fileno(), sys.stdout.fileno())
         os.dup2(log_stream.fileno(), sys.stderr.fileno())
-    print(f"daemon started pid={os.getpid()}", flush=True)
     return True
 
 
@@ -426,7 +426,7 @@ def main() -> int:
 
     daemon_pid: int | None = None
     if args.daemon:
-        if not detach_from_terminal(args.log_file, args.pid_file):
+        if not detach_from_terminal(args.log_file):
             return 0
         daemon_pid = os.getpid()
 
@@ -439,6 +439,11 @@ def main() -> int:
             except BlockingIOError:
                 print("another session scanner is already running", file=sys.stderr)
                 return 0
+
+            if daemon_pid is not None:
+                args.pid_file.parent.mkdir(parents=True, exist_ok=True)
+                args.pid_file.write_text(f"{daemon_pid}\n", encoding="utf-8")
+                print(f"daemon started pid={daemon_pid}", flush=True)
 
             state = load_state(args.state_file)
             while True:
