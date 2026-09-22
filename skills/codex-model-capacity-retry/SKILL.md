@@ -20,7 +20,7 @@ python3 /Users/derek/.agents/skills/codex-model-capacity-retry/scripts/scan_and_
 
 The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and its output to `~/.codex/codex-capacity-retry.log`. The state-file lock prevents a second watcher from duplicating retries.
 
-`CONTROL_TASK_SESSION_ID` is the session ID of the task that owns the watcher or heartbeat. Exclude that task. Otherwise a Desktop writer-conflict fallback can queue a new visible retry message into the control task itself, causing the watcher to trigger its own next scan. Repeat `--exclude-session-id` when one watcher is coordinating more than one controller task. The same list can be supplied through `CODEX_RETRY_EXCLUDE_SESSION_IDS`, separated by commas.
+`CONTROL_TASK_SESSION_ID` is the session ID of the task that owns the watcher or heartbeat. Exclude that task so the watcher never attempts to resume its own controller task. Repeat `--exclude-session-id` when one watcher is coordinating more than one controller task. The same list can be supplied through `CODEX_RETRY_EXCLUDE_SESSION_IDS`, separated by commas.
 
 ## What it scans
 
@@ -36,26 +36,20 @@ codex exec resume --json --skip-git-repo-check SESSION_ID "continue"
 
 The command keeps the original session ID, allows the detached watcher to run independently of the launching directory, and does not pass `--model`, `--thinking`, `model_reasoning_effort`, or an effort override.
 
-## Desktop-owned tasks
+## Active-writer gate
 
-Desktop tasks can appear in the app-server as a failed/system-error turn even when no new `task_complete` record is appended to the JSONL file. If `codex exec resume` reports `thread-store conflict` or `already has an active writer`, the script queues the same follow-up to the same thread through the shared app-server:
+The latest `task_complete` is necessary but not sufficient to send `continue`: a Desktop task can still have an active writer after that record has been written. `codex exec resume` is the atomic gate. It must acquire the task's writer before it can deliver `continue`.
 
-```text
-codex queue --thread SESSION_ID --message "continue"
-```
+If resume returns `thread-store conflict` or `already has an active writer`, the watcher does **not** queue a message. It leaves the capacity failure retryable, waits for the next scan, and tries resume again. This prevents a new follow-up from being inserted while the existing task is still active. An incidental `401`/`token_revoked` warning does not override this active-writer result; a genuine authentication error with no writer conflict is suppressed as before.
 
-This is a continuation of the existing task, not a new exec session, and it deliberately omits model and reasoning settings. If the app-server is not reachable, inspect the last turn with the Codex app thread tools and use `send_message_to_thread` on the same thread ID, omitting `model` and `thinking`.
-
-The active-writer decision takes precedence over authentication text in the `codex exec resume` output. Codex can print unrelated `401`/`token_revoked` warnings while refreshing plugins or models before reporting the Desktop writer conflict. Those warnings must not prevent same-thread queueing. Authentication suppression is applied only when there is no Desktop writer conflict, or when the queue operation itself fails with an authentication error.
-
-When checking a Desktop task manually, inspect only the newest turn first. A task is eligible only when its newest error is a capacity error; never revive a task just because it is `failed` or `systemError`.
+When checking a Desktop task manually, inspect only the newest turn first. A task is eligible only when its newest error is a capacity error, and it is resumed only after the writer can be acquired; never revive a task just because it is `failed` or `systemError`.
 
 ## Boundaries
 
 - Preserve the original task/session/thread ID and the original model settings.
 - Retry continuously at five-second intervals until the task produces a non-capacity completion or the watcher is stopped.
 - Do not retry semantic evaluation failures, Buildkite test regressions, missing fixtures, provider authentication failures, or ordinary tool errors.
-- Do not use a new `codex exec` invocation as a substitute for resume or queue.
+- Do not use a new `codex exec` invocation as a substitute for resume.
 - The default scan age is six hours; set `CODEX_RETRY_MAX_AGE_SECONDS=0` to scan all session files.
 - Use the state file to coordinate multiple watchers; a lock prevents duplicate watchers from retrying the same task.
 
@@ -67,6 +61,6 @@ Run the bundled regression test:
 bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_scanner.sh
 ```
 
-The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and Desktop writer-conflict routing through same-thread queue.
+The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and the active-writer gate: no `continue` is accepted until the existing writer has cleared.
 
 It also verifies that `--daemon --once` returns control to the launching process, preserves the launch working directory for `codex exec resume`, and exits cleanly.

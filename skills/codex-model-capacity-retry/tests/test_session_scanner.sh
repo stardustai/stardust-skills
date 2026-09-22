@@ -32,7 +32,7 @@ chmod +x "$fake_codex"
 
 output="$(FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_SESSION_FILE="$session_file" \
   python3 "$scanner" --once --session-root "$session_root" --state-file "$state_file" \
-  --codex-bin "$fake_codex" --queue-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0)"
+  --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0)"
 
 [[ "$output" == *"$session_id"* ]]
 [[ "$(<"$counter_file")" == 1 ]]
@@ -65,31 +65,50 @@ cat > "$desktop_codex" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf '%s\n' "$*" >> "$DESKTOP_CALLS"
-if [[ "$1 $2 $3" == "exec resume --json" ]]; then
+if [[ ! -f "$DESKTOP_READY_FILE" ]]; then
   printf '%s\n' 'Error: thread/resume: thread/resume failed: thread-store conflict: thread already has an active writer' >&2
   exit 1
 fi
-[[ "$1 $2" == "queue --thread" ]]
 EOF
 chmod +x "$desktop_codex"
 desktop_calls="$tmp_dir/desktop-calls"
-desktop_output="$(DESKTOP_CALLS="$desktop_calls" python3 "$scanner" --once --session-root "$session_root" \
-  --state-file "$desktop_state_file" --codex-bin "$desktop_codex" --queue-bin "$desktop_codex" \
+desktop_ready_file="$tmp_dir/desktop-ready"
+desktop_output="$(DESKTOP_CALLS="$desktop_calls" DESKTOP_READY_FILE="$desktop_ready_file" python3 "$scanner" --once --session-root "$session_root" \
+  --state-file "$desktop_state_file" --codex-bin "$desktop_codex" \
   --retry-delay-seconds 0 --max-age-seconds 0 2>&1)"
-[[ "$desktop_output" == *"Desktop-owned"* ]]
-[[ "$(wc -l < "$desktop_calls")" == 2 ]]
-[[ "$(sed -n '1p' "$desktop_calls")" == *"exec resume --json $desktop_session_id"* ]]
-[[ "$(sed -n '2p' "$desktop_calls")" == *"queue --thread $desktop_session_id"* ]]
-if [[ "$(sed -n '2p' "$desktop_calls")" != *"--message continue"* ]]; then
-  echo "Desktop queue prompt was not continue" >&2
+if [[ "$desktop_output" != *"still has an active writer"* ]]; then
+  echo "active writer was not reported as a pending retry" >&2
   exit 1
 fi
-if [[ "$(sed -n '2p' "$desktop_calls")" == *"Please retry the interrupted turn exactly as-is."* ]]; then
-  echo "legacy Desktop queue prompt is still present" >&2
+if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 1 ]]; then
+  echo "active writer accepted more than one recovery operation" >&2
   exit 1
 fi
-[[ "$(sed -n '2p' "$desktop_calls")" != *"--model"* ]]
-echo "desktop-owned same-thread queue test passed"
+if [[ "$(sed -n '1p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id continue"* ]]; then
+  echo "resume did not retain the original task and continue prompt" >&2
+  exit 1
+fi
+if grep -Fq 'queue --thread' "$desktop_calls"; then
+  echo "active writer incorrectly received a queued continue" >&2
+  exit 1
+fi
+if grep -Fq "$desktop_session_id" "$desktop_state_file"; then
+  echo "active writer was recorded as completed and would not retry" >&2
+  exit 1
+fi
+printf '%s\n' ready > "$desktop_ready_file"
+DESKTOP_CALLS="$desktop_calls" DESKTOP_READY_FILE="$desktop_ready_file" python3 "$scanner" --once --session-root "$session_root" \
+  --state-file "$desktop_state_file" --codex-bin "$desktop_codex" \
+  --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
+if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 2 ]]; then
+  echo "idle task was not retried after its active writer cleared" >&2
+  exit 1
+fi
+if [[ "$(sed -n '2p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id continue"* ]]; then
+  echo "idle task did not receive the original continue prompt" >&2
+  exit 1
+fi
+echo "active-writer recovery gate test passed"
 
 repeat_file="$session_root/2026/09/20/rollout-repeat.jsonl"
 repeat_state="$tmp_dir/repeat-state.json"
@@ -184,14 +203,20 @@ EOF
 chmod +x "$auth_codex"
 AUTH_CALLS="$auth_calls" AUTH_QUEUE_CALLS="$auth_queue_calls" python3 "$scanner" --once \
   --session-root "$auth_root" --state-file "$auth_state" --codex-bin "$auth_codex" \
-  --queue-bin "$auth_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
-[[ "$(wc -l < "$auth_calls")" == 2 ]]
-[[ "$(wc -l < "$auth_queue_calls")" == 1 ]]
-if ! grep -Fq "queue --thread $auth_session_id --message continue" "$auth_calls"; then
-  echo "Desktop writer conflict was not routed through same-thread queue" >&2
+  --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
+if [[ "$(wc -l < "$auth_calls" | tr -d ' ')" != 1 ]]; then
+  echo "active writer with an incidental authentication warning was retried immediately" >&2
   exit 1
 fi
-echo "Desktop writer conflict wins over incidental authentication warning test passed"
+if [[ -e "$auth_queue_calls" ]]; then
+  echo "active writer with an incidental authentication warning received a queued continue" >&2
+  exit 1
+fi
+if grep -Fq "$auth_session_id" "$auth_state"; then
+  echo "active writer with an incidental authentication warning was marked complete" >&2
+  exit 1
+fi
+echo "active writer suppresses incidental authentication warning test passed"
 
 real_auth_root="$tmp_dir/real-auth-sessions"
 real_auth_state="$tmp_dir/real-auth-state.json"
@@ -212,7 +237,7 @@ EOF
 chmod +x "$real_auth_codex"
 REAL_AUTH_CALLS="$real_auth_calls" python3 "$scanner" --once \
   --session-root "$real_auth_root" --state-file "$real_auth_state" --codex-bin "$real_auth_codex" \
-  --queue-bin "$real_auth_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
+  --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
 [[ "$(wc -l < "$real_auth_calls")" == 1 ]]
 if [[ "$(<"$real_auth_calls")" == *"queue --thread"* ]]; then
   echo "a genuine authentication failure was incorrectly queued" >&2

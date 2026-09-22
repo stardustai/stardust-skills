@@ -68,11 +68,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--codex-bin", default=os.environ.get("CODEX_BIN", "codex"))
     parser.add_argument(
-        "--queue-bin",
-        default=os.environ.get("CODEX_QUEUE_BIN", os.environ.get("CODEX_BIN", "codex")),
-        help="Codex executable used for same-thread Desktop queue fallback",
-    )
-    parser.add_argument(
         "--retry-delay-seconds",
         type=float,
         default=float(os.environ.get("CODEX_RETRY_DELAY_SECONDS", "5")),
@@ -310,7 +305,6 @@ def run_command(command: list[str]) -> tuple[int, str]:
 
 def resume_session(
     codex_bin: str,
-    queue_bin: str,
     failure: CapacityFailure,
     resume_prompt: str,
 ) -> tuple[int, bool]:
@@ -327,33 +321,20 @@ def resume_session(
     )
     if status == 0:
         return 0, False
-    # Codex startup can emit unrelated OAuth/plugin-refresh warnings before the
-    # app-server reports that the Desktop thread owns the writer. The writer
-    # conflict is the routing decision: queue the original task first, then
-    # inspect only the queue result for an authentication failure.
-    if not DESKTOP_WRITER_RE.search(output):
-        if AUTH_FAILURE_RE.search(output):
-            print(
-                f"Session {failure.session_id} returned an authentication failure; not retrying.",
-                flush=True,
-            )
-            return status, False
-        return status, bool(CAPACITY_RE.search(output))
-
-    print(
-        f"Session {failure.session_id} is Desktop-owned; queueing the same prompt to that thread.",
-        flush=True,
-    )
-    queue_status, queue_output = run_command(
-        [queue_bin, "queue", "--thread", failure.retry_session_id, "--message", resume_prompt]
-    )
-    if queue_status != 0 and AUTH_FAILURE_RE.search(queue_output):
+    if DESKTOP_WRITER_RE.search(output):
+        print(
+            f"Session {failure.session_id} still has an active writer; "
+            "not sending continue until a later retry can acquire the writer.",
+            flush=True,
+        )
+        return status, True
+    if AUTH_FAILURE_RE.search(output):
         print(
             f"Session {failure.session_id} returned an authentication failure; not retrying.",
             flush=True,
         )
-        return queue_status, False
-    return queue_status, True
+        return status, False
+    return status, bool(CAPACITY_RE.search(output))
 
 
 def scan_once(args: argparse.Namespace, state: dict) -> int:
@@ -380,7 +361,7 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
         )
         time.sleep(args.retry_delay_seconds)
         status, retry_on_failure = resume_session(
-            args.codex_bin, args.queue_bin, failure, args.resume_prompt
+            args.codex_bin, failure, args.resume_prompt
         )
         if status == 0 or not retry_on_failure:
             state["sessions"][failure.session_id] = failure.signature
