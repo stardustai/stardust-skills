@@ -344,12 +344,40 @@ def oauth_access_token(base_url: str) -> str:
 
 
 def session_status(base_url: str = DEFAULT_ACCOUNT) -> bool:
-    """True when a stored refresh token exists for this origin.
+    """True when the service accepts the stored session right now.
 
-    Returns a bool, not a message: the caller turns it into an exit code.
+    Only a refresh against the token endpoint answers that. Checking that a
+    refresh token is stored said "active" on 2026-09-23 while the server
+    answered `invalid_grant: Grant not found`, and OCR work that trusted it
+    stopped at a sign-in no headless caller could complete.
+
+    Never opens a browser. A refused refresh (HTTP 400/401) means sign-in is
+    required; an unreachable endpoint raises, because "cannot tell" is not
+    "signed out". Returns a bool, not a message: the caller turns it into an
+    exit code.
     """
-    record = load_record(_origin(base_url))
-    return bool(record and record.get("refresh_token"))
+    account = _origin(base_url)
+    record = load_record(account)
+    if not (record and record.get("client_id") and record.get("refresh_token")):
+        return False
+    try:
+        tokens = _refresh(discover(base_url), record)
+    except RuntimeError as exc:
+        if "HTTP 400" in str(exc) or "HTTP 401" in str(exc):
+            return False
+        raise
+    if not tokens.get("access_token"):
+        return False
+    # The server may rotate the refresh token; keep the one it just issued so
+    # this check never spends the stored session.
+    store_record(
+        {
+            "client_id": str(record["client_id"]),
+            "refresh_token": str(tokens.get("refresh_token") or record["refresh_token"]),
+        },
+        account,
+    )
+    return True
 
 
 def logout(base_url: str = DEFAULT_ACCOUNT) -> bool:

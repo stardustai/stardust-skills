@@ -28,6 +28,12 @@ That is the whole integration. Every entry point takes `base_url`, and refresh
 tokens are stored per origin in one `0600` file, so signing in to one service
 does not sign you in to another and signing out of one leaves the rest alone.
 
+`session_status(base_url)` refreshes the stored session against the token
+endpoint without opening a browser: `True` only when the server accepts it,
+`False` when it refuses (sign-in required), and an exception when the endpoint
+cannot be reached. A stored token alone is not a session: it read as active
+while the server answered `invalid_grant`.
+
 Set `STARDUST_ACCESS_TOKEN_FILE` to override the credential-store location.
 `STARDUST_TTS_TOKEN_FILE` remains a compatibility alias. The default stays at
 `~/.config/stardust-tts/oauth.json` so existing TTS sessions continue to work;
