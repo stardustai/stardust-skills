@@ -24,6 +24,8 @@ The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and i
 
 ## What it scans
 
+It never resumes a `codex exec` session (`source: exec` / `originator: codex_exec`). That session belongs to the program that ran it, which is waiting on the process and owns its retry; resuming it from here races the owner for the thread's writer (`already has an active writer`) and runs a turn nobody reviews. Services such as ceo-agent-service run every turn this way.
+
 The scanner groups rollout files by session and uses the newest turn boundary across the group. It retries only when that newest boundary is a capacity-failed completion or a completion whose direct error states `stream disconnected before completion`; an older retryable failure is ignored while a newer turn is running or has completed. Symptoms are evaluated only from the completion's direct terminal-error fields: `message`, `codex_error_info`, `error.message`, and `error.codex_error_info`. It never evaluates `last_agent_message`, which is normal answer text and can legitimately mention a status code or an amount such as `$429.06`. It must never retry an authentication, permission, validation, tool, or business-logic failure.
 
 If the rollout metadata marks the record as a `source.subagent`, the scanner uses its existing `parent_thread_id` as the retry target. Multi-agent v2 subagent sessions cannot be resumed directly after they are unloaded; continuing the parent task preserves the original task and avoids repeatedly producing the `resume the parent first` error.

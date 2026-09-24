@@ -202,6 +202,22 @@ HISTORY_COUNTER="$excluded_counter" python3 "$scanner" --once --session-root "$s
 [[ "$(<"$excluded_counter")" == 0 ]]
 echo "controller-session exclusion test passed"
 
+exec_root="$tmp_dir/exec-sessions"
+exec_state="$tmp_dir/exec-state.json"
+exec_counter="$tmp_dir/exec-counter"
+exec_id="019ed90c-3b33-7922-92ad-6e61d74ca9d9"
+mkdir -p "$exec_root"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$exec_id\",\"originator\":\"codex_exec\",\"source\":\"exec\"}}" > "$exec_root/rollout-exec.jsonl"
+printf '%s\n' '{"timestamp":"2026-09-20T09:14:02.000Z","ordinal":12,"type":"event_msg","payload":{"type":"task_complete","last_agent_message":null,"error":{"message":"Selected model is at capacity. Please try a different model.","codex_error_info":"server_overloaded"}}}' >> "$exec_root/rollout-exec.jsonl"
+printf '%s\n' 0 > "$exec_counter"
+HISTORY_COUNTER="$exec_counter" python3 "$scanner" --once --session-root "$exec_root" \
+  --state-file "$exec_state" --codex-bin "$history_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
+if [[ "$(<"$exec_counter")" != 0 ]]; then
+  echo "a codex exec session owned by another program was resumed" >&2
+  exit 1
+fi
+echo "codex exec session exclusion test passed"
+
 auth_root="$tmp_dir/auth-sessions"
 auth_state="$tmp_dir/auth-state.json"
 auth_calls="$tmp_dir/auth-calls"

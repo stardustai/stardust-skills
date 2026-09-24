@@ -164,8 +164,18 @@ def read_session_metadata(path: Path) -> tuple[str, str | None] | None:
     else:
         return None
 
-    parent_thread_id = payload.get("parent_thread_id")
     source = payload.get("source")
+    # A `codex exec` session belongs to the program that ran it: that program
+    # is waiting on the process and owns its retry. Resuming it from here races
+    # the owner for the thread's writer and runs a turn nobody reviews. On
+    # 2026-09-23 this watcher resumed ceo-agent-service thread 01a0d0fd while
+    # the service's own capacity retry was starting; both attempts failed with
+    # "already has an active writer", and eight service sessions had been
+    # resumed this way, one of them to a full turn.
+    if source == "exec" or payload.get("originator") == "codex_exec":
+        return None
+
+    parent_thread_id = payload.get("parent_thread_id")
     if isinstance(source, dict):
         subagent = source.get("subagent")
         if isinstance(subagent, dict):
