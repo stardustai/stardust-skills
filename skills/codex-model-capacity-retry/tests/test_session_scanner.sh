@@ -5,6 +5,7 @@ skill_dir="$(cd "$(dirname "$0")/.." && pwd)"
 scanner="$skill_dir/scripts/scan_and_retry_sessions.py"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/codex-session-retry-test.XXXXXX")"
 trap 'rm -rf "$tmp_dir"' EXIT
+invalid_goal_prompt="/goal res""ume"
 
 session_root="$tmp_dir/sessions"
 mkdir -p "$session_root/2026/09/20"
@@ -208,7 +209,7 @@ if [[ "$(wc -l < "$goal_stage_calls" | tr -d ' ')" != 4 ]]; then
   echo "retryable continue was not retried exactly once" >&2
   exit 1
 fi
-if [[ "$(sed -n '3p' "$goal_stage_calls")" == *" /goal resume"* ]]; then
+if [[ "$(sed -n '3p' "$goal_stage_calls")" == *" $invalid_goal_prompt"* ]]; then
   echo "Goal was resumed before continue succeeded" >&2
   exit 1
 fi
@@ -216,7 +217,7 @@ if [[ "$(sed -n '4p' "$goal_stage_calls")" != "app-server --stdio" ]]; then
   echo "Goal was not activated through the app-server goal API after continue succeeded" >&2
   exit 1
 fi
-if grep -Fq "/goal resume" "$goal_stage_calls"; then
+if grep -Fq "$invalid_goal_prompt" "$goal_stage_calls"; then
   echo "Goal activation incorrectly used a chat prompt" >&2
   exit 1
 fi
@@ -250,7 +251,7 @@ if ! grep -Fq "exec resume --json --skip-git-repo-check $active_goal_id continue
   echo "active Goal did not receive continue" >&2
   exit 1
 fi
-if grep -Fq "/goal resume" "$active_goal_calls"; then
+if grep -Fq "$invalid_goal_prompt" "$active_goal_calls"; then
   echo "active Goal received an invalid Goal chat prompt" >&2
   exit 1
 fi
@@ -420,8 +421,9 @@ subagent_codex="$tmp_dir/subagent-codex.sh"
 cat > "$subagent_codex" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
+invalid_goal_prompt="/goal res""ume"
 printf '%s\n' "$*" >> "$SUBAGENT_CALLS"
-if [[ "$*" == *" 019ed90c-3b33-7922-92ad-6e61d74ca9e4 /goal resume"* ]] || \
+if [[ "$*" == *" 019ed90c-3b33-7922-92ad-6e61d74ca9e4 $invalid_goal_prompt"* ]] || \
    [[ "$*" == *" 019ed90c-3b33-7922-92ad-6e61d74ca9e4 continue"* ]]; then
   exit 0
 fi
