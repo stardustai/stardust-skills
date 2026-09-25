@@ -12,8 +12,7 @@ Use this skill for a provider-capacity interruption, or the specific provider tr
 A skill loaded inside the failed turn cannot intercept the request that already failed. Start the watcher from an independent terminal process:
 
 ```bash
-python3 /Users/derek/.agents/skills/codex-model-capacity-retry/scripts/scan_and_retry_sessions.py --watch --daemon \
-  --exclude-session-id CONTROL_TASK_SESSION_ID
+python3 /Users/derek/.agents/skills/codex-model-capacity-retry/scripts/scan_and_retry_sessions.py --watch --daemon
 ```
 
 `--daemon` detaches the watcher from the terminal, shell, or Codex tool session that started it. This is required when the launching terminal may close; without it, the operating system may reap the watcher with that terminal. It waits five seconds after detecting a capacity error, then retries indefinitely. Stop it only when the user asks or when the original task has completed. There is no fixed attempt limit. The watcher remembers the exact failed completion, so it does not duplicate one failure; a later capacity failure appended to the same task has a new signature and is retried again.
@@ -22,7 +21,7 @@ The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and i
 
 Before retrying a capacity-failed completion, the watcher sends the normal `continue` prompt to the same task and waits five seconds. An `active` Goal needs no additional action. When the latest `thread_goal_updated.goal.status` is `paused`, the watcher uses Codex's app-server `thread/goal/set` request with the original `threadId` and `status: "active"`; it never sends a `/goal ...` chat prompt, because that would change the Goal objective instead of invoking an action. A task with no Goal, a completed Goal, or a Goal stopped by budget receives only `continue`; the watcher never invents a Goal. The state file records the successful first `continue` per failure signature, so a temporary failure before the Goal step does not repeat `continue` or activate the Goal early.
 
-`CONTROL_TASK_SESSION_ID` is the session ID of the task that owns the watcher or heartbeat. Exclude that task so the watcher never attempts to resume its own controller task. Repeat `--exclude-session-id` when one watcher is coordinating more than one controller task. The same list can be supplied through `CODEX_RETRY_EXCLUDE_SESSION_IDS`, separated by commas.
+The watcher is a detached process, not a Codex task, so it may monitor the task that started the heartbeat as well as other tasks. It does not create a new rollout by scanning; it only reacts to a newly completed capacity-failed turn. The state file records each exact failure signature before allowing it to be retried again, and the latest turn boundary prevents the same failure from being retried twice. Use `--exclude-session-id` only when a separate external owner is already responsible for a specific task, not as a default for the watcher itself. The same list can be supplied through `CODEX_RETRY_EXCLUDE_SESSION_IDS`, separated by commas.
 
 ## What it scans
 
