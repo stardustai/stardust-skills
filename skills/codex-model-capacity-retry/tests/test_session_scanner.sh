@@ -210,6 +210,40 @@ if [[ "$(sed -n '4p' "$goal_stage_calls")" != *" /goal resume"* ]]; then
 fi
 echo "Goal resume stage suppression test passed"
 
+active_goal_root="$tmp_dir/active-goal-sessions"
+active_goal_state="$tmp_dir/active-goal-state.json"
+active_goal_calls="$tmp_dir/active-goal-calls"
+mkdir -p "$active_goal_root"
+active_goal_id="019ed90c-3b33-7922-92ad-6e61d74ca9f7"
+active_goal_file="$active_goal_root/rollout-active-goal.jsonl"
+printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$active_goal_id\"}}" > "$active_goal_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:11:44.000Z","ordinal":9,"type":"event_msg","payload":{"type":"thread_goal_updated","goal":{"status":"active","objective":"continue the active goal"}}}' >> "$active_goal_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:11:45.000Z","ordinal":10,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"429 model at capacity"}}}' >> "$active_goal_file"
+active_goal_codex="$tmp_dir/active-goal-codex.sh"
+cat > "$active_goal_codex" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+printf '%s\n' "$*" >> "$ACTIVE_GOAL_CALLS"
+EOF
+chmod +x "$active_goal_codex"
+ACTIVE_GOAL_CALLS="$active_goal_calls" \
+  python3 "$scanner" --once --session-root "$active_goal_root" \
+  --state-file "$active_goal_state" --codex-bin "$active_goal_codex" \
+  --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
+if [[ "$(wc -l < "$active_goal_calls" | tr -d ' ')" != 2 ]]; then
+  echo "active Goal was not reactivated after continue" >&2
+  exit 1
+fi
+if ! grep -Fq "exec resume --json --skip-git-repo-check $active_goal_id continue" "$active_goal_calls"; then
+  echo "active Goal did not receive continue" >&2
+  exit 1
+fi
+if ! grep -Fq "exec resume --json --skip-git-repo-check $active_goal_id /goal resume" "$active_goal_calls"; then
+  echo "active Goal was not sent its resume command" >&2
+  exit 1
+fi
+echo "active Goal reactivation test passed"
+
 repeat_file="$session_root/2026/09/20/rollout-repeat.jsonl"
 repeat_state="$tmp_dir/repeat-state.json"
 repeat_id="019ed90c-3b33-7922-92ad-6e61d74ca9d0"

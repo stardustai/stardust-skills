@@ -457,13 +457,13 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
 
             time.sleep(args.retry_delay_seconds)
 
-        if failure.goal_status != "paused":
+        if failure.goal_status not in {"active", "paused"}:
             state["sessions"][failure.session_id] = failure.signature
             continue_state.pop(failure.session_id, None)
             save_state(args.state_file, state)
             print(
                 f"Retried existing session {failure.session_id} with exit code 0; "
-                "no paused Goal to resume.",
+                "no active or paused Goal to resume.",
                 flush=True,
             )
             continue
