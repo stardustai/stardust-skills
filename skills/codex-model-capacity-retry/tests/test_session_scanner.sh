@@ -165,7 +165,15 @@ cat > "$goal_stage_codex" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 printf '%s\n' "$*" >> "$GOAL_STAGE_CALLS"
-if [[ "$*" == *" /goal resume"* ]]; then
+if [[ "$1 $2" == "app-server --stdio" ]]; then
+  while IFS= read -r request; do
+    if [[ "$request" == *'"id":1'* ]]; then
+      printf '%s\n' '{"id":1,"result":{"userAgent":"capacity-retry-test"}}'
+    elif [[ "$request" == *'"method":"thread/goal/set"'* ]]; then
+      printf '%s\n' '{"id":2,"result":{"goal":{"status":"active"}}}'
+      exit 0
+    fi
+  done
   exit 0
 fi
 if [[ -f "$GOAL_STAGE_READY" ]]; then
@@ -204,11 +212,15 @@ if [[ "$(sed -n '3p' "$goal_stage_calls")" == *" /goal resume"* ]]; then
   echo "Goal was resumed before continue succeeded" >&2
   exit 1
 fi
-if [[ "$(sed -n '4p' "$goal_stage_calls")" != *" /goal resume"* ]]; then
-  echo "Goal was not resumed after continue succeeded" >&2
+if [[ "$(sed -n '4p' "$goal_stage_calls")" != "app-server --stdio" ]]; then
+  echo "Goal was not activated through the app-server goal API after continue succeeded" >&2
   exit 1
 fi
-echo "Goal resume stage suppression test passed"
+if grep -Fq "/goal resume" "$goal_stage_calls"; then
+  echo "Goal activation incorrectly used a chat prompt" >&2
+  exit 1
+fi
+echo "Goal activation stage suppression test passed"
 
 active_goal_root="$tmp_dir/active-goal-sessions"
 active_goal_state="$tmp_dir/active-goal-state.json"
@@ -230,19 +242,19 @@ ACTIVE_GOAL_CALLS="$active_goal_calls" \
   python3 "$scanner" --once --session-root "$active_goal_root" \
   --state-file "$active_goal_state" --codex-bin "$active_goal_codex" \
   --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-if [[ "$(wc -l < "$active_goal_calls" | tr -d ' ')" != 2 ]]; then
-  echo "active Goal was not reactivated after continue" >&2
+if [[ "$(wc -l < "$active_goal_calls" | tr -d ' ')" != 1 ]]; then
+  echo "active Goal caused an unnecessary second action after continue" >&2
   exit 1
 fi
 if ! grep -Fq "exec resume --json --skip-git-repo-check $active_goal_id continue" "$active_goal_calls"; then
   echo "active Goal did not receive continue" >&2
   exit 1
 fi
-if ! grep -Fq "exec resume --json --skip-git-repo-check $active_goal_id /goal resume" "$active_goal_calls"; then
-  echo "active Goal was not sent its resume command" >&2
+if grep -Fq "/goal resume" "$active_goal_calls"; then
+  echo "active Goal received an invalid Goal chat prompt" >&2
   exit 1
 fi
-echo "active Goal reactivation test passed"
+echo "active Goal no-op test passed"
 
 repeat_file="$session_root/2026/09/20/rollout-repeat.jsonl"
 repeat_state="$tmp_dir/repeat-state.json"

@@ -8,6 +8,7 @@ import fcntl
 import json
 import os
 import re
+import select
 import subprocess
 import sys
 import time
@@ -91,11 +92,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--resume-prompt",
         default="continue",
-    )
-    parser.add_argument(
-        "--goal-resume-prompt",
-        default="/goal resume",
-        help="Restore a paused Goal on the original task after the retry prompt",
     )
     parser.add_argument(
         "--exclude-session-id",
@@ -409,6 +405,109 @@ def resume_session(
     return status, bool(CAPACITY_RE.search(output) or RECOVERABLE_TRANSPORT_RE.search(output))
 
 
+def read_app_server_response(process: subprocess.Popen[bytes], request_id: int) -> dict:
+    if process.stdout is None:
+        raise RuntimeError("app-server stdout is unavailable")
+    deadline = time.monotonic() + 30
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError("timed out waiting for app-server response")
+        readable, _, _ = select.select([process.stdout], [], [], remaining)
+        if not readable:
+            raise TimeoutError("timed out waiting for app-server response")
+        line = process.stdout.readline()
+        if not line:
+            raise RuntimeError("app-server closed before returning a response")
+        try:
+            response = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(response, dict) and response.get("id") == request_id:
+            return response
+
+
+def activate_goal(
+    codex_bin: str,
+    failure: CapacityFailure,
+) -> tuple[int, bool]:
+    try:
+        process = subprocess.Popen(
+            [codex_bin, "app-server", "--stdio"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
+        )
+    except OSError as error:
+        print(
+            f"Goal activation for session {failure.session_id} could not start app-server: {error}",
+            flush=True,
+        )
+        return 1, True
+
+    try:
+        if process.stdin is None:
+            raise RuntimeError("app-server stdin is unavailable")
+        process.stdin.write(
+            (
+                json.dumps(
+                {
+                    "id": 1,
+                    "method": "initialize",
+                    "params": {
+                        "clientInfo": {
+                            "name": "codex-model-capacity-retry",
+                            "title": "Codex model capacity retry",
+                            "version": "1.0.0",
+                        }
+                    },
+                }
+                )
+                + "\n"
+            ).encode("utf-8")
+        )
+        process.stdin.flush()
+        initialize_response = read_app_server_response(process, 1)
+        if "error" in initialize_response:
+            raise RuntimeError(json.dumps(initialize_response["error"], ensure_ascii=False))
+
+        process.stdin.write(
+            (
+                json.dumps(
+                {
+                    "id": 2,
+                    "method": "thread/goal/set",
+                    "params": {"threadId": failure.retry_session_id, "status": "active"},
+                }
+                )
+                + "\n"
+            ).encode("utf-8")
+        )
+        process.stdin.flush()
+        goal_response = read_app_server_response(process, 2)
+        if "error" in goal_response:
+            raise RuntimeError(json.dumps(goal_response["error"], ensure_ascii=False))
+        return 0, False
+    except (OSError, RuntimeError, TimeoutError) as error:
+        output = str(error)
+        print(
+            f"Goal activation for session {failure.session_id} failed: {output}",
+            flush=True,
+        )
+        return 1, bool(CAPACITY_RE.search(output) or RECOVERABLE_TRANSPORT_RE.search(output))
+    finally:
+        if process.stdin is not None:
+            process.stdin.close()
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+
+
 def scan_once(args: argparse.Namespace, state: dict) -> int:
     retry_count = 0
     continue_state = state.get("continue_first")
@@ -457,23 +556,23 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
 
             time.sleep(args.retry_delay_seconds)
 
-        if failure.goal_status not in {"active", "paused"}:
+        if failure.goal_status != "paused":
             state["sessions"][failure.session_id] = failure.signature
             continue_state.pop(failure.session_id, None)
             save_state(args.state_file, state)
             print(
                 f"Retried existing session {failure.session_id} with exit code 0; "
-                "no active or paused Goal to resume.",
+                "no paused Goal to activate.",
                 flush=True,
             )
             continue
 
         print(
-            f"Resuming paused Goal for existing session {failure.session_id} "
+            f"Activating paused Goal for existing session {failure.session_id} "
             "after continue.",
             flush=True,
         )
-        status, retry_on_failure = resume_session(args.codex_bin, failure, args.goal_resume_prompt)
+        status, retry_on_failure = activate_goal(args.codex_bin, failure)
         if status == 0 or not retry_on_failure:
             state["sessions"][failure.session_id] = failure.signature
             continue_state.pop(failure.session_id, None)
