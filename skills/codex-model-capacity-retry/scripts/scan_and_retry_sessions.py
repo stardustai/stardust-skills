@@ -336,12 +336,30 @@ def resume_session(
     if status == 0:
         return 0, False
     if DESKTOP_WRITER_RE.search(output):
+        queue_status, queue_output = run_command(
+            [
+                codex_bin,
+                "queue",
+                "--thread",
+                failure.retry_session_id,
+                "--message",
+                resume_prompt,
+            ]
+        )
+        if queue_status == 0:
+            print(
+                f"Session {failure.session_id} has an active writer; "
+                "queued continue on the same thread.",
+                flush=True,
+            )
+            return 0, False
         print(
             f"Session {failure.session_id} still has an active writer; "
-            "not sending continue until a later retry can acquire the writer.",
+            f"same-thread queue failed with exit code {queue_status}; "
+            "will retry later.",
             flush=True,
         )
-        return status, True
+        return queue_status, True
     if AUTH_FAILURE_RE.search(output):
         print(
             f"Session {failure.session_id} returned an authentication failure; not retrying.",

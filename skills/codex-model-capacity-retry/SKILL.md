@@ -38,13 +38,13 @@ codex exec resume --json --skip-git-repo-check SESSION_ID "continue"
 
 The command keeps the original session ID, allows the detached watcher to run independently of the launching directory, and does not pass `--model`, `--thinking`, `model_reasoning_effort`, or an effort override.
 
-## Active-writer gate
+## Active-writer recovery
 
-The latest `task_complete` is necessary but not sufficient to send `continue`: a Desktop task can still have an active writer after that record has been written. `codex exec resume` is the atomic gate. It must acquire the task's writer before it can deliver `continue`.
+The latest `task_complete` is necessary but not sufficient to send `continue`: a Desktop task can still have an active writer after that record has been written. The watcher first tries `codex exec resume` so the task can continue directly.
 
-If resume returns `thread-store conflict` or `already has an active writer`, the watcher does **not** queue a message. It leaves the capacity failure retryable, waits for the next scan, and tries resume again. This prevents a new follow-up from being inserted while the existing task is still active. An incidental `401`/`token_revoked` warning does not override this active-writer result; a genuine authentication error with no writer conflict is suppressed as before.
+If resume returns `thread-store conflict` or `already has an active writer`, the watcher queues the exact same `continue` prompt on the exact same thread with `codex queue --thread SESSION_ID --message continue`. A successful queue is recorded against the failure signature, so the watcher does not enqueue duplicates every five seconds. If queueing fails, the signature remains retryable and the watcher tries again later. An incidental `401`/`token_revoked` warning does not override this active-writer result; a genuine authentication error with no writer conflict is suppressed as before.
 
-When checking a Desktop task manually, inspect only the newest turn first. A task is eligible only when its newest error is a capacity error, and it is resumed only after the writer can be acquired; never revive a task just because it is `failed` or `systemError`.
+When checking a Desktop task manually, inspect only the newest turn first. A task is eligible only when its newest error is a capacity error; never revive a task just because it is `failed` or `systemError`.
 
 ## Boundaries
 
@@ -63,6 +63,6 @@ Run the bundled regression test:
 bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_scanner.sh
 ```
 
-The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and the active-writer gate: no `continue` is accepted until the existing writer has cleared.
+The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and active-writer recovery by queueing exactly one same-thread `continue`.
 
 It also verifies that `--daemon --once` returns control to the launching process, preserves the launch working directory for `codex exec resume`, and exits cleanly.
