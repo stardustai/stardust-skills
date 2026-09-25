@@ -35,7 +35,7 @@ output="$(FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_S
   --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0)"
 
 [[ "$output" == *"$session_id"* ]]
-[[ "$(<"$counter_file")" == 2 ]]
+[[ "$(<"$counter_file")" == 1 ]]
 [[ "$(<"$args_file")" == *"exec resume --json --skip-git-repo-check $session_id"* ]]
 if ! grep -Fq "exec resume --json --skip-git-repo-check $session_id continue" "$args_file"; then
   echo "resume prompt was not continue" >&2
@@ -51,7 +51,7 @@ fi
 
 python3 "$scanner" --once --session-root "$session_root" --state-file "$state_file" \
   --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-[[ "$(<"$counter_file")" == 2 ]]
+[[ "$(<"$counter_file")" == 1 ]]
 echo "existing-session scanner test passed"
 
 # A provider stream ending before the turn completes is recoverable: preserve
@@ -69,7 +69,7 @@ printf '%s\n' '{"timestamp":"2026-09-20T09:10:44.000Z","ordinal":10,"type":"even
 FAKE_CODEX_COUNTER="$transport_counter_file" FAKE_CODEX_ARGS="$transport_args_file" FAKE_SESSION_FILE="$transport_session_file" \
   python3 "$scanner" --once --session-root "$transport_root" --state-file "$transport_state_file" \
   --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-if [[ "$(<"$transport_counter_file")" != 2 ]]; then
+if [[ "$(<"$transport_counter_file")" != 1 ]]; then
   echo "stream-disconnected completion was not resumed" >&2
   exit 1
 fi
@@ -115,8 +115,8 @@ if [[ "$desktop_output" != *"queued 'continue' on the same thread"* ]]; then
   echo "active writer did not queue the same-thread continue" >&2
   exit 1
 fi
-if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 4 ]]; then
-  echo "active writer did not receive goal resume and same-thread continue" >&2
+if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 2 ]]; then
+  echo "active writer did not receive same-thread continue only for a task without a Goal" >&2
   exit 1
 fi
 if [[ "$(sed -n '1p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id continue"* ]]; then
@@ -127,14 +127,6 @@ if [[ "$(sed -n '2p' "$desktop_calls")" != *"queue --thread $desktop_session_id 
   echo "active writer did not receive a same-thread continue queue" >&2
   exit 1
 fi
-if [[ "$(sed -n '3p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id /goal resume"* ]]; then
-  echo "goal resume did not retain the original task and prompt" >&2
-  exit 1
-fi
-if [[ "$(sed -n '4p' "$desktop_calls")" != *"queue --thread $desktop_session_id --message /goal resume"* ]]; then
-  echo "active writer did not receive a same-thread goal resume queue" >&2
-  exit 1
-fi
 if ! grep -Fq "$desktop_session_id" "$desktop_state_file"; then
   echo "successful same-thread queue was not recorded" >&2
   exit 1
@@ -143,7 +135,7 @@ DESKTOP_CALLS="$desktop_calls" DESKTOP_READY_FILE="$desktop_ready_file" DESKTOP_
   python3 "$scanner" --once --session-root "$session_root" \
   --state-file "$desktop_state_file" --codex-bin "$desktop_codex" \
   --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 4 ]]; then
+if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 2 ]]; then
   echo "queued desktop task was retried more than once" >&2
   exit 1
 fi
@@ -152,7 +144,7 @@ DESKTOP_CALLS="$desktop_calls" DESKTOP_READY_FILE="$desktop_ready_file" DESKTOP_
   python3 "$scanner" --once --session-root "$session_root" \
   --state-file "$desktop_state_file" --codex-bin "$desktop_codex" \
   --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 4 ]]; then
+if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 2 ]]; then
   echo "queued desktop task was retried after its active writer cleared" >&2
   exit 1
 fi
@@ -166,6 +158,7 @@ mkdir -p "$goal_stage_root"
 goal_stage_id="019ed90c-3b33-7922-92ad-6e61d74ca9f0"
 goal_stage_file="$goal_stage_root/rollout-goal-stage.jsonl"
 printf '%s\n' "{\"type\":\"session_meta\",\"payload\":{\"id\":\"$goal_stage_id\"}}" > "$goal_stage_file"
+printf '%s\n' '{"timestamp":"2026-09-20T09:11:44.000Z","ordinal":9,"type":"event_msg","payload":{"type":"thread_goal_updated","goal":{"status":"paused","objective":"continue the task"}}}' >> "$goal_stage_file"
 printf '%s\n' '{"timestamp":"2026-09-20T09:11:45.000Z","ordinal":10,"type":"event_msg","payload":{"type":"task_complete","error":{"message":"429 model at capacity"}}}' >> "$goal_stage_file"
 goal_stage_codex="$tmp_dir/goal-stage-codex.sh"
 cat > "$goal_stage_codex" <<'EOF'
@@ -230,7 +223,7 @@ printf '%s\n' '{"timestamp":"2026-09-20T09:12:45.000Z","ordinal":2,"type":"event
 FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_SESSION_FILE="$repeat_file" \
   python3 "$scanner" --once --session-root "$session_root" --state-file "$repeat_state" \
   --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-[[ "$(<"$counter_file")" == 4 ]]
+[[ "$(<"$counter_file")" == 2 ]]
 echo "new-capacity-failure retry test passed"
 
 history_root="$tmp_dir/history-sessions"
@@ -327,11 +320,11 @@ chmod +x "$auth_codex"
 AUTH_CALLS="$auth_calls" AUTH_QUEUE_CALLS="$auth_queue_calls" python3 "$scanner" --once \
   --session-root "$auth_root" --state-file "$auth_state" --codex-bin "$auth_codex" \
   --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
-if [[ "$(wc -l < "$auth_calls" | tr -d ' ')" != 4 ]]; then
+if [[ "$(wc -l < "$auth_calls" | tr -d ' ')" != 2 ]]; then
   echo "active writer with an incidental authentication warning did not queue continue" >&2
   exit 1
 fi
-if [[ "$(wc -l < "$auth_queue_calls" | tr -d ' ')" != 2 ]]; then
+if [[ "$(wc -l < "$auth_queue_calls" | tr -d ' ')" != 1 ]]; then
   echo "active writer with an incidental authentication warning did not reach the queue path" >&2
   exit 1
 fi
@@ -392,12 +385,8 @@ EOF
 chmod +x "$subagent_codex"
 SUBAGENT_CALLS="$subagent_calls" python3 "$scanner" --once --session-root "$subagent_root" \
   --state-file "$subagent_state" --codex-bin "$subagent_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
-if [[ "$(wc -l < "$subagent_calls" | tr -d ' ')" != 2 ]]; then
-  echo "expected one parent Goal resume and one parent retry call" >&2
-  exit 1
-fi
-if ! grep -Fqx "exec resume --json --skip-git-repo-check $parent_id /goal resume" "$subagent_calls"; then
-  echo "subagent Goal resume did not target its parent" >&2
+if [[ "$(wc -l < "$subagent_calls" | tr -d ' ')" != 1 ]]; then
+  echo "expected only one parent retry call because the parent has no paused Goal" >&2
   exit 1
 fi
 if ! grep -Fqx "exec resume --json --skip-git-repo-check $parent_id continue" "$subagent_calls"; then

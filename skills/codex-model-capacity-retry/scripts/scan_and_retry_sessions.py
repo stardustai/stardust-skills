@@ -43,6 +43,7 @@ class CapacityFailure:
     path: Path
     signature: str
     message: str
+    goal_status: str | None
 
 
 def parse_args() -> argparse.Namespace:
@@ -94,7 +95,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--goal-resume-prompt",
         default="/goal resume",
-        help="Restore a paused Goal on the original task before sending the retry prompt",
+        help="Restore a paused Goal on the original task after the retry prompt",
     )
     parser.add_argument(
         "--exclude-session-id",
@@ -230,7 +231,11 @@ def event_sort_key(record: dict, path: Path) -> tuple[str, int, float]:
 
 
 def capacity_failure_from_completion(
-    session_id: str, retry_session_id: str | None, path: Path, latest_completion: dict
+    session_id: str,
+    retry_session_id: str | None,
+    path: Path,
+    latest_completion: dict,
+    goal_status: str | None,
 ) -> CapacityFailure | None:
     if latest_completion.get("payload", {}).get("type") != "task_complete":
         return None
@@ -261,7 +266,31 @@ def capacity_failure_from_completion(
             str(error.get("codex_error_info", "")),
         ]
     )
-    return CapacityFailure(session_id, retry_session_id or session_id, path, signature, message)
+    return CapacityFailure(
+        session_id,
+        retry_session_id or session_id,
+        path,
+        signature,
+        message,
+        goal_status,
+    )
+
+
+def latest_goal_status(paths: list[Path]) -> str | None:
+    latest: tuple[tuple[str, int, float], str | None] | None = None
+    for path in paths:
+        for record in read_json_lines(path):
+            if record.get("type") != "event_msg":
+                continue
+            payload = record.get("payload", {})
+            if not isinstance(payload, dict) or payload.get("type") != "thread_goal_updated":
+                continue
+            goal = payload.get("goal")
+            status = goal.get("status") if isinstance(goal, dict) else None
+            key = event_sort_key(record, path)
+            if latest is None or key > latest[0]:
+                latest = (key, status if isinstance(status, str) else None)
+    return latest[1] if latest else None
 
 
 def load_state(path: Path) -> dict:
@@ -286,6 +315,7 @@ def candidate_failures(root: Path, max_age_seconds: float) -> list[CapacityFailu
         return []
     cutoff = time.time() - max_age_seconds if max_age_seconds > 0 else 0
     latest_by_session: dict[str, tuple[str | None, Path, dict]] = {}
+    paths_by_session: dict[str, list[Path]] = {}
     for path in root.rglob("rollout-*.jsonl"):
         try:
             if cutoff and path.stat().st_mtime < cutoff:
@@ -296,6 +326,7 @@ def candidate_failures(root: Path, max_age_seconds: float) -> list[CapacityFailu
         if boundary is None:
             continue
         session_id, retry_session_id, boundary_path, latest_event = boundary
+        paths_by_session.setdefault(session_id, []).append(path)
         current = latest_by_session.get(session_id)
         if current is None or event_sort_key(latest_event, boundary_path) > event_sort_key(
             current[2], current[1]
@@ -305,7 +336,11 @@ def candidate_failures(root: Path, max_age_seconds: float) -> list[CapacityFailu
     candidates: list[CapacityFailure] = []
     for session_id, (retry_session_id, path, latest_event) in latest_by_session.items():
         failure = capacity_failure_from_completion(
-            session_id, retry_session_id, path, latest_event
+            session_id,
+            retry_session_id,
+            path,
+            latest_event,
+            latest_goal_status(paths_by_session[session_id]),
         )
         if failure:
             candidates.append(failure)
@@ -422,14 +457,23 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
 
             time.sleep(args.retry_delay_seconds)
 
+        if failure.goal_status != "paused":
+            state["sessions"][failure.session_id] = failure.signature
+            continue_state.pop(failure.session_id, None)
+            save_state(args.state_file, state)
+            print(
+                f"Retried existing session {failure.session_id} with exit code 0; "
+                "no paused Goal to resume.",
+                flush=True,
+            )
+            continue
+
         print(
-            f"Resuming Goal for existing session {failure.session_id} "
+            f"Resuming paused Goal for existing session {failure.session_id} "
             "after continue.",
             flush=True,
         )
-        status, retry_on_failure = resume_session(
-            args.codex_bin, failure, args.goal_resume_prompt
-        )
+        status, retry_on_failure = resume_session(args.codex_bin, failure, args.goal_resume_prompt)
         if status == 0 or not retry_on_failure:
             state["sessions"][failure.session_id] = failure.signature
             continue_state.pop(failure.session_id, None)
