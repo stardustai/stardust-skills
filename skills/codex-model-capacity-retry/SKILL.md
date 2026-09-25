@@ -20,6 +20,8 @@ python3 /Users/derek/.agents/skills/codex-model-capacity-retry/scripts/scan_and_
 
 The detached watcher writes its PID to `~/.codex/codex-capacity-retry.pid` and its output to `~/.codex/codex-capacity-retry.log`. The state-file lock prevents a second watcher from duplicating retries.
 
+Before retrying a capacity-failed completion, the watcher sends `/goal resume` to the same task, then waits five seconds and sends the normal `continue` prompt. The state file records Goal restoration per failure signature, so a temporary failure on the second step does not repeatedly reactivate the same Goal. If the task has no Goal, `/goal resume` is harmless and the normal `continue` retry still runs. If the Goal was cleared, completed, or stopped by budget, the watcher cannot recreate it; the task needs a new Goal.
+
 `CONTROL_TASK_SESSION_ID` is the session ID of the task that owns the watcher or heartbeat. Exclude that task so the watcher never attempts to resume its own controller task. Repeat `--exclude-session-id` when one watcher is coordinating more than one controller task. The same list can be supplied through `CODEX_RETRY_EXCLUDE_SESSION_IDS`, separated by commas.
 
 ## What it scans
@@ -42,7 +44,7 @@ The command keeps the original session ID, allows the detached watcher to run in
 
 The latest `task_complete` is necessary but not sufficient to send `continue`: a Desktop task can still have an active writer after that record has been written. The watcher first tries `codex exec resume` so the task can continue directly.
 
-If resume returns `thread-store conflict` or `already has an active writer`, the watcher queues the exact same `continue` prompt on the exact same thread with `codex queue --thread SESSION_ID --message continue`. A successful queue is recorded against the failure signature, so the watcher does not enqueue duplicates every five seconds. If queueing fails, the signature remains retryable and the watcher tries again later. An incidental `401`/`token_revoked` warning does not override this active-writer result; a genuine authentication error with no writer conflict is suppressed as before.
+If either Goal resume or normal resume returns `thread-store conflict` or `already has an active writer`, the watcher queues the exact same prompt on the exact same thread with `codex queue --thread SESSION_ID --message PROMPT`. A successful Goal queue is recorded as the first stage; a successful `continue` queue records the failure signature, so the watcher does not enqueue duplicates every five seconds. If queueing fails, the signature remains retryable and the watcher tries again later. An incidental `401`/`token_revoked` warning does not override this active-writer result; a genuine authentication error with no writer conflict is suppressed as before.
 
 When checking a Desktop task manually, inspect only the newest turn first. A task is eligible only when its newest error is a capacity error; never revive a task just because it is `failed` or `systemError`.
 
@@ -63,6 +65,6 @@ Run the bundled regression test:
 bash /Users/derek/.agents/skills/codex-model-capacity-retry/tests/test_session_scanner.sh
 ```
 
-The test proves capacity matching, same-session resume, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and active-writer recovery by queueing exactly one same-thread `continue`.
+The test proves capacity matching, same-session Goal resume followed by `continue`, no model/effort override, duplicate suppression, repeated retry after a new capacity failure, suppression of normal answer text that merely contains a `429` amount, historical rollout suppression, controller-session exclusion, and active-writer recovery by queueing exactly one same-thread Goal resume and one same-thread `continue`.
 
 It also verifies that `--daemon --once` returns control to the launching process, preserves the launch working directory for `codex exec resume`, and exits cleanly.

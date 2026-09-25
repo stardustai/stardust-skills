@@ -92,6 +92,11 @@ def parse_args() -> argparse.Namespace:
         default="continue",
     )
     parser.add_argument(
+        "--goal-resume-prompt",
+        default="/goal resume",
+        help="Restore a paused Goal on the original task before sending the retry prompt",
+    )
+    parser.add_argument(
         "--exclude-session-id",
         dest="excluded_session_ids",
         action="append",
@@ -349,7 +354,7 @@ def resume_session(
         if queue_status == 0:
             print(
                 f"Session {failure.session_id} has an active writer; "
-                "queued continue on the same thread.",
+                f"queued {resume_prompt!r} on the same thread.",
                 flush=True,
             )
             return 0, False
@@ -371,6 +376,10 @@ def resume_session(
 
 def scan_once(args: argparse.Namespace, state: dict) -> int:
     retry_count = 0
+    goal_resume_state = state.get("goal_resume")
+    if not isinstance(goal_resume_state, dict):
+        goal_resume_state = {}
+        state["goal_resume"] = goal_resume_state
     for failure in candidate_failures(args.session_root, args.max_age_seconds):
         if (
             failure.session_id in args.excluded_session_ids
@@ -392,11 +401,38 @@ def scan_once(args: argparse.Namespace, state: dict) -> int:
             flush=True,
         )
         time.sleep(args.retry_delay_seconds)
+
+        if goal_resume_state.get(failure.session_id) != failure.signature:
+            print(
+                f"Resuming Goal for existing session {failure.session_id} "
+                "before retrying.",
+                flush=True,
+            )
+            status, retry_on_failure = resume_session(
+                args.codex_bin, failure, args.goal_resume_prompt
+            )
+            if status == 0:
+                goal_resume_state[failure.session_id] = failure.signature
+                save_state(args.state_file, state)
+            else:
+                if not retry_on_failure:
+                    state["sessions"][failure.session_id] = failure.signature
+                save_state(args.state_file, state)
+                print(
+                    f"Goal resume for existing session {failure.session_id} "
+                    f"returned exit code {status}; not sending continue.",
+                    flush=True,
+                )
+                continue
+
+            time.sleep(args.retry_delay_seconds)
+
         status, retry_on_failure = resume_session(
             args.codex_bin, failure, args.resume_prompt
         )
         if status == 0 or not retry_on_failure:
             state["sessions"][failure.session_id] = failure.signature
+            goal_resume_state.pop(failure.session_id, None)
         else:
             # Leave a retryable signature unrecorded so the next watch cycle retries it.
             state["sessions"].pop(failure.session_id, None)
