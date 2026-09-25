@@ -22,7 +22,7 @@ fake_codex="$tmp_dir/fake-codex.sh"
 cat > "$fake_codex" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
-printf '%s\n' "$*" > "$FAKE_CODEX_ARGS"
+printf '%s\n' "$*" >> "$FAKE_CODEX_ARGS"
 attempt=$(( $(<"$FAKE_CODEX_COUNTER") + 1 ))
 printf '%s\n' "$attempt" > "$FAKE_CODEX_COUNTER"
 printf '%s\n' '{"type":"turn.completed","usage":{"output_tokens":1}}'
@@ -37,7 +37,7 @@ output="$(FAKE_CODEX_COUNTER="$counter_file" FAKE_CODEX_ARGS="$args_file" FAKE_S
 [[ "$output" == *"$session_id"* ]]
 [[ "$(<"$counter_file")" == 2 ]]
 [[ "$(<"$args_file")" == *"exec resume --json --skip-git-repo-check $session_id"* ]]
-if [[ "$(<"$args_file")" != *" continue" ]]; then
+if ! grep -Fq "exec resume --json --skip-git-repo-check $session_id continue" "$args_file"; then
   echo "resume prompt was not continue" >&2
   exit 1
 fi
@@ -51,7 +51,7 @@ fi
 
 python3 "$scanner" --once --session-root "$session_root" --state-file "$state_file" \
   --codex-bin "$fake_codex" --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null
-[[ "$(<"$counter_file")" == 1 ]]
+[[ "$(<"$counter_file")" == 2 ]]
 echo "existing-session scanner test passed"
 
 # A provider stream ending before the turn completes is recoverable: preserve
@@ -119,20 +119,20 @@ if [[ "$(wc -l < "$desktop_calls" | tr -d ' ')" != 4 ]]; then
   echo "active writer did not receive goal resume and same-thread continue" >&2
   exit 1
 fi
-if [[ "$(sed -n '1p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id /goal resume"* ]]; then
-  echo "goal resume did not retain the original task" >&2
+if [[ "$(sed -n '1p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id continue"* ]]; then
+  echo "continue did not retain the original task" >&2
   exit 1
 fi
-if [[ "$(sed -n '2p' "$desktop_calls")" != *"queue --thread $desktop_session_id --message /goal resume"* ]]; then
-  echo "active writer did not receive a same-thread goal resume queue" >&2
-  exit 1
-fi
-if [[ "$(sed -n '3p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id continue"* ]]; then
-  echo "continue did not retain the original task and prompt" >&2
-  exit 1
-fi
-if [[ "$(sed -n '4p' "$desktop_calls")" != *"queue --thread $desktop_session_id --message continue"* ]]; then
+if [[ "$(sed -n '2p' "$desktop_calls")" != *"queue --thread $desktop_session_id --message continue"* ]]; then
   echo "active writer did not receive a same-thread continue queue" >&2
+  exit 1
+fi
+if [[ "$(sed -n '3p' "$desktop_calls")" != *"exec resume --json --skip-git-repo-check $desktop_session_id /goal resume"* ]]; then
+  echo "goal resume did not retain the original task and prompt" >&2
+  exit 1
+fi
+if [[ "$(sed -n '4p' "$desktop_calls")" != *"queue --thread $desktop_session_id --message /goal resume"* ]]; then
+  echo "active writer did not receive a same-thread goal resume queue" >&2
   exit 1
 fi
 if ! grep -Fq "$desktop_session_id" "$desktop_state_file"; then
@@ -186,17 +186,16 @@ GOAL_STAGE_CALLS="$goal_stage_calls" GOAL_STAGE_READY="$goal_stage_ready" \
   python3 "$scanner" --once --session-root "$goal_stage_root" \
   --state-file "$goal_stage_state" --codex-bin "$goal_stage_codex" \
   --retry-delay-seconds 0 --max-age-seconds 0 >/dev/null 2>&1
-if [[ "$(wc -l < "$goal_stage_calls" | tr -d ' ')" != 3 ]]; then
+if [[ "$(wc -l < "$goal_stage_calls" | tr -d ' ')" != 2 ]]; then
   echo "goal resume stage did not preserve the retryable continue state" >&2
   exit 1
 fi
-if [[ "$(sed -n '1p' "$goal_stage_calls")" != *" /goal resume"* ]]; then
-  echo "goal resume stage did not run first" >&2
+if [[ "$(sed -n '1p' "$goal_stage_calls")" != *" continue"* ]]; then
+  echo "continue did not run first" >&2
   exit 1
 fi
-if [[ "$(sed -n '2p' "$goal_stage_calls")" != *" continue"* ]] || \
-   [[ "$(sed -n '3p' "$goal_stage_calls")" != *"queue --thread $goal_stage_id --message continue"* ]]; then
-  echo "goal resume stage did not leave continue retryable" >&2
+if [[ "$(sed -n '2p' "$goal_stage_calls")" != *"queue --thread $goal_stage_id --message continue"* ]]; then
+  echo "continue stage did not remain retryable" >&2
   exit 1
 fi
 touch "$goal_stage_ready"
@@ -208,8 +207,12 @@ if [[ "$(wc -l < "$goal_stage_calls" | tr -d ' ')" != 4 ]]; then
   echo "retryable continue was not retried exactly once" >&2
   exit 1
 fi
-if [[ "$(sed -n '4p' "$goal_stage_calls")" == *" /goal resume"* ]]; then
-  echo "Goal was reactivated after its first resume succeeded" >&2
+if [[ "$(sed -n '3p' "$goal_stage_calls")" == *" /goal resume"* ]]; then
+  echo "Goal was resumed before continue succeeded" >&2
+  exit 1
+fi
+if [[ "$(sed -n '4p' "$goal_stage_calls")" != *" /goal resume"* ]]; then
+  echo "Goal was not resumed after continue succeeded" >&2
   exit 1
 fi
 echo "Goal resume stage suppression test passed"
