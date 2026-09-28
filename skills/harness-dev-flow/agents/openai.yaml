@@ -1,0 +1,4 @@
+interface:
+  display_name: "Harness Dev Flow"
+  short_description: "从空仓库启动低风险原型，按依赖切片实现并逐步验收"
+  default_prompt: "用 $harness-dev-flow 规划一个隔离的低风险原型，先写 PRD，再拆 MVS 依赖链和验收标准。"

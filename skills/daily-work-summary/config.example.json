@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "company": {"name": "示例公司"},
+  "timezone": "Asia/Shanghai",
+  "identity": {"name": "示例员工", "git_emails": ["employee@example.com"]},
+  "git": {"repositories": [{"name": "示例项目", "path": "/absolute/company/project"}], "max_commits": 2000, "include_worktree": true},
+  "local": {
+    "roots": [{"path": "/absolute/company/documents", "project": "示例项目", "mode": "workspace", "keywords": []}],
+    "include_globs": ["**/*"], "exclude_globs": [], "max_files": 500, "max_file_bytes": 3000000
+  },
+  "dingtalk": {"enabled": true, "profile": "", "queries": ["示例项目"], "nodes": [], "max_pages": 10, "max_documents": 50, "page_size": 20},
+  "limits": {"timeout_seconds": 30, "max_content_chars": 20000}
+}
