@@ -1,0 +1,4 @@
+interface:
+  display_name: "公司每日工作总结"
+  short_description: "核对公司 Git、钉钉文档与本地工作材料，生成可追溯的每日工作总结"
+  default_prompt: "使用 $daily-work-summary 核对今天的公司工作，生成带证据和采集缺口的日报。"

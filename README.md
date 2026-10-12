@@ -13,6 +13,7 @@
 | `ai-pr-redteam` | 审查 AI 生成、Vibe Coding 产出或 Agent 大比例参与的 PR / diff，识别 fake/mock/fallback 假完成、弱测试、契约漂移，以及按 TypeScript、Python、Go、Java 等语言范式判断的工程质量、包边界、抽象复用和合入风险，并输出针对性优化建议、owner、验收标准和 proof command。 |
 | `build-work-memory` | 引导用户首次初始化 Friday Memory：按用户确认的范围读取本地文档、钉钉知识库 / 文档、钉钉 AI 听记和其他指定钉钉数据，标准化来源信息后提交到 Memory 后台处理。 |
 | `codex-model-capacity-retry` | 扫描本机已有 Codex 任务的最新错误记录；当且仅当出现模型容量错误或 HTTP 429 时，在原任务中持续发送 `continue`。兼容 Desktop writer 冲突，保留原模型和推理设置，不创建新的任务。 |
+| `daily-work-summary` | 核对指定日期的多仓库 Git、钉钉文档和授权本地材料，区分本人贡献、实际成果与证据缺口，生成可追溯的工作总结。 |
 | `daily-frontier-tech-discovery` | 扫描最近 72 小时的技术聚合源、一手博客、GitHub、评测与高影响论文，结合内部人物、会议和项目上下文筛选，归档完整候选分析，并生成可直接发送到钉钉的中文技术日报。 |
 | `dengbao-code-audit` | 从等保三级 / MLPS 2.0 视角检查源码、配置、部署文件和项目文档，覆盖登录认证、权限控制、安全审计、数据安全、接口安全、传输安全、运维暴露面、备份恢复、发布变更和文档材料，并输出 Markdown 风险报告和整改路线图。 |
 | `dingtang-okr-review` | 从叮当 OKR 页面导出 OKR Excel，并按 CEO 视角在 KR 层级做证据核实、打分和超时折扣。 |
@@ -22,6 +23,7 @@
 | `dingtalk-oa-approval` | 审阅钉钉 OA 审批，要求读完整审批详情、流水、附件、链接文档和依据材料后再给审批意见。 |
 | `fundflow-investor-meeting` | 准备 FundFlow/融管通投资人会议、会后复盘、投资人问题和风格分析、跟进建议，以及融资群更新。 |
 | `fxiaoke-crm-cli` | 使用官方 `sharecrm` CLI 查询纷享销客 CRM 合同、商机、客户、联系人、交付、回款和跟进，按明确口径输出指标，并在 CRM 写操作前要求最终确认。 |
+| `harness-dev-flow` | 从空仓库启动低风险原型，整理 PRD、技术计划、依赖有序的最小可验证切片和重复验收；正式工程交付仍走 `spec-intake` 与 `vibe-coding`。 |
 | `internal-app-standards` | 统一 AI 编码生成的企业内部系统标准，覆盖技术栈选型、工程设计、React + Ant Design 前端、TypeScript/NestJS 后端、PostgreSQL/Prisma、迁移、Docker/Kubernetes 部署、生产就绪检查和代码评审门禁。 |
 | `ocr` | 调用 Stardust 对外 OCR 服务识别图片、截图和扫描 PDF，支持中英文、批量输入、指定 PDF 页码，以及 text、Markdown 和 JSON 输出。 |
 | `pm-data-adaptation-assistant` | 面向项目经理回答多模态数据适配、平台导入/导出错误、PM-check、交付校验和 Conflux 使用问题，说明 PM 应收集的信息、下一步动作和是否需要开发确认。 |
@@ -232,6 +234,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `ai-pr-redteam` | 不需要开放平台 key。它读取用户授权范围内的目标仓库、PR/diff、README、manifest、env 模板、CI、测试和变更代码；扫描脚本只给 review 线索，不替代人工判断。默认只读审查，不修复代码，不得提交 `.env`、token、cookie、私有 URL、数据库内容、日志敏感片段或本机状态。 |
 | `build-work-memory` | 不需要开放平台 key。它需要已安装并鉴权的 Friday Memory MCP，以及已安装并登录的 `dws`；本地文档只有在用户明确指定路径并确认后才读取。 |
 | `codex-model-capacity-retry` | 不需要业务系统凭证。它仅读取当前用户本机的 Codex rollout 记录，并通过已登录的 Codex CLI/Desktop app-server 继续同一任务；不保存或提交登录态、任务内容、日志、token 或模型设置。 |
+| `daily-work-summary` | 不需要开放平台 key。读取明确配置的 Git 仓库和本地目录；钉钉文档需要使用者已登录的 `dws`。真实配置、文档正文、证据包和报告只保存在使用者本机。 |
 | `daily-frontier-tech-discovery` | 互联网发现需要可用的搜索/抓取能力；内部关联需要用户授权读取本机 memory 目录。钉钉机器人发送需要安装后在 `config/config.json` 配置 webhook 和 secret，并限制为 `600` 权限；真实配置、日报归档和发送历史都不进入仓库。 |
 | `dengbao-code-audit` | 不需要开放平台 key。它读取用户授权范围内的本地源码、配置、部署文件和项目文档；报告中不得暴露 token、密码、私钥、连接串等敏感值。 |
 | `dingtang-okr-review` | 当前导出不需要。它使用已登录 Chrome 中的叮当 OKR 页面，前提是当前浏览器账号本身有 OKR 查看权限。CEO review 阶段会按用户授权读取本地文件、`memory_recall` 和 `dws` 资料核实 KR。 |
@@ -241,6 +244,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `dingtalk-oa-approval` | 优先使用 `dws oa` 授权；只有在 DWS 详情缺字段且用户已授权时，才会用本机开放平台配置补读。 |
 | `fundflow-investor-meeting` | 需要可用的 FundFlow MCP 授权；融资阶段、投资人状态、会议记录和跟进事实以 FundFlow 为准。DingTalk 群更新只在用户授权后执行，且发送前需要验证群和命令 schema。 |
 | `fxiaoke-crm-cli` | 需要官方 `sharecrm` CLI 及当前使用者在本机建立的有效登录会话。CLI 会话不进入仓库，Agent 不索要、不读取、不共享 token、cookie 或其他凭证；查询、写入权限和审计继承当前登录的 CRM 用户。 |
+| `harness-dev-flow` | 不需要开放平台 key。只在已授权的隔离原型仓库内读写；外部依赖探针须使用获准的测试环境。正式项目的权限和交付门禁仍由对应仓库及 `spec-intake`、`vibe-coding` 约束。 |
 | `internal-app-standards` | 不需要开放平台 key。它读取用户授权范围内的本地内部系统源码、配置、数据库迁移、Docker/K8s 文件和 CI/部署脚本，用于技术选型、工程设计和生产就绪评审；不得提交或报告明文密钥、连接串、token、私有域名等敏感值。 |
 | `ocr` | 需要可访问 `https://ocr.preseen.ai/v1`。员工端通过公司邮箱完成 Cloudflare Access 登录；headless 工作负载使用成对的 `CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET`。本机 provider registry 只提供模型和语言默认值；识别文件只发送到该 OCR 服务。 |
 | `pm-data-adaptation-assistant` | 默认不需要开放平台 key。它按已有沉淀回答 PM 的数据适配、平台错误和 Conflux 使用问题；若要判断当前生产行为、客户交付结论、脚本改动或平台配置，应由用户授权读取相应样例、平台记录、配置或代码并交开发确认，不得提交客户隐私数据、凭证、内网地址或完整私有路径。 |
@@ -276,6 +280,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 ├── install.sh
 ├── skills/
 │   ├── build-work-memory/
+│   ├── daily-work-summary/
 │   ├── daily-frontier-tech-discovery/
 │   ├── dengbao-code-audit/
 │   ├── dingtang-okr-review/
@@ -285,6 +290,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 │   ├── dingtalk-oa-approval/
 │   ├── fundflow-investor-meeting/
 │   ├── fxiaoke-crm-cli/
+│   ├── harness-dev-flow/
 │   ├── internal-app-standards/
 │   ├── ocr/
 │   ├── pm-data-adaptation-assistant/
