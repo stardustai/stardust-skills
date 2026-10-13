@@ -14,6 +14,7 @@
 | `build-work-memory` | 引导用户首次初始化 Friday Memory：按用户确认的范围读取本地文档、钉钉知识库 / 文档、钉钉 AI 听记和其他指定钉钉数据，标准化来源信息后提交到 Memory 后台处理。 |
 | `codex-model-capacity-retry` | 扫描本机已有 Codex 任务的最新错误记录；当且仅当出现模型容量错误或 HTTP 429 时，在原任务中持续发送 `continue`。兼容 Desktop writer 冲突，保留原模型和推理设置，不创建新的任务。 |
 | `daily-frontier-tech-discovery` | 扫描最近 72 小时的技术聚合源、一手博客、GitHub、评测与高影响论文，结合内部人物、会议和项目上下文筛选，归档完整候选分析，并生成可直接发送到钉钉的中文技术日报。 |
+| `database-design` | 根据业务负载和项目风险选择数据库，设计或审查表结构、DDL、约束、注释、索引和迁移方案；包含本地 DDL 质量检查脚本。 |
 | `dengbao-code-audit` | 从等保三级 / MLPS 2.0 视角检查源码、配置、部署文件和项目文档，覆盖登录认证、权限控制、安全审计、数据安全、接口安全、传输安全、运维暴露面、备份恢复、发布变更和文档材料，并输出 Markdown 风险报告和整改路线图。 |
 | `dingtang-okr-review` | 从叮当 OKR 页面导出 OKR Excel，并按 CEO 视角在 KR 层级做证据核实、打分和超时折扣。 |
 | `dingtalk-browser-export` | 从已登录 Chrome 当前打开的 DingTalk/Alidocs 文档导出为 docx、PDF 或 Markdown，用作网页导出兜底。 |
@@ -233,6 +234,7 @@ CLI 登录会话保留在使用者本机，不由安装脚本复制，也不得�
 | `build-work-memory` | 不需要开放平台 key。它需要已安装并鉴权的 Friday Memory MCP，以及已安装并登录的 `dws`；本地文档只有在用户明确指定路径并确认后才读取。 |
 | `codex-model-capacity-retry` | 不需要业务系统凭证。它仅读取当前用户本机的 Codex rollout 记录，并通过已登录的 Codex CLI/Desktop app-server 继续同一任务；不保存或提交登录态、任务内容、日志、token 或模型设置。 |
 | `daily-frontier-tech-discovery` | 互联网发现需要可用的搜索/抓取能力；内部关联需要用户授权读取本机 memory 目录。钉钉机器人发送需要安装后在 `config/config.json` 配置 webhook 和 secret，并限制为 `600` 权限；真实配置、日报归档和发送历史都不进入仓库。 |
+| `database-design` | 不需要业务系统凭证。按用户授权读取项目代码、迁移和部署资料；DDL 检查脚本仅检查本地文件，不连接或修改数据库。 |
 | `dengbao-code-audit` | 不需要开放平台 key。它读取用户授权范围内的本地源码、配置、部署文件和项目文档；报告中不得暴露 token、密码、私钥、连接串等敏感值。 |
 | `dingtang-okr-review` | 当前导出不需要。它使用已登录 Chrome 中的叮当 OKR 页面，前提是当前浏览器账号本身有 OKR 查看权限。CEO review 阶段会按用户授权读取本地文件、`memory_recall` 和 `dws` 资料核实 KR。 |
 | `dingtalk-browser-export` | 当前不需要。它使用已登录 Chrome 中当前打开的 DingTalk/Alidocs 页面。 |
