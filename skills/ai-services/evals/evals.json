@@ -1,0 +1,35 @@
+{
+  "skill_name": "ai-services",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "把 /absolute/path/invoice.png 里的文字识别出来，这是一张普通发票截图。",
+      "expected_output": "Uses the default rapidocr engine through the ai-services client (or the connected MCP ocr_document tool), reports the extracted text, and flags low confidence or warnings instead of silently correcting amounts, dates or identifiers.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "这份 /absolute/path/financials.pdf 前 3 页有很多合并单元格的表格，帮我提取成可以直接贴进文档的格式。",
+      "expected_output": "Chooses --engine qwen because the pages are tables with merged cells, passes --pages 1-3, and returns Markdown (or HTML tables) rather than flattened plain text.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "把 /absolute/path/meeting.m4a 转成文字，会议是中文的，我要带时间戳的版本。",
+      "expected_output": "Uses the asr command with --language zh and --format json to include timestamped segments, authenticates through company Cloudflare Access, and does not expose credentials.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "给我生成一段 4000 字的 MP3 旁白，用 Serena。",
+      "expected_output": "Explains that each TTS request is limited to 3000 characters and the output is MP3 only, proposes splitting at sentence boundaries, and only proceeds with the user's agreement; it does not send the 4000-character text in one request.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "怎么让我的 Codex 接上 ai-services 这个 MCP？",
+      "expected_output": "Gives the https://ai-services.preseen.ai/mcp endpoint and the Codex config.toml snippet, states that authentication is Cloudflare Access OAuth, and tells the user never to put credentials in the URL.",
+      "files": []
+    }
+  ]
+}

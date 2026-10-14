@@ -4,13 +4,14 @@
 
 这个项目不是钉钉官方 SDK，也不是 `dws`、小青 MCP 或任何业务系统的替代品。它的定位是让 Agent 在星尘的真实业务里按统一规则工作：先读事实源，再按业务判断标准分析，最后在用户确认后执行高影响操作。
 
-当前仓库覆盖 Friday Memory 初始化、每日技术前沿发现、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、TTS 语音合成、ASR 转写、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、项目交付结项资料收集、PM 数据适配和 Conflux 问答、Startask/Stardust I/O 契约审计、Vibe Coding 工程交付、Vibe Coding 项目救援、AI PR 反方审查、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，每日技术前沿发现先扫描可信聚合源和一手技术资料，再结合内部人物、会议和项目上下文筛选并归档；钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，文本转 MP3 走 Stardust 对外 Qwen3-TTS 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；项目交付结项类 skill 主要盘点、核验和组织资料，不替代财务、法务、数据安全或正式结项审批；PM 数据适配问答类 skill 主要用项目经理能理解的语言解释导入/导出、平台错误、PM-check、交付校验和 Conflux 概念，不替代开发根因确认或客户交付审批；Startask/Stardust 契约审计类 skill 主要核对客户规格、真实样例、operator/schema、平台记录、适配代码和校验器，不替代平台端或客户验收；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；`vibe-coding-rescue` 面向 AI 生成或遗留项目的启动、构建、测试、环境、契约、迁移、CI/部署和 README 漂移救援，不替代正式需求交付或生产变更审批；`ai-pr-redteam` 面向 AI 生成或 Agent 参与的 PR/diff 做合入前反方审查，重点识别 fake/fallback 假完成、弱测试、契约漂移和按语言范式判断的工程质量风险，不替代作者修复、正式安全测评或生产审批；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
+当前仓库覆盖 Friday Memory 初始化、每日技术前沿发现、钉钉、叮当 OKR、DingTalk/Alidocs、OA 审批、知识库整理、AI 听记权限、纷享销客 CRM、OCR、TTS 语音合成、ASR 转写、统一 AI Services（OCR/ASR/TTS 的 MCP 与命令行）、在线视频转写、内部任务上下文、融资会议、PRD 测试用例生成、需求规格访谈、项目交付结项资料收集、PM 数据适配和 Conflux 问答、Startask/Stardust I/O 契约审计、Vibe Coding 工程交付、Vibe Coding 项目救援、AI PR 反方审查、候选人面试、高级技术候选人产品经历评估、小青面试系统、SRE 部署交付、等保代码安全审计和内部系统工程标准。具体原子操作仍交给对应工具完成：Memory 导入优先走已安装的 Friday Memory MCP，每日技术前沿发现先扫描可信聚合源和一手技术资料，再结合内部人物、会议和项目上下文筛选并归档；钉钉能力优先走 `dws`，纷享销客数据优先走官方 `sharecrm` CLI，图片和扫描 PDF 的文字识别走 Stardust 对外 OCR 服务，文本转 MP3 走 Stardust 对外 Qwen3-TTS 服务，音视频文件转写走 OpenAI 转写模型，在线视频转写走 Stardust Video Transcribe 服务，融资事实优先走 FundFlow MCP，候选人和面评业务事实优先走 `xiaoqing_interview` MCP，浏览器只作为明确授权后的兜底路径；项目交付结项类 skill 主要盘点、核验和组织资料，不替代财务、法务、数据安全或正式结项审批；PM 数据适配问答类 skill 主要用项目经理能理解的语言解释导入/导出、平台错误、PM-check、交付校验和 Conflux 概念，不替代开发根因确认或客户交付审批；Startask/Stardust 契约审计类 skill 主要核对客户规格、真实样例、operator/schema、平台记录、适配代码和校验器，不替代平台端或客户验收；`task-management` 只读取已部署 CEO agent service 的本地任务上下文，不能修改任务；`vibe-coding` 以 `spec-intake` 的工程就绪 Spec 为输入，自动编排项目初始化、架构治理、计划、TDD、业务 E2E/Eval、Review 和 Git 交付；`vibe-coding-rescue` 面向 AI 生成或遗留项目的启动、构建、测试、环境、契约、迁移、CI/部署和 README 漂移救援，不替代正式需求交付或生产变更审批；`ai-pr-redteam` 面向 AI 生成或 Agent 参与的 PR/diff 做合入前反方审查，重点识别 fake/fallback 假完成、弱测试、契约漂移和按语言范式判断的工程质量风险，不替代作者修复、正式安全测评或生产审批；内部系统标准类 skill 主要约束技术栈选型、工程设计、代码结构和生产门禁；部署类 skill 主要生成可审计的部署包、发布门禁和变更材料，不替代正式生产变更审批；安全审计类 skill 主要读取本地项目源码、配置、部署文件和项目文档，不替代正式等保测评。
 
 ## 包含的 Skills
 
 | Skill | 作用 |
 | --- | --- |
 | `ai-pr-redteam` | 审查 AI 生成、Vibe Coding 产出或 Agent 大比例参与的 PR / diff，识别 fake/mock/fallback 假完成、弱测试、契约漂移，以及按 TypeScript、Python、Go、Java 等语言范式判断的工程质量、包边界、抽象复用和合入风险，并输出针对性优化建议、owner、验收标准和 proof command。 |
+| `ai-services` | 通过 Stardust 统一的 AI Services 服务（`ai-services.preseen.ai`）做 OCR、语音转文字和文字转语音：默认 RapidOCR 识别普通文本，表格和复杂排版用 Qwen 视觉模型输出 Markdown；ASR 转写音频；TTS 生成 MP3。同一服务提供 MCP，源码在 `mcp/ai-services`。 |
 | `build-work-memory` | 引导用户首次初始化 Friday Memory：按用户确认的范围读取本地文档、钉钉知识库 / 文档、钉钉 AI 听记和其他指定钉钉数据，标准化来源信息后提交到 Memory 后台处理。 |
 | `codex-model-capacity-retry` | 扫描本机已有 Codex 任务的最新错误记录；当且仅当出现模型容量错误或 HTTP 429 时，在原任务中持续发送 `continue`。兼容 Desktop writer 冲突，保留原模型和推理设置，不创建新的任务。 |
 | `daily-frontier-tech-discovery` | 扫描最近 72 小时的技术聚合源、一手博客、GitHub、评测与高影响论文，结合内部人物、会议和项目上下文筛选，归档完整候选分析，并生成可直接发送到钉钉的中文技术日报。 |
@@ -62,6 +63,8 @@
 ```bash
 ./install.sh
 ```
+
+`mcp/` 目录存放随 skill 一起发布的 MCP 服务端源码（目前是 `mcp/ai-services`），它不会被安装脚本同步到本机，部署方式见各自的 README。
 
 安装脚本会把 `skills/*` 同步到：
 
