@@ -1,0 +1,4 @@
+interface:
+  display_name: "数据库选型与表结构设计"
+  short_description: "结合用户背景和项目风险，选择数据库并生成可审查的表结构、约束和索引"
+  default_prompt: "使用 $database-design 为我的应用选择数据库，并生成包含完整说明、约束和索引依据的表结构。"
