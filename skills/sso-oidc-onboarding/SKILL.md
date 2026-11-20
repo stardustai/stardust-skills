@@ -20,14 +20,6 @@ Bring the target application to a working OIDC integration:
 
 Prefer OIDC authorization code flow. Use PKCE for browser/public clients; use a confidential client with server-side `clientSecret` for server-rendered or backend-owned apps.
 
-## Mandatory OIDC Rules
-
-Apply these rules to generated application code and reviews. Do not downgrade them unless the user explicitly changes the SSO server contract:
-
-- Confidential clients must exchange authorization codes with `client_secret_basic` by default. Send `Authorization: Basic base64(client_id:client_secret)` to the token endpoint; do not default to `client_secret_post`.
-- JWKS lookup must read the provider discovery document first and use its `jwks_uri`. Use a hardcoded JWKS endpoint only as a documented fallback when discovery is unavailable.
-- PKCE `code_verifier` must be validated before token exchange: length 43-128 characters, and every character must match the RFC 7636 unreserved set `[A-Za-z0-9._~-]`.
-
 ## Required Inputs
 
 Infer these from the codebase when possible, otherwise ask only for the missing high-risk values:
@@ -105,9 +97,6 @@ Implement the smallest framework-native integration:
 - Add `/sso/login` or equivalent route that redirects to `${issuer}/oauth/authorize`.
 - Generate and persist `state`; use `nonce` for OIDC ID token validation.
 - Use PKCE S256 for public clients and for confidential clients when the local framework makes it straightforward.
-- For confidential clients, implement token exchange with `client_secret_basic` by default.
-- Load the discovery document and use its `jwks_uri` for ID token verification keys.
-- Validate PKCE `code_verifier` with the required 43-128 character length and `[A-Za-z0-9._~-]` character set before exchanging the authorization code.
 - Add `/sso/callback` that validates `state`, exchanges code at `${issuer}/oauth/token`, verifies the ID token/JWKS, optionally calls userinfo, and creates the app's local session.
 - Add logout that clears local session and redirects to `${issuer}/oauth/logout` when the app stores an ID token or has a registered post-logout URL.
 - Protect routes using the app's existing middleware/guard style.
@@ -122,8 +111,5 @@ After implementation:
 - Exercise login/callback locally when possible with a dev callback URL registered in SSO.
 - Confirm callback URL exact-match behavior, including scheme, host, port, path, and trailing slash.
 - If the callback is localhost, confirm the SSO project is development-only and visible only to the requesting user. If the app is going online, confirm a separate HTTPS production client was registered.
-- Confirm confidential token exchange uses `client_secret_basic`.
-- Confirm JWKS is loaded from discovery `jwks_uri`.
-- Confirm PKCE `code_verifier` validation rejects values shorter than 43 characters, longer than 128 characters, or containing characters outside `[A-Za-z0-9._~-]`.
 - Confirm `.gitignore` protects the file containing the real secret.
 - Summarize the created SSO client id, callback URL, env variables changed, and tests run. Mask secrets.

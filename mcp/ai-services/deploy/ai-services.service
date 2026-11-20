@@ -1,0 +1,14 @@
+[Unit]
+Description=AI Services (OCR / ASR / TTS MCP)
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/services/ai-services
+EnvironmentFile=%h/services/ai-services/.env
+ExecStart=%h/services/ai-services/.venv/bin/uvicorn ai_services.app:app --host 127.0.0.1 --port 8920
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

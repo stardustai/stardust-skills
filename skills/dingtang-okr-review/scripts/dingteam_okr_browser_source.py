@@ -43,7 +43,7 @@ APP_ID = os.getenv("CEO_OKR_DINGTEAM_APPID", "40707")
 SUITE_ID = os.getenv("CEO_OKR_DINGTEAM_SUITEID", "9242001")
 ENTRY_URL = os.getenv(
     "CEO_OKR_DINGTEAM_ENTRY_URL",
-    "https://dingokr.dingteam.com/web/okr/pc/index.html#/okr/cycle",
+    f"https://dingokr.dingteam.com/web/okr/pc/index.html?corpId={CORP_ID}#/okr/cycle",
 )
 
 PROFILE_DIR = Path(
@@ -109,6 +109,39 @@ def _write_cache(headers: dict[str, str]) -> None:
         pass
 
 
+def _evaluate_after_navigation(page, script: str, *, timeout_seconds: float = 10):
+    """Evaluate once Chromium has installed a stable execution context."""
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        try:
+            return page.evaluate(script)
+        except Exception as exc:
+            if "execution context was destroyed" not in str(exc).lower():
+                raise
+            if time.monotonic() >= deadline:
+                raise RuntimeError(
+                    "Dingteam page kept navigating and never exposed a stable context"
+                ) from exc
+            time.sleep(0.25)
+
+
+def _capture_candidate_headers(
+    captured: dict[str, str], request_headers: dict[str, str]
+) -> bool:
+    """Accept only a token that can outlive the cache refresh skew window."""
+    candidate = {
+        _canonical(key): value
+        for key, value in request_headers.items()
+        if key.lower() in AUTH_HEADER_KEYS
+    }
+    expires_at = _jwt_exp(candidate)
+    if expires_at is None or expires_at <= time.time() + TOKEN_SKEW_SECONDS:
+        return False
+    captured.clear()
+    captured.update(candidate)
+    return True
+
+
 def _capture_headers(headless: bool, wait_seconds: float) -> dict[str, str]:
     """Open the OKR page in a persistent context and capture the session auth headers."""
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
@@ -117,10 +150,15 @@ def _capture_headers(headless: bool, wait_seconds: float) -> dict[str, str]:
     cur_url = ""
     with sync_playwright() as p:
         launch_kwargs = dict(user_data_dir=str(PROFILE_DIR), headless=headless)
-        try:
-            context = p.chromium.launch_persistent_context(channel="chrome", **launch_kwargs)
-        except Exception:
+        # Prefer the installed system Chrome. Playwright's downloaded
+        # Chromium is optional on this host, while the documented source uses
+        # system Chrome for both interactive login and headless fetches.
+        system_chrome = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+        if system_chrome.is_file():
+            launch_kwargs["executable_path"] = str(system_chrome)
             context = p.chromium.launch_persistent_context(**launch_kwargs)
+        else:
+            context = p.chromium.launch_persistent_context(channel="chrome", **launch_kwargs)
 
         # Always tear the browser down — otherwise the headless Chromium lingers
         # and holds memory after the fetch returns.
@@ -131,19 +169,50 @@ def _capture_headers(headless: bool, wait_seconds: float) -> dict[str, str]:
                         headers = request.headers
                         if not headers:
                             headers = request.all_headers()
-                        for k, v in headers.items():
-                            if k.lower() in AUTH_HEADER_KEYS:
-                                # preserve canonical-ish casing the API expects
-                                captured[_canonical(k)] = v
+                        _capture_candidate_headers(captured, headers)
                     except Exception:
                         pass
 
             context.on("request", on_request)
-            page = context.pages[0] if context.pages else context.new_page()
+            # Chromium starts with an internal about:blank page.  Reusing that
+            # page can leave the headful login window visually blank on macOS
+            # while navigation is still attached to the startup page.  Use a
+            # fresh page for the actual entry URL and close the placeholder.
+            placeholder = context.pages[0] if context.pages else None
+            page = context.new_page()
+            if placeholder is not None:
+                try:
+                    placeholder.close()
+                except Exception:
+                    pass
             try:
                 page.goto(ENTRY_URL, wait_until="domcontentloaded", timeout=60000)
             except Exception as exc:
                 _log(f"navigation note: {exc}")
+
+            # Do not open a visible Chrome window when standalone Chrome cannot
+            # initialize the Dingteam application.  In that environment the
+            # HTML shell loads but #root-master remains empty (the app depends
+            # on DingTalk's embedded WebView), so an interactive popup would
+            # only be a disruptive blank page.
+            time.sleep(1.5)
+            app_state = _evaluate_after_navigation(
+                page,
+                """() => ({
+                    root: !!document.querySelector('#root-master'),
+                    mounted: !!document.querySelector('#root-master > * > *'),
+                    title: document.title || '',
+                })"""
+            )
+            if (
+                isinstance(app_state, dict)
+                and app_state.get("root")
+                and not app_state.get("mounted")
+            ):
+                raise RuntimeError(
+                    "okr_website_unavailable: Dingteam OKR website did not "
+                    "render in the current browser session"
+                )
 
             nudge = (
                 "() => { try {"
@@ -162,10 +231,10 @@ def _capture_headers(headless: bool, wait_seconds: float) -> dict[str, str]:
                     try:
                         if "dingokr.dingteam.com" in pg.url:
                             cur_url = pg.url
-                            pg.evaluate(nudge)
+                            _evaluate_after_navigation(pg, nudge)
                     except Exception:
                         pass
-                page.wait_for_timeout(800)
+                time.sleep(0.8)
         finally:
             try:
                 context.close()
@@ -200,8 +269,22 @@ def get_headers(allow_browser: bool = True) -> dict[str, str]:
         return cached
     if not allow_browser:
         raise RuntimeError("no valid cached token and browser launch disabled")
-    _log("cached token missing/expired — launching headless browser to refresh")
-    headers = _capture_headers(headless=True, wait_seconds=40)
+    _log("cached token missing/expired — trying headless refresh")
+    try:
+        headers = _capture_headers(headless=True, wait_seconds=40)
+    except Exception as exc:
+        error_text = str(exc)
+        if (
+            "okr_website_unavailable" in error_text
+            or "ProcessSingleton" in error_text
+            or "SingletonLock" in error_text
+        ):
+            raise
+        _log(
+            "headless refresh needs interactive authentication; opening a visible "
+            "browser window. Complete DingTalk login/QR to continue."
+        )
+        headers = _capture_headers(headless=False, wait_seconds=240)
     _write_cache(headers)
     return headers
 

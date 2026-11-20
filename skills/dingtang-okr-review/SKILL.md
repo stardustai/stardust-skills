@@ -17,14 +17,15 @@ This skill is for 叮当OKR (`https://dingokr.dingteam.com/...`), not DingTalk O
 - For automated CEO OKR review runners, use a live 叮当OKR Web/API source for the `dingokr.dingteam.com` product. Do not default to Agoal just because the word OKR appears; this tenant has previously exported live OKR data from the Dingteam Web product while Agoal rule APIs returned no objective rule. Re-confirmed: even with all 10 Agoal permissions granted on the DingTalk app, `GET /v1.0/agoal/objectiveRuleLists/query` returns `success:true` with `totalCount:0` — the org uses 叮当OKR (蓝凌), not DingTalk-native Agoal, so the DingTalk Agoal API never has this data.
 - Configure the service with `CEO_OKR_SOURCE_KIND=dingteam_web` and `CEO_OKR_LIVE_SOURCE_COMMAND`. The command must accept `{user_id}` and `{period_label}` placeholders and return live JSON containing `processed.objectives` and `processed.okrRows`.
 - Three live-source commands are available (all return the same `processed.objectives` / `processed.okrRows`). Prefer the headless-browser source — it does NOT need an always-open Chrome tab:
-  - **Preferred — headless browser + token cache** (`dingteam_okr_browser_source.py`): a dedicated, persistent browser profile (default `~/.agents/runtime/dingteam-okr-chrome`) holds the DingTalk SSO session. One-time interactive login, then the service drives a headless Chromium itself to mint/refresh the session JWT; the JWT is cached (`<profile>/token_cache.json`, mode 600) and reused until ~5 min before its `exp` (~6h), so most fetches launch no browser at all.
-    - One-time (or when the DingTalk session expires): `python3 /Users/derek/.agents/skills/dingtang-okr-review/scripts/dingteam_okr_browser_source.py login` (opens a window; scan the DingTalk QR once).
+  - **Preferred — headless browser + token cache** (`dingteam_okr_browser_source.py`): a dedicated, persistent browser profile (default `~/.agents/runtime/dingteam-okr-chrome`) holds the DingTalk SSO session. The service drives an isolated headless Chromium to mint/refresh the session JWT; the JWT is cached (`<profile>/token_cache.json`, mode 600) and reused until ~5 min before its `exp`, so most fetches launch no browser at all.
+    - The CEO service wrapper `/Users/derek/Projects/ceo-agent-service/scripts/dingteam_okr_headless_source.py` must first use the already logged-in local DingTalk client for SSO: select the current local account, select the target organization when prompted, and confirm only the native `叮当OKR` login prompt. This flow needs neither a password nor a visible browser window.
+    - Request interactive login or QR scanning only when the local DingTalk client is not running, is logged out, or local SSO has been attempted and definitively fails. A redirect to `login.dingtalk.com` by itself is not evidence that human login is required.
     - `CEO_OKR_LIVE_SOURCE_COMMAND=/Users/derek/.agents/skills/dingtang-okr-review/scripts/dingteam_okr_browser_source.py fetch --user-id {user_id} --period-label {period_label}`
     - Requires `pip install playwright` (uses system Chrome via `channel="chrome"`). The dedicated profile is the source's OWN session store, not the user's Chrome profile; it never reads the user's Chrome cookie store and never prints the token.
   - **Alternative — direct API via open tab** (`dingteam_okr_direct_source.py`): touches an already-authorized `dingokr.dingteam.com` Chrome tab once (osascript) to read the live session header, then fetches all OKR data via direct server-side HTTP.
     `CEO_OKR_LIVE_SOURCE_COMMAND=/Users/derek/.agents/skills/dingtang-okr-review/scripts/dingteam_okr_direct_source.py --user-id {user_id} --period-label {period_label}`
-  - **Fallback — page injection** (`/Users/derek/Documents/Projects/ceo-agent-service/scripts/dingteam_okr_live_source.py`): injects an extraction script that uses the page's `webpackChunkallinone` module and polls a DOM result attribute. It auto-opens a `dingokr.dingteam.com` tab if none is present (reusing the Chrome login session), and — like the other sources — also fetches the 评论/进展 comments via `findCommentListV2` and merges them into `krDetailsUpdatesAggregated`.
-  - All three ultimately depend on a logged-in DingTalk session (the JWT is minted by 叮当OKR's DingTalk SSO and cannot be reproduced from stored AppKey/Secret without 叮当OKR's official OpenAPI). The headless source reduces this to a periodic background QR re-login when the session expires. On any failure they fail fast; do not fall back to stale local exports.
+  - **Fallback — page injection** (`/Users/derek/Projects/ceo-agent-service/scripts/dingteam_okr_live_source.py`): injects an extraction script that uses the page's `webpackChunkallinone` module and polls a DOM result attribute. It auto-opens a `dingokr.dingteam.com` tab if none is present (reusing the Chrome login session), and — like the other sources — also fetches the 评论/进展 comments via `findCommentListV2` and merges them into `krDetailsUpdatesAggregated`.
+  - All three ultimately depend on a logged-in DingTalk session (the JWT is minted by 叮当OKR's DingTalk SSO and cannot be reproduced from stored AppKey/Secret without 叮当OKR's official OpenAPI). The service headless source renews this through the logged-in local DingTalk client; QR login is the fallback, not the normal refresh path. On any failure they fail fast; do not fall back to stale local exports.
 - Use Agoal `agoal_1.0` only when the enterprise's OKR data is confirmed to be exposed through Agoal objective APIs. Required permissions normally include `Agoal.Objective.Read`, `Agoal.ObjectiveRule.Read`, `Agoal.Period.Read`, and `Agoal.ObjectiveProgress.Read`; org-performance plan/document APIs additionally require `Agoal.OrgPerfPlan.Read` / `Agoal.OrgPerfDoc.Read`.
 - For Agoal mode, use `CEO_OKR_SOURCE_KIND=agoal` and `CEO_OKR_OBJECTIVE_RULE_ID` when the enterprise has multiple Agoal rules. If the rule or period cannot be resolved unambiguously, fail fast and expose the configuration error.
 - Use the user's logged-in Chrome tab only for interactive workbook export or for fields not exposed by the API. Chrome export does not require DingTalk Open Platform AppKey/AppSecret; it requires the browser user to be logged in and authorized to view the target OKR data.
@@ -206,6 +207,20 @@ node /Users/derek/.agents/skills/dingtang-okr-review/scripts/build_workbook.mjs 
    - Scan for `#REF!`, `#DIV/0!`, `#VALUE!`, `#NAME?`, `#N/A`.
 
 ## CEO OKR Review Workflow
+
+### Approval or rejection when the OKR write surface is unavailable
+
+The review decision itself remains autonomous: choose approve (通过) or reject
+(不通过) from the live OKR and evidence. If this Skill or the connected
+runtime does not expose a reviewed write operation for changing the OKR
+approval state, do not invent a write command and do not escalate the decision
+as `needs_human`. Use the supported `dingtalk-chat` reply surface to tell the
+requester the decision and the evidence, and state explicitly that the OKR
+record was not changed. Include a concrete risk boundary (for example,
+“可以按不通过意见补材料，但注意当前系统状态仍未修改；不要按已批准
+执行”) and a next step for resubmission. Audit must verify the message
+readback and preserve the distinction between the recommendation and the
+unchanged OKR state.
 
 Use this when the user asks to review, audit, or score a person's OKR.
 

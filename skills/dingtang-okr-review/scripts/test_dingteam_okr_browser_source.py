@@ -53,6 +53,27 @@ def test_cache_rejects_expired(tmp_path, monkeypatch):
     assert module._read_cache() is None
 
 
+def test_header_capture_ignores_expired_token_until_fresh_token_arrives():
+    module = load_module()
+    captured = {}
+    expired = {
+        "authorization": _make_jwt(int(time.time()) - 60),
+        "x-space-id": "old-space",
+    }
+    fresh = {
+        "authorization": _make_jwt(int(time.time()) + 3600),
+        "x-space-id": "current-space",
+    }
+
+    assert module._capture_candidate_headers(captured, expired) is False
+    assert captured == {}
+    assert module._capture_candidate_headers(captured, fresh) is True
+    assert captured == {
+        "Authorization": fresh["authorization"],
+        "X-Space-Id": "current-space",
+    }
+
+
 def test_get_headers_uses_cache_without_browser(tmp_path, monkeypatch):
     module = load_module()
     monkeypatch.setattr(module, "PROFILE_DIR", tmp_path)
@@ -72,3 +93,36 @@ def test_get_headers_raises_when_no_cache_and_browser_disabled(tmp_path, monkeyp
     monkeypatch.setattr(module, "CACHE_PATH", tmp_path / "token_cache.json")
     with pytest.raises(RuntimeError):
         module.get_headers(allow_browser=False)
+
+
+def test_evaluate_after_navigation_retries_destroyed_execution_context(monkeypatch):
+    module = load_module()
+
+    class Page:
+        def __init__(self):
+            self.calls = 0
+            self.waits = []
+
+        def evaluate(self, script):
+            self.calls += 1
+            if self.calls < 3:
+                raise RuntimeError(
+                    "Execution context was destroyed, most likely because of a navigation"
+                )
+            return {"mounted": True, "script": script}
+
+        def wait_for_timeout(self, milliseconds):
+            raise AssertionError("navigation retry must not depend on a page staying open")
+
+    monotonic_values = iter([0.0, 0.1, 0.2])
+    monkeypatch.setattr(module.time, "monotonic", lambda: next(monotonic_values))
+    sleeps = []
+    monkeypatch.setattr(module.time, "sleep", sleeps.append)
+    page = Page()
+
+    assert module._evaluate_after_navigation(page, "() => ({mounted: true})") == {
+        "mounted": True,
+        "script": "() => ({mounted: true})",
+    }
+    assert page.calls == 3
+    assert sleeps == [0.25, 0.25]
