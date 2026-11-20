@@ -46,6 +46,23 @@ REQUIRED_BUSINESS_LINE_KEYS = (
     "milestones",
     "full_report_jsonml",
 )
+RENDERED_METRIC_KEYS = (
+    "name",
+    "target",
+    "current",
+    "status",
+    "data_date",
+    "definition_evidence",
+)
+
+
+def validate_rendered_metric(metric: dict) -> list[str]:
+    key = metric.get("key", metric.get("name", "<missing>"))
+    return [
+        f"{key} is missing rendered field {field}"
+        for field in RENDERED_METRIC_KEYS
+        if field not in metric
+    ]
 
 
 def validate_run(
@@ -70,8 +87,23 @@ def validate_run(
     if exception_count > 3:
         errors.append("company report has more than 3 exception metrics")
 
-    for claim in report.get("claims", []):
+    claims = report.get("claims", [])
+    validated_claim_texts = set()
+    for claim in claims:
         errors.extend(validate_claim(claim))
+        if not validate_claim(claim):
+            validated_claim_texts.add(claim.get("text"))
+    for section, records in (
+        ("CEO judgment", report.get("ceo_judgment", [])),
+        ("root cause", report.get("root_causes", [])),
+    ):
+        for record in records:
+            if record.get("text") not in validated_claim_texts:
+                errors.append(
+                    f"{section} '{record.get('text', '<missing>')}' has no matching validated claim"
+                )
+    for metric in metrics:
+        errors.extend(validate_rendered_metric(metric))
     for issue in report.get("issues", []):
         errors.extend(validate_issue(issue))
     errors.extend(
@@ -85,11 +117,15 @@ def validate_run(
         if line_name not in business_lines:
             errors.append(f"business line {line_name} is missing from report")
             continue
+        line = business_lines[line_name]
         for key in REQUIRED_BUSINESS_LINE_KEYS:
-            if key not in business_lines[line_name]:
+            if key not in line:
                 errors.append(
                     f"business line {line_name} is missing field {key}"
                 )
+        for metric in line.get("metrics", []):
+            errors.extend(validate_metric(metric))
+            errors.extend(validate_rendered_metric(metric))
 
     errors.extend(validate_privacy(report.get("private", {})))
     unique_errors = list(dict.fromkeys(errors))

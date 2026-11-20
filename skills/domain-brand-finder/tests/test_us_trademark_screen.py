@@ -2,6 +2,7 @@ import importlib.util
 import io
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "us_trademark_screen.py"
@@ -259,6 +260,25 @@ class FakeSession:
 
 
 class ControlledQueryTests(unittest.TestCase):
+    def test_access_denied_positive_control_stops_the_entire_run(self):
+        session = FakeSession(
+            screen.ApiResponse(403, {}, b"access denied"),
+            FakeResponse({"hits": {"totalValue": 0, "totalRelation": "eq", "hits": []}}),
+        )
+        output = io.StringIO()
+
+        with patch.object(screen, "UrllibSession", return_value=session):
+            status = screen.run_candidates(
+                [
+                    {"name": "Clearpath", "variants": [], "meanings": []},
+                    {"name": "Brightside", "variants": [], "meanings": []},
+                ],
+                output,
+            )
+
+        self.assertEqual(status, 2)
+        self.assertEqual(len(session.calls), 1)
+
     def test_unsupported_run_exits_nonzero_and_keeps_unknown_receipts(self):
         output = io.StringIO()
         status = screen.run_candidates([{

@@ -33,5 +33,8 @@ python3 -m scripts.render_dingtalk_jsonml --help
 ```
 
 Before publication, run the validator against `manifest.json`, `report.json`,
-and `previous-issues.json`. Publish only when it exits successfully with
-`publishable: true`, then verify the complete DingTalk readback.
+and `previous-issues.json`. It checks every company and business-line metric
+against both the evidence contract and the renderer's required fields, and
+requires each rendered CEO judgment and root-cause conclusion to match a valid
+claim. Publish only when it exits successfully with `publishable: true`, then
+verify the complete DingTalk readback.

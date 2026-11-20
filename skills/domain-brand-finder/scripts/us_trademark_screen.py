@@ -681,7 +681,18 @@ def run_candidates(candidates: list[dict], output) -> int:
             row["coverage"] = coverage
             write_json_line(output, row)
             incomplete = incomplete or row["status"] != "COMPLETE"
-            if row.get("HTTP") == 429 or row.get("control", {}).get("HTTP") == 429:
+            response_statuses = (
+                row.get("HTTP"),
+                row.get("control", {}).get("HTTP"),
+            )
+            if any(status in {403, 429} for status in response_statuses):
+                status = next(status for status in response_statuses if status in {403, 429})
+                if status == 403:
+                    print(
+                        "USPTO returned HTTP 403; stopped without further requests.",
+                        file=sys.stderr,
+                    )
+                    return 2
                 print(
                     "USPTO returned HTTP 429; stopped without further requests. "
                     f"Honor Retry-After={row.get('retry_after') or row.get('control', {}).get('retry_after')} before a later run.",

@@ -49,7 +49,16 @@ class ReportContractTests(unittest.TestCase):
         metrics = [
             {
                 "key": key,
+                "name": key,
+                "target": "无数据",
+                "previous": "无数据",
                 "current": "无数据",
+                "change": "无数据",
+                "status": "待补数据",
+                "data_date": "2026-09-14",
+                "definition_evidence": "无数据",
+                "source": "fixture",
+                "definition": "fixture",
                 "decision_critical": False,
             }
             for key in FIXED_METRICS
@@ -312,6 +321,36 @@ class ReportContractTests(unittest.TestCase):
             self.complete_manifest(), self.complete_report(), []
         )
         self.assertEqual(result, {"publishable": True, "errors": []})
+
+    def test_complete_run_rejects_renderer_incomplete_fixed_metric(self):
+        report = self.complete_report()
+        report["company_metrics"][0].pop("target")
+        result = validate_run(self.complete_manifest(), report, [])
+        self.assertIn(
+            "new_signed_orders is missing rendered field target",
+            result["errors"],
+        )
+
+    def test_every_ceo_judgment_requires_a_validated_claim(self):
+        report = self.complete_report()
+        report["ceo_judgment"] = [{"status": "判断", "text": "无证据判断"}]
+        result = validate_run(self.complete_manifest(), report, [])
+        self.assertIn(
+            "CEO judgment '无证据判断' has no matching validated claim",
+            result["errors"],
+        )
+
+    def test_business_line_metrics_use_metric_evidence_validation(self):
+        report = self.complete_report()
+        report["business_lines"]["Friday"]["metrics"] = [
+            {"key": "Friday revenue", "current": 12}
+        ]
+        result = validate_run(self.complete_manifest(), report, [])
+        self.assertIn("Friday revenue is missing source", result["errors"])
+        self.assertIn(
+            "Friday revenue is missing rendered field name",
+            result["errors"],
+        )
 
 
 if __name__ == "__main__":
